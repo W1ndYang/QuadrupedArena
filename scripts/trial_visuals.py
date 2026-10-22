@@ -3,7 +3,8 @@ import math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-FONTS={s:ImageFont.truetype("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",s) for s in (15,17,19,22,27)}
+from arena_fonts import load_font
+FONTS={s:load_font(s) for s in (15,17,19,22,27)}
 WHITE="#e9f2fb";CYAN="#49c9ff";ORANGE="#ffb360"
 EYE=np.array([-9.,8.,12.]);TARGET=np.array([-.2,.15,.3]);FOCAL=30.;APERTURE=20.955
 

@@ -60,7 +60,8 @@ def build(root):
         for i,d in enumerate(decisions):
             a=d.get('api',{})
             writer.writerow([i,d['simulation_seconds'],observations[i+1]['simulation_seconds'],len(observations[i]['frames']),d['decision_wait_seconds'],d.get('skill_compile_seconds',''),d.get('tokens'),a.get('api_wall_seconds'),a.get('time_to_first_output_seconds'),a.get('time_to_first_visible_content_seconds'),a.get('reasoning_tokens'),a.get('api_started_utc'),a.get('api_finished_utc')])
-    font=ImageFont.truetype('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',18)
+    from arena_fonts import load_font
+    font=load_font(18)
     gif=[];durations=[]
     for i,f in enumerate(frames):
         im=Image.new('RGB',(768,482),'#132333');im.paste(Image.open(root/f['file']).convert('RGB'),(0,50))

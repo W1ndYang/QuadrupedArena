@@ -159,8 +159,9 @@ class Match:
 def map_image(observation,path,route=None):
     from PIL import Image,ImageDraw,ImageFont
     im=Image.new('RGB',(1000,760),'#142333');d=ImageDraw.Draw(im)
-    font=ImageFont.truetype('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',18)
-    small=ImageFont.truetype('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',14)
+    from arena_fonts import load_font
+    font=load_font(18)
+    small=load_font(14)
     def p(xy):return (80+(xy[0]+6)*70,640-(xy[1]+4)*70)
     d.rectangle((*p([-6,4]),*p([6,-4])),fill='#d5d9d9')
     for x in range(-6,7):d.line([p([x,-4]),p([x,4])],fill='#b4bebf')

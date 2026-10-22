@@ -10,7 +10,8 @@ TITLES={"TAKE_COVER":"01  发现对手 · 快速进掩体", "HIDDEN":"02  藏在
 
 @lru_cache(None)
 def font(size):
-    return ImageFont.truetype("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",size)
+    from arena_fonts import load_font
+    return load_font(size)
 
 def panel(rgb,state,events,intro=False,outro=False):
     w,h=rgb.size

@@ -76,7 +76,8 @@ def build(root):
         for d in decisions:
             a=d['api'];w.writerow([d['observation_id'],'completed',d['simulation_seconds'],a['api_started_utc'],a['api_finished_utc'],a['api_wall_seconds'],d['tokens']])
         w.writerow([len(decisions),'failed_'+cause,last['simulation_seconds'],failure['call_start_utc'],failure['call_failed_utc'],failure['call_until_failure_seconds'],(failed_response.get('usage') or {}).get('total_tokens') if failed_response else 'unknown'])
-    font=ImageFont.truetype('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',18);images=[];durations=[]
+    from arena_fonts import load_font
+    font=load_font(18);images=[];durations=[]
     for i,f in enumerate(frames):
         im=Image.new('RGB',(768,482),'#302018');im.paste(Image.open(root/f['file']).convert('RGB'),(0,50))
         ImageDraw.Draw(im).text((12,10),f"未完赛 · 中断前机载记录  t={f['simulation_seconds']:.2f}s · 止于{last['simulation_seconds']:g}秒",font=font,fill='white')

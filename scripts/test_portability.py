@@ -15,6 +15,23 @@ from prepare_assets import install_archive
 
 
 class PortabilityTests(unittest.TestCase):
+    def test_text_draws_without_system_fonts(self):
+        from PIL import Image, ImageDraw
+        from arena_fonts import load_font
+        with patch('arena_fonts.font_candidates', return_value=[]), patch.dict(os.environ, {}, clear=True):
+            font = load_font(18)
+            ImageDraw.Draw(Image.new('RGB', (256, 64))).text((0, 0), '机器人 baseline', font=font)
+
+    def test_map_generation_without_system_fonts(self):
+        from adaptive_motion import load_config
+        from llm_trial import Match, map_image
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = load_config(PROJECT / 'configs/trial_rotating.json')
+            with patch('arena_fonts.font_candidates', return_value=[]), patch.dict(os.environ, {}, clear=True):
+                path = Path(tmp) / 'map.png'
+                map_image(Match(cfg).observe(), path)
+                self.assertGreater(path.stat().st_size, 100)
+
     def test_default_output_is_inside_ignored_directory(self):
         with patch.dict(os.environ, {}, clear=True):
             self.assertEqual(workspace_root(), PROJECT / '.arena-workspace')

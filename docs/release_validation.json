@@ -2,6 +2,15 @@
   "release_date": "2026-10-22",
   "status": "local_checks_passed",
   "paid_api_calls": 0,
+  "isolated_cpu_revalidation": {
+    "installation": "Fresh venv, requirements-cpu.txt only; pip check passed",
+    "total": 203,
+    "passed": 202,
+    "skipped": 1,
+    "skip_reason": "Optional PBR integration check: no assets in isolated workspace",
+    "seconds": 30.153,
+    "regression": "Added font fallback and two no-system-font tests"
+  },
   "cpu_tests": {
     "total": 201,
     "passed": 201,

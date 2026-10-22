@@ -36,6 +36,7 @@ mkdir -p "$ARENA_DATA_DIR/projects/unitree"
 | --- | --- |
 | `ARENA_WORKSPACE` | `<仓库>/.arena-workspace`；统一容纳缓存、场景和实验 |
 | `ARENA_PYTHON` | `python`；包装脚本使用的解释器，可指定绝对路径 |
+| `ARENA_FONT` | 可选字体文件绝对路径；不设置时查找系统字体并提供降级 |
 | `ISAACLAB_PATH` | `<workspace>/projects/unitree/IsaacLab` |
 | `UNITREE_ROS_DIR` | `<workspace>/projects/unitree/unitree_ros` |
 | `UNITREE_RL_LAB_PATH` | 仅历史物理探针相关；比赛主线不需要 |
@@ -78,7 +79,7 @@ python -m pip check
 
 比赛主线只使用 `isaaclab` 核心和本仓库脚本，不需要安装完整 PPO/RSL-RL 训练栈。若自行扩展训练，请另行管理 `isaaclab_tasks`、`isaaclab_rl`、策略权重和训练依赖。
 
-Linux 渲染还需要可用的 Vulkan / NVIDIA 驱动。文字绘制使用系统字体，Ubuntu 可安装 `fonts-dejavu-core`、`fonts-noto-cjk`。不要以 root 身份运行比赛。
+Linux 渲染还需要可用的 Vulkan / NVIDIA 驱动。为了正确显示中文标注，Ubuntu 建议安装 `fonts-dejavu-core`、`fonts-noto-cjk`；没有系统字体时使用 Pillow 内置字体，不影响 CPU 运行，但中文可能显示方框。也可用 `ARENA_FONT` 指定自己的字体文件。不要以 root 身份运行比赛。
 
 ## 4. Unitree 模型和 PBR 素材
 

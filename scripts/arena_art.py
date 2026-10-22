@@ -153,11 +153,11 @@ class Courtyard:
         from pxr import Vt
         W, H = 1024, max(128, int(1024*height/width))
         im = Image.new('RGB', (W,H), (24,32,35)); d = ImageDraw.Draw(im)
-        font = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+        from arena_fonts import load_font
         d.rectangle((0,0,18,H), fill=color)
         fs = min(int(H*.47), int((W-80)/max(1,len(title)) * 1.4))
-        d.text((44,int(H*.08)), title, fill=(221,220,204), font=ImageFont.truetype(font, fs))
-        d.text((47,int(H*.70)), subtitle, fill=color, font=ImageFont.truetype(font, max(14,int(H*.14))))
+        d.text((44,int(H*.08)), title, fill=(221,220,204), font=load_font(fs, bold=True))
+        d.text((47,int(H*.70)), subtitle, fill=color, font=load_font(max(14,int(H*.14)), bold=True))
         file = self.generated/(path.rsplit('/',1)[-1]+'.png'); im.save(file)
         name = 'Label_'+path.rsplit('/',1)[-1]; self.material(name, (1,1,1), image=file)
         x,y,z = center; w,h = width/2,height/2

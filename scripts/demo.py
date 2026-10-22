@@ -106,8 +106,8 @@ def panel(rgb, state, events, intro=False, outro=False):
     image = Image.new("RGB", (width, height+224), "#101d2d")
     image.paste(rgb, (0, 96))
     draw = ImageDraw.Draw(image)
-    font_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
-    fonts = {s: ImageFont.truetype(font_path, s) for s in (16,18,20,24,32)}
+    from arena_fonts import load_font
+    fonts = {s: load_font(s) for s in (16,18,20,24,32)}
     cyan, orange, white = "#49c9ff", "#ffb360", "#e9f2fb"
     draw.text((22, 9), "四足 × 人形｜掩体对抗流程 Demo", font=fonts[24], fill=white)
     draw.text((width-265, 14), "Isaac Sim 原生场景渲染", font=fonts[18], fill="#aec3d8")
