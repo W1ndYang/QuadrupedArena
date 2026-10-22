@@ -1,0 +1,14 @@
+{
+  "version": "industrial-courtyard-art-v1",
+  "rules_config": "trial_v3.json",
+  "playable_size_m": [12, 8],
+  "compound_size_m": [18, 14],
+  "resolution": [1600, 1000],
+  "samples": 256,
+  "cameras": {
+    "overview": {"eye": [-16, -19, 23], "target": [0, 0.8, 0.4], "focal": 25},
+    "courtyard": {"eye": [-7.5, -8.5, 4.8], "target": [0, 0.3, 0.6], "focal": 18},
+    "cover_detail": {"eye": [-6.7, -5.8, 2.8], "target": [-3.2, -1.6, 0.6], "focal": 22}
+  },
+  "note": "Art-only compound expansion; original playable arena, cover colliders and rules unchanged."
+}

@@ -1,0 +1,22 @@
+{
+  "provider": "deepseek_official",
+  "base_url": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "documented_version": "DeepSeek-V4.1-Flash-1017",
+  "documentation_checked": "2026-10-21",
+  "thinking": {"type": "enabled"},
+  "reasoning_effort": "low",
+  "decision_fields": ["observation_id", "skill", "params", "assessment"],
+  "explain_decisions": true,
+  "max_tokens": 16384,
+  "timeout_seconds": 180,
+  "max_calls_per_match": 20,
+  "automatic_retries": 0,
+  "automatic_strategy_fallback": false,
+  "image_detail": "original",
+  "history_decisions": 4,
+  "rules_config": "trial_rotating.json",
+  "match_seed": 2026102107,
+  "decision_period_seconds": 2,
+  "frame_interval_seconds": 0.5
+}

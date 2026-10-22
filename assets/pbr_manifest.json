@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "Concrete023",
+      "resolution": "2K",
+      "license": "CC0-1.0",
+      "source": "https://ambientcg.com/view?id=Concrete023",
+      "download": "https://ambientcg.com/get?file=Concrete023_2K-JPG.zip",
+      "files": [
+        {
+          "name": "Concrete023_2K-JPG_Color.jpg",
+          "sha256": "94c2469673c02d53985cdb58ef85bd9da24e9035adef67b6146a411f45de58a5",
+          "size_bytes": 5598798
+        },
+        {
+          "name": "Concrete023_2K-JPG_NormalGL.jpg",
+          "sha256": "4c45fd9791604213e1505a3024053c6573f460ce8d78aabf202fd30de8e662e9",
+          "size_bytes": 8768106
+        },
+        {
+          "name": "Concrete023_2K-JPG_Roughness.jpg",
+          "sha256": "0f10c4fbeb983aa2a7a5b07da69979f09d0eda4f61e9a11e8fd84dcaeee7ea4d",
+          "size_bytes": 2968349
+        }
+      ]
+    },
+    {
+      "id": "Concrete034",
+      "resolution": "2K",
+      "license": "CC0-1.0",
+      "source": "https://ambientcg.com/view?id=Concrete034",
+      "download": "https://ambientcg.com/get?file=Concrete034_2K-JPG.zip",
+      "files": [
+        {
+          "name": "Concrete034_2K-JPG_Color.jpg",
+          "sha256": "fa27982687596d7aa080db1e9b88c30f48a3c32eb3e50b27a2ea27c431e4cde9",
+          "size_bytes": 1156573
+        },
+        {
+          "name": "Concrete034_2K-JPG_NormalGL.jpg",
+          "sha256": "b077dfe6b3b8fbe794d82b9014d030fa01984a25ab67d2e21310995e6ea5b881",
+          "size_bytes": 3325261
+        },
+        {
+          "name": "Concrete034_2K-JPG_Roughness.jpg",
+          "sha256": "fd39973b8ef8212d1c99d18b6665595db3ab96f1c124e062fea52b9bda4ffa63",
+          "size_bytes": 879275
+        }
+      ]
+    },
+    {
+      "id": "Asphalt012",
+      "resolution": "1K",
+      "license": "CC0-1.0",
+      "source": "https://ambientcg.com/view?id=Asphalt012",
+      "download": "https://ambientcg.com/get?file=Asphalt012_1K-JPG.zip",
+      "files": [
+        {
+          "name": "Asphalt012_1K-JPG_Color.jpg",
+          "sha256": "c7a142a1c12f517024d1b4c92472c700af86cfe3bfc12263c4260e414d4c2c59",
+          "size_bytes": 1009615
+        },
+        {
+          "name": "Asphalt012_1K-JPG_NormalGL.jpg",
+          "sha256": "4e1d22a2216769d575d3481c548555ab955f7e6d7cb06f0c5eda99835612deb1",
+          "size_bytes": 2149012
+        },
+        {
+          "name": "Asphalt012_1K-JPG_Roughness.jpg",
+          "sha256": "0f3bdc4408c43fb8cfbef8089ea6aa9dbfbd104fcfc0ea7a63200fed79cb395c",
+          "size_bytes": 744991
+        }
+      ]
+    },
+    {
+      "id": "Metal032",
+      "resolution": "2K",
+      "license": "CC0-1.0",
+      "source": "https://ambientcg.com/view?id=Metal032",
+      "download": "https://ambientcg.com/get?file=Metal032_2K-JPG.zip",
+      "files": [
+        {
+          "name": "Metal032_2K-JPG_Color.jpg",
+          "sha256": "f444c07a08de291049d0dda880d6fca9faae4b172f293f604c87e5e96ad30370",
+          "size_bytes": 3843751
+        },
+        {
+          "name": "Metal032_2K-JPG_NormalGL.jpg",
+          "sha256": "b84a0bfe4639b7e3fac36d04adf1844e0e2654f987a36ece5c966ad77921cd27",
+          "size_bytes": 1572994
+        },
+        {
+          "name": "Metal032_2K-JPG_Roughness.jpg",
+          "sha256": "8a0570593c028cf0eca32a0107d7bc936817f0de7076f1b8b8f48ea7745aee27",
+          "size_bytes": 2105192
+        }
+      ]
+    }
+  ]
+}

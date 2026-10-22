@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "prototype_not_frozen_rules",
+  "units": "meters",
+  "up_axis": "Z",
+  "floor_size": [12.0, 8.0, 0.2],
+  "covers": [
+    {"name": "High1", "center": [-3.0, -1.5], "size": [0.4, 2.0, 1.8]},
+    {"name": "High2", "center": [3.0, 1.5], "size": [0.4, 2.0, 1.8]},
+    {"name": "High3", "center": [-1.0, 2.7], "size": [2.0, 0.4, 1.8]},
+    {"name": "High4", "center": [1.0, -2.7], "size": [2.0, 0.4, 1.8]},
+    {"name": "Low1", "center": [-1.5, -1.2], "size": [1.4, 0.4, 0.6]},
+    {"name": "Low2", "center": [1.5, 1.2], "size": [1.4, 0.4, 0.6]},
+    {"name": "Low3", "center": [-4.3, 2.0], "size": [1.4, 0.4, 0.6]},
+    {"name": "Low4", "center": [4.3, -2.0], "size": [1.4, 0.4, 0.6]}
+  ],
+  "spawn_points": [[-5.0, -2.8], [5.0, 2.8]],
+  "task_points": [{"name": "P1", "center": [-1.8, 0.5], "radius": 0.9}, {"name": "P2", "center": [1.8, -0.5], "radius": 0.9}],
+  "camera": {"eye": [12.0, -14.0, 13.0], "target": [0.0, 0.0, 0.0], "resolution": [640, 480]}
+}

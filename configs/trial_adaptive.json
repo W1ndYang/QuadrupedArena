@@ -1,0 +1,22 @@
+{
+  "base_config": "trial_v3.json",
+  "version": "rules-v0.3-policy-2",
+  "policy": {
+    "human_sensor_half_angle_degrees": 60.0,
+    "human_sensor_range": 8.0,
+    "human_memory_seconds": 4.0,
+    "human_scan_seconds": 1.2,
+    "human_patrol": [[0.0, -0.1], [-4.0, -3.2], [-5.2, 1.0], [-2.7, 3.3], [2.0, 3.3], [4.8, -3.2]],
+    "risk_weight": 7.0,
+    "low_hp_risk_multiplier": 1.8,
+    "a_replan_seconds": 1.0,
+    "a_react_seconds": 0.24,
+    "warning_risk_threshold": 0.55,
+    "reverse_speed_limit": 0.8,
+    "a_min_evasion_seconds": 0.6,
+    "dynamic_avoid_radius": 1.0,
+    "safety_stop_distance": 1.05,
+    "human_knowledge": "visible representative point only; last seen memory; map-known patrol",
+    "quadruped_knowledge": "current opponent position/yaw; public HP and hit events; no opponent aim state or future random outcomes"
+  }
+}

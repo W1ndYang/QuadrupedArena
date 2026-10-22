@@ -1,0 +1,61 @@
+{
+  "version": "rules-v0.3-trial-1",
+  "status": "experimental_not_balance_validated",
+  "duration": 40.0,
+  "dt": 0.02,
+  "seed": 20261021,
+  "initial_hp": 3,
+  "hold_seconds": 1.0,
+  "score_rate": 1.0,
+  "cooldown_seconds": 2.0,
+  "aim_half_angle_degrees": 30.0,
+  "range_m": 8.0,
+  "lambda_max": 1.5,
+  "tau": [1.0, 0.5],
+  "representative_heights": [0.40, 1.05],
+  "start_a": [-5.0, -2.8],
+  "start_b": [5.0, 2.8],
+  "max_speed": [1.1, 0.65],
+  "acceleration": [2.0, 1.2],
+  "yaw_rate": [2.5, 1.2],
+  "wheel_radius": 0.089,
+  "wheel_track": 0.40,
+  "planner_grid": 0.2,
+  "planner_clearance": 0.42,
+  "collapse": {
+    "time": 20.0,
+    "wall": "High3",
+    "axis": [1.0, 0.0, 0.0],
+    "pivot": [-1.0, 2.2, 0.0],
+    "angle_degrees": 90.0,
+    "display_seconds": 2.0,
+    "clock_policy": "instant_switch_with_visual_replay",
+    "debris": {"name": "High3", "center": [-1.0, 1.3], "size": [2.0, 1.8, 0.4]},
+    "damage": false,
+    "overlap_policy": "planner_reserves_sweep_then_reject_if_unsafe",
+    "planner_reserved_sweep": {"name": "FutureCollapseSweep", "center": [-1.0, 1.48], "size": [2.0, 2.26, 1.8]}
+  },
+  "arena": {
+    "floor_size": [12.0, 8.0, 0.2],
+    "covers": [
+      {"name": "High1", "center": [-3.0, -1.5], "size": [0.4, 2.0, 1.8]},
+      {"name": "High2", "center": [3.0, 1.5], "size": [0.4, 2.0, 1.8]},
+      {"name": "High3", "center": [-1.0, 2.4], "size": [2.0, 0.4, 1.8]},
+      {"name": "High4", "center": [1.0, -2.7], "size": [2.0, 0.4, 1.8]},
+      {"name": "Low1", "center": [-1.5, -1.2], "size": [1.4, 0.4, 0.6]},
+      {"name": "Low2", "center": [1.5, 1.2], "size": [1.4, 0.4, 0.6]},
+      {"name": "Low3", "center": [-4.3, 2.0], "size": [1.4, 0.4, 0.6]},
+      {"name": "Low4", "center": [4.3, -2.0], "size": [1.4, 0.4, 0.6]}
+    ],
+    "task_points": [
+      {"name": "P1", "center": [-4.0, -1.5], "radius": 0.55},
+      {"name": "P2", "center": [-1.0, 3.25], "radius": 0.55}
+    ]
+  },
+  "fps": 12,
+  "playback_speed": 1.0,
+  "resolution": [960, 720],
+  "intro_seconds": 2,
+  "outro_seconds": 4,
+  "render_spp": 16
+}

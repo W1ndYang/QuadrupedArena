@@ -1,0 +1,17 @@
+{
+  "base_config": "trial_adaptive.json",
+  "version": "rules-v0.4-rotating-targets-fast-human",
+  "target_rotation": {
+    "enabled": true,
+    "lifetime_seconds": 5.0,
+    "trigger": "first_quadruped_entry",
+    "order": "cyclic_config_order",
+    "refresh_on_hit": true
+  },
+  "yaw_rate": [2.5, 3.0],
+  "policy": {
+    "human_search_scan_rate": 2.4,
+    "human_patrol_scan_rate": 2.4,
+    "human_scan_seconds": 1.8
+  }
+}

@@ -1,0 +1,9 @@
+# Compatibility pins from the original Isaac Sim 5.1 / Isaac Lab v2.3.2 setup.
+# Apply AFTER the IsaacLab Starlette patch in docs/INSTALL.md.
+starlette==0.45.3
+typing_extensions==4.12.2
+psutil==5.9.8
+ipython==8.31.0
+onnx==1.18.0
+wheel==0.45.1
+setuptools==75.8.0

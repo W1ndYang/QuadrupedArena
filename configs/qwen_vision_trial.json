@@ -1,0 +1,29 @@
+{
+  "provider": "aliyun_bailian_beijing",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "model": "qwen3.6-27b",
+  "documentation_checked": "2026-10-21",
+  "decision_fields": ["observation_id", "skill", "params", "assessment"],
+  "explain_decisions": true,
+  "response_format": {"type": "json_object"},
+  "allow_single_json_fence": true,
+  "max_tokens": 16384,
+  "temperature": 0.6,
+  "timeout_seconds": 600,
+  "wall_timeout_seconds": 600,
+  "max_calls_per_match": 20,
+  "automatic_retries": 0,
+  "automatic_strategy_fallback": false,
+  "image_detail": "high",
+  "history_decisions": 4,
+  "rules_config": "trial_rotating.json",
+  "match_seed": 2026102107,
+  "decision_period_seconds": 2,
+  "frame_interval_seconds": 0.5,
+  "modes": {
+    "max": {"enable_thinking": true, "reasoning_effort": "maximum_default_budget", "thinking": {"type": "enabled"}},
+    "min": {"enable_thinking": false, "reasoning_effort": "thinking_off", "thinking": {"type": "disabled"}}
+  },
+  "effort_semantics": "Qwen3.6-27B has no documented low/max reasoning_effort tier. max enables thinking without a client thinking_budget (provider maximum default); min disables thinking. These are experiment labels, not transmitted reasoning_effort parameters. max_tokens limits answer content for this model, not reasoning. The 600-second operational deadline still applies.",
+  "docs": ["https://help.aliyun.com/zh/model-studio/qwen3-6-27b", "https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-chat-completions"]
+}

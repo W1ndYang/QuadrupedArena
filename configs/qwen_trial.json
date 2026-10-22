@@ -1,0 +1,18 @@
+{
+  "provider": "aliyun_bailian_beijing",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "model": "qwen3.6-27b",
+  "enable_thinking": true,
+  "thinking_budget": 4096,
+  "max_tokens": 8192,
+  "temperature": 0.6,
+  "timeout_seconds": 180,
+  "max_calls_per_decision": 3,
+  "max_calls_per_match": 60,
+  "include_observation_map": true,
+  "decision_period_seconds": 2.0,
+  "match_seed": 2026102107,
+  "rules_config": "trial_rotating.json",
+  "automatic_retries": 0,
+  "automatic_strategy_fallback": false
+}

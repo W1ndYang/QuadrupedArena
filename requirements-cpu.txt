@@ -1,0 +1,8 @@
+# Reference CPU stack; Python 3.11. No Isaac, PyTorch or paid model access needed.
+numpy==1.26.0
+scipy==1.15.3
+pillow==11.3.0
+matplotlib==3.10.3
+trimesh==4.5.1
+imageio==2.37.0
+imageio-ffmpeg==0.6.0

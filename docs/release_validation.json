@@ -1,0 +1,96 @@
+{
+  "release_date": "2026-10-22",
+  "status": "local_checks_passed",
+  "paid_api_calls": 0,
+  "cpu_tests": {
+    "total": 201,
+    "passed": 201,
+    "skipped": 0,
+    "seconds": 31.123
+  },
+  "cpu_baseline": {
+    "status": "passed",
+    "kind": "cpu_kinematic_baseline",
+    "training": false,
+    "dynamics_validated": false,
+    "llm_calls": 0,
+    "seed": 20261021,
+    "simulation_seconds": 27.52,
+    "ticks": 1377,
+    "validation": {
+      "min_center_to_cover": 0.42004764486903956,
+      "min_actor_separation": 3.321078380625411,
+      "collapse_sweep_checked": true,
+      "score": 8.0,
+      "finish": "quadruped_eliminated",
+      "max_speed": [
+        1.1,
+        0.65
+      ],
+      "safety_stop_steps": [
+        35,
+        1
+      ],
+      "human_visible_seconds": 11.28,
+      "a_exposed_seconds": 11.22,
+      "quadruped_mode": "risk_aware",
+      "controller": "A: risk_aware; B: visibility-only pursuit, last-seen search and patrol",
+      "scope": "ideal geometric sensor and kinematic center-clearance checks, not vision or contact dynamics"
+    },
+    "hashes": {
+      "trial_config.json": "969cb3ae63cfca526b40ed8e7fef5fee6154b256c37b309284c70ce9eedbce6d",
+      "timeline.json": "9c3db219d9fb69d197d1b338a66bf91059ef69e18e351df8c497031d56fd3898",
+      "events.json": "67b703f4fced85da1f5a5265bb3fd7ef43b9faa97c43abc554cbc2417a901839",
+      "validation.json": "0fbc8d4eec2690bfba0f2a54b5a804e927644f0f3a8d74ac3de18e64d9729176"
+    }
+  },
+  "isaac_preview": {
+    "status": "passed",
+    "kind": "r0_rules_preview",
+    "renderer": "PathTracing",
+    "target_spp": 16,
+    "frames": 21,
+    "match_seconds": 27.52,
+    "wall_seconds": 48.602759367000544,
+    "dynamics_validated": false
+  },
+  "vision_smoke": {
+    "status": "passed",
+    "mode": "engineering_smoke",
+    "simulation_seconds": 2.0,
+    "frames": 5,
+    "decisions": 1,
+    "score": 0.0,
+    "finish": "time_limit",
+    "final_hp": [
+      3,
+      3
+    ],
+    "decision_wait_seconds": 0.00027351800235919654,
+    "tokens": null,
+    "isaac_dynamics": false,
+    "online_isaac_rgb": true,
+    "semantic_skills": true,
+    "skill_compile_seconds": 0.31541068697697483
+  },
+  "pbr_hashes": {
+    "passed": 12,
+    "total": 12,
+    "source": "offline original ambientCG ZIP cache"
+  },
+  "environment": {
+    "os": "Ubuntu 22.04.5",
+    "python": "3.11.15",
+    "isaac_sim": "5.1.0.0",
+    "isaac_lab_commit": "37ddf626871758333d6ed89cf64ad702aef127d0",
+    "unitree_ros_commit": "f3772ce54c56ef2d34c6aee8100bc768896c7d19",
+    "gpu": "RTX 4050 Laptop 6 GB",
+    "driver": "580.159.03"
+  },
+  "limitations": [
+    "Existing Python/Isaac installation reused; no second-machine clean GPU install",
+    "No paid LLM matches during packaging",
+    "No contact-dynamics match validation",
+    "DOCK 07 v2 remains a development snapshot"
+  ]
+}

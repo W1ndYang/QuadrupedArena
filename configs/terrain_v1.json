@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "seed": 20261019,
+  "units": "meters",
+  "description": "Fixed rough-ground prototypes; not loose sand or calibrated real gravel",
+  "physics": {"static_friction": 0.85, "dynamic_friction": 0.7, "restitution": 0.0},
+  "undulating": {
+    "centers": [[-4.4, 0.0], [4.4, 0.0]],
+    "size": [2.0, 3.0],
+    "grid_spacing": 0.1,
+    "max_height": 0.12,
+    "color": [0.32, 0.23, 0.14]
+  },
+  "gravel": {
+    "centers": [[0.0, -1.2], [0.0, 1.2]],
+    "size": [1.2, 1.8],
+    "stone_count_per_patch": 36,
+    "radius_range": [0.055, 0.10],
+    "height_range": [0.04, 0.11],
+    "bed_height": 0.015,
+    "bed_color": [0.28, 0.24, 0.19],
+    "stone_color": [0.40, 0.37, 0.31]
+  },
+  "detail_camera": {"eye": [2.0, -2.0, 1.6], "target": [0.0, -1.2, 0.05], "resolution": [640, 480]}
+}

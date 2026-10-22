@@ -1,0 +1,51 @@
+{
+  "base_config": "dockyard_v1.json",
+  "version": "dockyard-v2-port-facilities-review",
+  "title": "DOCK 07 / 码头设备与货运场",
+  "previous_review_run": "20261022-153300-036600",
+  "revision_note": "Shorten and offset both side containers; keep full-width ramp approaches clear. Replace abstract walls with port facilities, preserving each original cover height. No rule or match integration changes.",
+  "walls": [
+    {"name":"High1","center":[-3.15,-3.6],"size":[1.25,2.6,2.0],"kind":"power_bank","label":"岸电配电柜组","material":"cabinet"},
+    {"name":"High2","center":[3.15,3.6],"size":[1.4,2.6,2.0],"kind":"cooler","label":"冷藏箱冷却机组","material":"cabinet"},
+    {"name":"High3","center":[-0.4,5.2],"size":[2.4,0.4,2.2],"kind":"pump_facade","label":"旧泵房前墙（定时倒塌）","material":"weathered"},
+    {"name":"High4","center":[1.6,-6.4],"size":[3.0,1.5,2.1],"kind":"freight_stack","label":"捆扎货运箱垛","material":"cargo_ochre"},
+    {"name":"High5","center":[-7.0,4.8],"size":[2.3,2.8,2.2],"kind":"service_hut","label":"港区检修机房","material":"cargo_teal"},
+    {"name":"High6","center":[7.0,-4.8],"size":[2.2,2.8,2.2],"kind":"freight_stack","label":"周转金属货箱垛","material":"cargo_red"},
+    {"name":"High7","center":[-12.5,7.7],"size":[2.5,1.2,2.0],"kind":"power_bank","label":"装卸区控制柜组","material":"cabinet"},
+    {"name":"High8","center":[12.4,-7.7],"size":[2.5,1.5,2.0],"kind":"cooler","label":"货场通风机组","material":"cabinet"},
+    {"name":"Low1","center":[-5.5,-5.5],"size":[1.8,1.15,0.65],"kind":"pallet","label":"低位托盘货物","material":"crate"},
+    {"name":"Low2","center":[5.5,5.5],"size":[1.8,1.15,0.65],"kind":"pallet","label":"低位托盘货物","material":"crate"},
+    {"name":"Low3","center":[-0.2,-3.6],"size":[2.0,1.15,0.75],"kind":"tool_chest","label":"码头维修工具箱","material":"cargo_ochre"},
+    {"name":"Low4","center":[2.2,7.0],"size":[1.6,1.3,0.8],"kind":"pallet","label":"备用零件托盘","material":"crate"},
+    {"name":"Low5","center":[-9.0,8.0],"size":[1.2,1.3,0.6],"kind":"tool_chest","label":"系泊器材箱","material":"cargo_teal"},
+    {"name":"Low6","center":[9.8,-7.5],"size":[1.8,1.0,0.6],"kind":"fender","label":"橡胶防撞设施","material":"rubber"}
+  ],
+  "facility_solids": [
+    {"name":"PumpHouse_Left","center":[-1.52,6.2,1.1],"size":[0.16,1.6,2.2],"material":"weathered"},
+    {"name":"PumpHouse_Right","center":[0.72,6.2,1.1],"size":[0.16,1.6,2.2],"material":"weathered"},
+    {"name":"PumpHouse_Back","center":[-0.4,6.92,1.1],"size":[2.4,0.16,2.2],"material":"weathered"},
+    {"name":"PumpHouse_Roof","center":[-0.4,6.2,2.14],"size":[2.4,1.6,0.12],"material":"steel"},
+    {"name":"PumpHouse_Pump","center":[-0.4,6.2,0.8],"size":[0.8,0.9,1.6],"material":"cargo_teal"}
+  ],
+  "containers": [
+    {"name":"T01","center":[-12.3,-4.8],"length":4.0,"width":2.6,"height":2.6,"axis":"y","open_ends":true,"material":"cargo_teal"},
+    {"name":"T02","center":[12.3,4.8],"length":4.0,"width":2.6,"height":2.6,"axis":"y","open_ends":true,"material":"cargo_red"},
+    {"name":"T03","center":[-3.4,8.5],"length":6.6,"width":2.6,"height":2.6,"axis":"x","open_ends":true,"material":"cargo_ochre"},
+    {"name":"C04","center":[-5.0,-9.4],"length":6.0,"width":2.5,"height":2.6,"axis":"x","open_ends":false,"material":"cargo_red"},
+    {"name":"C05","center":[7.0,9.4],"length":6.0,"width":2.5,"height":2.6,"axis":"x","open_ends":false,"material":"cargo_teal"}
+  ],
+  "bridge_approaches": [
+    {"name":"WestApproach","x_range":[-14.0,-9.6],"y_range":[-1.2,1.2],"entry":[-11.5,0.0]},
+    {"name":"EastApproach","x_range":[9.6,14.0],"y_range":[-1.2,1.2],"entry":[11.5,0.0]}
+  ],
+  "cameras": {
+    "reverse":{"label":"02 · 北侧反向总览","eye":[-28,29,35],"target":[0,0,0.5],"focal":25},
+    "bridge":{"label":"03 · 坡道入口与中央桥","eye":[-14.2,-2.0,3.8],"target":[-1.5,0.0,1.0],"focal":19},
+    "tunnel":{"label":"04 · 缩短后的贯通箱内部","eye":[-12.3,-6.1,1.2],"target":[-12.3,-1.5,1.15],"focal":14},
+    "north_lane":{"label":"07 · 检修机房与北侧箱体","eye":[-11.4,3.8,4.4],"target":[-2.2,6.5,1.0],"focal":18},
+    "west_entry":{"label":"09 · 西桥口净空","eye":[-14.5,-1.1,1.35],"target":[-7.2,0.0,0.9],"focal":15},
+    "east_entry":{"label":"10 · 东桥口净空","eye":[14.5,1.1,1.35],"target":[7.2,0.0,0.9],"focal":15},
+    "equipment":{"label":"11 · 岸电柜与低位货物","eye":[-7.8,-7.6,3.6],"target":[-2.7,-3.6,0.9],"focal":19},
+    "pump_house":{"label":"12 · 保留倒塌机制的泵房","eye":[-4.6,2.8,3.6],"target":[-0.4,6.0,1.0],"focal":19}
+  }
+}

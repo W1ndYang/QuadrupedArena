@@ -1,0 +1,56 @@
+{
+  "version": "dockyard-v1-design-review",
+  "title": "DOCK 07 / 集装箱维修货场",
+  "stage": "map_review_only",
+  "playable_size_m": [32.0, 24.0],
+  "previous_playable_size_m": [12.0, 8.0],
+  "rules_reference_run": "20261022-095614-313039",
+  "match_integration_ready": false,
+  "rules_note": "Preserve the archived competition rules; this file describes a new environment, not a runnable replacement for the legacy 2D match config.",
+  "targets": [
+    {"name": "P1", "center": [-4.8, -3.4], "radius": 0.55},
+    {"name": "P2", "center": [4.8, 3.4], "radius": 0.55}
+  ],
+  "spawns": {"A": [-7.2, -5.4], "B": [7.2, 5.8]},
+  "walls": [
+    {"name": "High1", "center": [-3.15, -3.6], "size": [0.45, 2.8, 2.0]},
+    {"name": "High2", "center": [3.15, 3.6], "size": [0.45, 2.8, 2.0]},
+    {"name": "High3", "center": [-0.4, 5.2], "size": [2.4, 0.4, 2.2]},
+    {"name": "High4", "center": [2.0, -6.0], "size": [3.0, 0.45, 2.1]},
+    {"name": "High5", "center": [-7.1, 4.6], "size": [0.45, 3.0, 2.2]},
+    {"name": "High6", "center": [7.1, -4.6], "size": [0.45, 3.0, 2.2]},
+    {"name": "High7", "center": [-12.7, 7.6], "size": [2.2, 0.45, 2.0]},
+    {"name": "High8", "center": [12.7, -7.6], "size": [2.2, 0.45, 2.0]},
+    {"name": "Low1", "center": [-5.5, -5.5], "size": [1.8, 0.5, 0.65]},
+    {"name": "Low2", "center": [5.5, 5.5], "size": [1.8, 0.5, 0.65]},
+    {"name": "Low3", "center": [-0.2, -3.6], "size": [2.0, 0.55, 0.75]},
+    {"name": "Low4", "center": [1.0, 7.1], "size": [0.5, 1.8, 0.8]},
+    {"name": "Low5", "center": [-8.9, 7.8], "size": [0.55, 1.8, 0.6]},
+    {"name": "Low6", "center": [9.5, -7.7], "size": [0.55, 1.8, 0.6]}
+  ],
+  "containers": [
+    {"name": "T01", "center": [-11.3, -3.0], "length": 7.0, "width": 2.6, "height": 2.6, "axis": "y", "open_ends": true, "material": "cargo_teal"},
+    {"name": "T02", "center": [11.3, 3.0], "length": 7.0, "width": 2.6, "height": 2.6, "axis": "y", "open_ends": true, "material": "cargo_red"},
+    {"name": "T03", "center": [-3.4, 8.5], "length": 6.6, "width": 2.6, "height": 2.6, "axis": "x", "open_ends": true, "material": "cargo_ochre"},
+    {"name": "C04", "center": [-5.0, -9.4], "length": 6.0, "width": 2.5, "height": 2.6, "axis": "x", "open_ends": false, "material": "cargo_red"},
+    {"name": "C05", "center": [7.0, 9.4], "length": 6.0, "width": 2.5, "height": 2.6, "axis": "x", "open_ends": false, "material": "cargo_teal"}
+  ],
+  "bridge": {"center": [0.0, 0.0], "deck_length": 5.6, "width": 2.4, "height": 2.2, "deck_thickness": 0.18, "ramp_run": 6.8, "rail_height": 0.85, "axis": "x"},
+  "collapse": {"wall": "High3", "time": 20.0, "angle_degrees": 90.0, "axis": [1, 0, 0], "pivot": [-0.4, 5.0, 0.0], "debris": {"center": [-0.4, 3.9, 0.2], "size": [2.4, 2.2, 0.4]}, "note": "Fixed wall, fixed angle, one event; before/after previews only, not a simulated match."},
+  "render": {"resolution": [1600, 1000], "samples": 192, "tour_resolution": [960, 600], "tour_samples": 24, "tour_frames": 72, "tour_fps": 8},
+  "cameras": {
+    "overview": {"label": "01 · 全场鸟瞰", "eye": [28, -32, 30], "target": [0, 0.4, 0.2], "focal": 22},
+    "reverse": {"label": "02 · 北侧反向总览", "eye": [-28, 29, 23], "target": [0, 0, 0.5], "focal": 22},
+    "bridge": {"label": "03 · 中央坡道桥", "eye": [-12.5, -6.5, 4.8], "target": [-0.6, 0.2, 1.15], "focal": 19},
+    "tunnel": {"label": "04 · 集装箱内部与双向出口", "eye": [-11.3, -5.3, 1.2], "target": [-11.3, 1.0, 1.15], "focal": 14},
+    "underpass": {"label": "05 · 桥下通行空间", "eye": [0, -3.0, 1.05], "target": [0, 3.2, 1.0], "focal": 16},
+    "robot_eye": {"label": "06 · 四足视高 / P1 接近", "eye": [-7.1, -4.25, 0.62], "target": [-3.5, -2.6, 0.65], "focal": 13},
+    "north_lane": {"label": "07 · 北侧箱体与绕行通道", "eye": [-10.4, 5.8, 3.0], "target": [0, 7.8, 1.1], "focal": 17},
+    "top": {"label": "08 · 正俯视 / 空间布局", "eye": [0, -0.02, 40], "target": [0, 0, 0], "focal": 21}
+  },
+  "references": [
+    {"title": "Valve · The Return of Dust II", "url": "https://www.counter-strike.net/dust2/", "use": "Readability, navigable cover, lit passages; no game meshes or textures copied."},
+    {"title": "CF 运输船地图详尽剖析 · 17173", "url": "https://cf.17173.com/content/2009-02-02/1233541796.shtml", "use": "Community map reference for container-yard routes; original layout, not a replica."},
+    {"title": "ambientCG · CC0 material license", "url": "https://docs.ambientcg.com/license/", "use": "Concrete023 / Concrete034 / Asphalt012 / Metal032 PBR textures."}
+  ]
+}
