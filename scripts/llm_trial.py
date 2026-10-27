@@ -31,9 +31,9 @@ def public_events(events):
 
 
 class Match:
-    def __init__(self,cfg):
+    def __init__(self,cfg,initial_a_yaw=0.):
         self.cfg=copy.deepcopy(cfg);self.ref=Referee(self.cfg);self.tick=0;self.t=0.
-        self.a=ReversibleMover(cfg['start_a'],0,*[cfg[k][0] for k in ('max_speed','acceleration','yaw_rate')])
+        self.a=ReversibleMover(cfg['start_a'],initial_a_yaw,*[cfg[k][0] for k in ('max_speed','acceleration','yaw_rate')])
         self.b=Mover(cfg['start_b'],math.pi,*[cfg[k][1] for k in ('max_speed','acceleration','yaw_rate')])
         self.human=HumanPolicy(cfg);self.planner=Planner(cfg,covers_at(cfg,0));self.collapsed=False
         self.states=[];self.decisions=[];self.events=[];self.active=None;self.skill_status='IDLE'

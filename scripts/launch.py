@@ -29,10 +29,16 @@ if "--help" in sys.argv:
     print("--vision-trial --headless: kinematic match with online Isaac RGB; waits for external actions/NNN.json every 2s.")
     print("--vision-trial --vision-smoke --headless: separate 2s camera sweep engineering test, not an LLM match.")
     print("--vision-trial --semantic-skills --headless: five robot intent skills and short four-field external decisions.")
+    print("--vision-trial --semantic-skills --g1b1-visible-spawn --headless: G1-B.1 diagnostic A spawn facing B; inspect real RGB before annotating.")
+    print("--vision-trial --geometry-diagnostic --headless: capture two formal-scene geometry samples, bundle them, and exit; no LLM or actions JSON.")
+    print("  --diagnostic-output-dir PATH: optional diagnostic artifact directory; default is the generated run/geometry_diagnostic.")
     print("--vision-trial --semantic-skills --deepseek --headless: paid official DeepSeek Flash RGB planner, effort from config.")
     print("--vision-trial --semantic-skills --qwen-vision max|min --headless: paid Qwen3.6-27B public RGB; default max thinking budget or thinking off.")
     print("--vision-trial --semantic-skills --assessment --headless: external assistant, same four-field decision/assessment schema.")
     raise SystemExit(0)
+
+if "--geometry-diagnostic" in sys.argv and "--vision-trial" not in sys.argv:
+    raise SystemExit("--geometry-diagnostic requires --vision-trial")
 
 gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv"], capture_output=True, text=True)
 if gpu.returncode:
@@ -64,6 +70,7 @@ entrypoint = "embodied_probe.py" if "--embodied-probe" in sys.argv else "art_sce
 timeout = 1200 if "--demo" in sys.argv else 600 if any(flag in sys.argv for flag in ('--art','--embodied-probe')) else 300
 if '--dockyard' in sys.argv:entrypoint='dockyard_scene.py';timeout=2400
 if '--vision-trial' in sys.argv:entrypoint='vision_trial.py';timeout=5400
+if '--geometry-diagnostic' in sys.argv:timeout=1200
 if '--vision-trial' in sys.argv and '--deepseek' in sys.argv:
     from deepseek_trial import settings
     timeout=settings().get('launch_timeout_seconds',timeout)

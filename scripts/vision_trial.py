@@ -20,11 +20,23 @@ parser.add_argument('--deepseek',action='store_true',help='Official Flash API, c
 parser.add_argument('--qwen-vision',choices=['max','min'],help='Official Qwen3.6-27B with public RGB; paid requests')
 parser.add_argument('--assessment',action='store_true',help='External assistant uses the same four-field assessment schema')
 parser.add_argument('--smoke-skill',choices=['CAPTURE_POINT','OBSERVE'],default='CAPTURE_POINT')
+parser.add_argument('--g1b1-visible-spawn',action='store_true',
+                    help='G1-B.1 diagnostic only: start A at (4.8,-1.0), facing north; default match spawn is unchanged')
+parser.add_argument('--geometry-diagnostic',action='store_true',
+                    help='Capture two formal-scene geometry diagnostics and exit; no LLM, actions JSON or Skill commit')
+parser.add_argument('--diagnostic-output-dir',type=Path,
+                    help='Diagnostic artifacts directory (default: this run/geometry_diagnostic)')
 parser.add_argument('--run-dir',type=Path,required=True)
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args();args.enable_cameras=True
+from formal_geometry_diagnostic import diagnostic_mode_error
+mode_error=diagnostic_mode_error(args)
+if mode_error:parser.error(mode_error)
+if args.diagnostic_output_dir and not args.geometry_diagnostic:parser.error('--diagnostic-output-dir requires --geometry-diagnostic')
 if (args.deepseek or args.qwen_vision or args.assessment) and (not args.semantic_skills or args.vision_smoke):parser.error('Planner modes require semantic skills and exclude fixed-command smoke')
 if sum((bool(args.deepseek),bool(args.qwen_vision),args.assessment))>1:parser.error('Choose one planner mode')
+if args.g1b1_visible_spawn and (not args.vision_trial or not args.semantic_skills or args.vision_smoke or args.deepseek or args.qwen_vision or args.assessment):
+    parser.error('--g1b1-visible-spawn requires a manual semantic vision trial without smoke or planner modes')
 app=AppLauncher(args).app
 import omni.usd
 import omni.replicator.core as rep
@@ -40,15 +52,19 @@ from demo_actors import Actor
 def main():
     from arena_paths import workspace_root
     root=args.run_dir;workspace=workspace_root()
-    for name in ('frames','observations','actions','decisions'):(root/name).mkdir()
+    if not args.geometry_diagnostic:
+        for name in ('frames','observations','actions','decisions'):(root/name).mkdir()
     cfg=load_config(PROJECT/'configs/trial_rotating.json');cfg['seed']=2026102107
     if args.vision_smoke:cfg['duration']=2.
-    match=VisionMatch(cfg);rig=CameraRig()
+    if args.g1b1_visible_spawn:
+        # Only this explicit G1-B.1 diagnostic run moves A; keep B and the arena intact.
+        cfg['start_a']=[4.8,-1.0]
+    match=VisionMatch(cfg,initial_a_yaw=math.pi/2 if args.g1b1_visible_spawn else 0.);rig=CameraRig()
     engine=None;execution=[];api_planner=None
     if args.semantic_skills:
         from semantic_skills import SemanticSkills
         engine=SemanticSkills(cfg)
-    dump(root/'protocol.json',dict(mode='engineering_smoke' if args.vision_smoke else 'assistant_partial_observation',
+    if not args.geometry_diagnostic:dump(root/'protocol.json',dict(mode='engineering_smoke' if args.vision_smoke else 'assistant_partial_observation',
         engine='Python kinematics/referee; Isaac online RGB only; no PhysX steps',
         decision_period_seconds=2,frame_interval_seconds=.5,horizontal_fov_degrees=90,
         camera_mount=dict(forward=.36,height=.60,pitch_degrees=-5),camera_pan_limits=[-90,90],camera_max_rate_degrees=120,
@@ -119,8 +135,7 @@ def main():
     product=rep.create.render_product(str(camera.GetPath()),(768,432))
     rgb=rep.AnnotatorRegistry.get_annotator('rgb');rgb.attach([product]);rep.orchestrator.set_capture_on_play(False)
     frames=[]
-    def capture():
-        s=match.states[-1]
+    def pose_scene(s):
         for i,actor in enumerate(actors):
             actor.update(s['xy'][i],s['yaw'][i],s['t']*s['speed'][i]*2*math.pi/.65,s['speed'][i],0,s['wheels'] if i==0 else None)
             if i==1 and s['hp'][1]==0:UsdGeom.Imageable(stage.GetPrimAtPath('/World/Actors/B')).MakeInvisible()
@@ -137,6 +152,26 @@ def main():
         eye=np.array([s['xy'][0][0]+.36*math.cos(yaw),s['xy'][0][1]+.36*math.sin(yaw),.60])
         direction=np.array([math.cos(heading)*math.cos(math.radians(5)),math.sin(heading)*math.cos(math.radians(5)),-math.sin(math.radians(5))])
         camop.Set(Gf.Matrix4d().SetLookAt(Gf.Vec3d(*eye),Gf.Vec3d(*(eye+direction)),Gf.Vec3d(0,0,1)).GetInverse())
+        return yaw,heading,eye
+    if args.geometry_diagnostic:
+        from formal_geometry_diagnostic import run as run_geometry_diagnostic
+        output=args.diagnostic_output_dir or root/'geometry_diagnostic'
+        try:
+            summary=run_geometry_diagnostic(output,match.states[-1],cfg,stage,camera,rgb,app,pose_scene)
+        except Exception:
+            print(f'Geometry diagnostic failed; partial artifacts: {output}',flush=True)
+            raise
+        dump(root/'result.json',dict(status='passed',mode='formal_geometry_diagnostic',
+            diagnostic_status=summary['status'],runtime_verified=False,
+            diagnostic_output_dir=str(Path(output).expanduser().resolve()),
+            diagnostic_bundle=str(Path(output).expanduser().resolve()/'diagnostic_bundle.zip')))
+        print(f'Geometry diagnostic output: {Path(output).expanduser().resolve()}',flush=True)
+        print(f'Geometry diagnostic bundle: {Path(output).expanduser().resolve()/"diagnostic_bundle.zip"}',flush=True)
+        print(f'Geometry diagnostic status: {summary["status"]}; runtime_verified=false',flush=True)
+        return
+    def capture():
+        s=match.states[-1]
+        yaw,heading,eye=pose_scene(s)
         for _ in range(12 if not frames else 6):app.update()
         pixels=np.asarray(rgb.get_data())
         if pixels.shape[:2]!=(432,768) or pixels[...,:3].std()<1:raise RuntimeError('Missing or blank onboard image')
@@ -230,4 +265,5 @@ try:main()
 except Exception:
     dump(args.run_dir/'result.json',dict(status='failed',error=traceback.format_exc()))
     traceback.print_exc()
+    if args.geometry_diagnostic:raise SystemExit(1)
 finally:app.close(wait_for_replicator=False,skip_cleanup=True)

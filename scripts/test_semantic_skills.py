@@ -85,5 +85,130 @@ class SemanticTests(unittest.TestCase):
     def test_stationary_eta_zero(self):
         self.assertEqual(self.engine.eta(self.packet['self_state'],[np.asarray(self.packet['self_state']['xy'])],False),0)
 
+    def test_sighting_validate_then_commit_updates_formal_memory(self):
+        feet=pixel([-1,-2.8],frame())
+        request=self.request('AIM_AT_TRACK',sighting=dict(time=0,feet=feet))
+        initial=copy.deepcopy(self.engine.memory.track)
+        prepared=self.engine.validate(request,self.packet)
+        self.assertIsInstance(prepared,VisualMemory)
+        self.assertIsNot(prepared,self.engine.memory)
+        self.assertEqual(self.engine.memory.track,initial)
+        self.assertEqual(self.engine.sequence,0)
+        self.assertIsNone(self.engine.intent)
+        self.assertEqual(self.engine.status,dict(state='IDLE'))
+        self.assertIsNone(self.engine.action)
+        self.assertEqual(prepared.track['source'],'rgb_foot_pixel')
+        self.assertTrue(np.allclose(prepared.track['xy'],ground_point(frame(),feet)))
+
+        action,route,camera,status=self.engine.commit(request,self.packet)
+        self.assertEqual(self.engine.memory.track,prepared.track)
+        self.assertEqual(self.engine.memory.track['feet'],feet)
+        self.assertEqual(self.engine.memory.track['frame'],'test.png')
+        self.assertEqual(self.engine.memory.track['seen_at'],0)
+        self.assertEqual(self.engine.memory.track['base_uncertainty'],.6)
+        self.assertEqual(self.engine.intent,'AIM_AT_TRACK')
+        self.assertEqual(self.engine.params,request['params'])
+        self.assertEqual(self.engine.sequence,1)
+        self.assertEqual(self.engine.generation,self.packet['public_state']['target_generation'])
+        self.assertEqual(self.engine.hp,self.packet['self_state']['hp'])
+        self.assertEqual(action['skill'],'HOLD')
+        self.assertTrue(action['attack'])
+        self.assertEqual(route,[])
+        self.assertEqual(camera['mode'],'hold')
+        self.assertEqual(status['state'],'RUNNING')
+        self.assertEqual(self.engine.public(0)['visual_memory']['source'],'rgb_foot_pixel')
+
+    def test_missing_sighting_preserves_known_initial_memory(self):
+        request=self.request('OBSERVE',direction='scan')
+        initial=copy.deepcopy(self.engine.memory.track)
+        prepared=self.engine.validate(request,self.packet)
+        self.assertEqual(prepared.track,initial)
+        self.assertEqual(self.engine.memory.track,initial)
+        action,route,camera,status=self.engine.commit(request,self.packet)
+        self.assertEqual(self.engine.memory.track,initial)
+        self.assertEqual(action['skill'],'SCAN')
+        self.assertEqual(route,[])
+        self.assertEqual(camera['mode'],'sweep')
+        self.assertEqual(status['state'],'RUNNING')
+
+    def test_invalid_sighting_and_observation_do_not_mutate_state(self):
+        valid=self.request('OBSERVE',sighting=dict(time=0,feet=[384,250]))
+        bad=[]
+        for sighting in ({'time':0},{'feet':[384,250]},
+                         {'time':0,'feet':[384]}, {'time':0,'feet':[384,250,1]},
+                         {'time':0,'feet':[768,250]}, {'time':0,'feet':[True,250]},
+                         {'time':0,'feet':[float('nan'),250]},
+                         {'time':'0','feet':[384,250]}, {'time':True,'feet':[384,250]},
+                         {'time':float('inf'),'feet':[384,250]},
+                         {'time':0,'feet':[384,250],'frame':'test.png'},
+                         {'time':2,'feet':[384,250]}):
+            request=copy.deepcopy(valid);request['params']['sighting']=sighting;bad.append(request)
+        for observation_id in (None,True,1):
+            request=copy.deepcopy(valid);request['observation_id']=observation_id;bad.append(request)
+        request=copy.deepcopy(valid);del request['observation_id'];bad.append(request)
+        for request in bad:
+            with self.subTest(request=request):
+                engine=SemanticSkills(self.cfg);initial=copy.deepcopy(engine.memory.track)
+                with self.assertRaises(ValueError):
+                    engine.validate(request,self.packet)
+                self.assertEqual(engine.memory.track,initial)
+                with self.assertRaises(ValueError):
+                    engine.commit(request,self.packet)
+                self.assertEqual(engine.memory.track,initial)
+                self.assertEqual(engine.sequence,0)
+                self.assertIsNone(engine.intent)
+
+    def test_sighting_time_must_match_a_frame_not_observation_time(self):
+        packet=copy.deepcopy(self.packet)
+        packet['observation_id']=1;packet['simulation_seconds']=1.
+        packet['frames']=[frame(0),frame(1)]
+        request=dict(observation_id=1,skill='OBSERVE',params=dict(sighting=dict(time=0,feet=pixel([-1,-2.8],frame()))))
+        prepared=self.engine.validate(request,packet)
+        self.assertEqual(prepared.track['seen_at'],0)
+        self.assertEqual(self.engine.memory.track['source'],'known_initial')
+        self.engine.commit(request,packet)
+        self.assertEqual(self.engine.memory.track['seen_at'],0)
+        self.assertEqual(self.engine.memory.track['source'],'rgb_foot_pixel')
+
+    def test_older_sighting_cannot_replace_newer_memory(self):
+        newer=copy.deepcopy(self.packet)
+        newer['observation_id']=1;newer['simulation_seconds']=1.;newer['frames']=[frame(1)]
+        request=dict(observation_id=1,skill='OBSERVE',params=dict(sighting=dict(time=1,feet=pixel([-1,-2.8],frame(1)))))
+        self.engine.commit(request,newer)
+        previous=copy.deepcopy(self.engine.memory.track);sequence=self.engine.sequence
+        stale=self.request('OBSERVE',sighting=dict(time=0,feet=pixel([-2,-2.8],frame())))
+        with self.assertRaisesRegex(ValueError,'newer visual memory'):
+            self.engine.commit(stale,self.packet)
+        self.assertEqual(self.engine.memory.track,previous)
+        self.assertEqual(self.engine.sequence,sequence)
+
+    def test_validate_two_candidates_commit_uses_passed_request(self):
+        a=self.request('OBSERVE',sighting=dict(time=0,feet=pixel([-1,-2.8],frame())))
+        b=self.request('OBSERVE',sighting=dict(time=0,feet=pixel([-2,-2.8],frame())))
+        for selected in (a,b):
+            with self.subTest(selected=selected):
+                engine=SemanticSkills(self.cfg)
+                prepared_a=engine.validate(a,self.packet)
+                prepared_b=engine.validate(b,self.packet)
+                self.assertEqual(engine.memory.track['source'],'known_initial')
+                engine.commit(selected,self.packet)
+                expected=prepared_a if selected is a else prepared_b
+                self.assertEqual(engine.memory.track,expected.track)
+
+    def test_repeated_commit_and_rejected_commit_state(self):
+        request=self.request('OBSERVE',sighting=dict(time=0,feet=pixel([-1,-2.8],frame())))
+        self.engine.commit(request,self.packet)
+        committed=copy.deepcopy(self.engine.memory.track)
+        self.engine.commit(request,self.packet)
+        self.assertEqual(self.engine.memory.track,committed)
+        self.assertEqual(self.engine.sequence,2)
+        before=(copy.deepcopy(self.engine.memory.track),copy.deepcopy(self.engine.status),
+                copy.deepcopy(self.engine.action),self.engine.intent,copy.deepcopy(self.engine.params),self.engine.sequence)
+        bad=self.request('OBSERVE',sighting=dict(time=2,feet=[384,250]))
+        with self.assertRaises(ValueError):self.engine.commit(bad,self.packet)
+        after=(self.engine.memory.track,self.engine.status,self.engine.action,
+               self.engine.intent,self.engine.params,self.engine.sequence)
+        self.assertEqual(after,before)
+
 
 if __name__=='__main__':unittest.main()
