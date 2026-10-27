@@ -10,7 +10,8 @@ import unittest
 import numpy as np
 
 from geometry_interface_probe import (
-    CANDIDATES, artifact_list, attach_candidates, collect_candidate, frame_evidence,
+    CANDIDATES, _scene_snapshot, artifact_list, attach_candidates, candidate_pixel_result,
+    collect_candidate, detach_candidates, frame_evidence, projected_pixel_index,
     id_to_paths, interface_probe_mode_error, mask_mapping, probe_execution_status,
     safe_json, summarize_result,
 )
@@ -22,8 +23,9 @@ VISUALS = {"left_ankle_roll_link": [LEFT], "right_ankle_roll_link": [RIGHT]}
 
 
 class FakeAnnotator:
-    def __init__(self, value=None, attach_error=False, read_error=False):
+    def __init__(self, value=None, attach_error=False, read_error=False, detach_error=False):
         self.value, self.attach_error, self.read_error = value, attach_error, read_error
+        self.detach_error = detach_error
         self.detached = False
 
     def attach(self, products):
@@ -35,8 +37,10 @@ class FakeAnnotator:
             raise RuntimeError("read unavailable")
         return self.value
 
-    def detach(self, products):
+    def detach(self):
         self.detached = True
+        if self.detach_error:
+            raise RuntimeError("detach unavailable")
 
 
 class FakeRegistry:
@@ -156,12 +160,95 @@ class ProbeTests(unittest.TestCase):
             self.assertIn("frames/clear_instance_id_segmentation.npy", artifact_list(output))
             json.dumps(safe_json({"items": [item, failed, missing]}), allow_nan=False)
         self.assertEqual(set(attached), {CANDIDATES[0], CANDIDATES[3]})
+        detach_candidates(attached, statuses, "/Render/Probe")
+        self.assertEqual(statuses[CANDIDATES[0]]["detach"], "ok")
+        self.assertEqual(statuses[CANDIDATES[0]]["detach_argument"]["kind"], "none")
+        self.assertEqual(statuses[CANDIDATES[0]]["detach_argument"]["attached_render_product_path"], "/Render/Probe")
         for name in attached:
             statuses[name]["reads"] = {"clear": "ok", "occluded": "ok"}
-            statuses[name]["detach"] = "ok"
         self.assertEqual(probe_execution_status(2, statuses), "partial")
         self.assertEqual(probe_execution_status(0, statuses), "blocked")
         self.assertEqual(probe_execution_status(2, {CANDIDATES[0]: statuses[CANDIDATES[0]]}), "complete")
+
+    def test_detach_failure_does_not_stop_other_cleanup(self):
+        first = FakeAnnotator(detach_error=True)
+        second = FakeAnnotator()
+        statuses = {"a": {"detach": "not_attempted"}, "b": {"detach": "not_attempted"}}
+        detach_candidates({"a": first, "b": second}, statuses, "/Render/Probe")
+        self.assertTrue(first.detached and second.detached)
+        self.assertEqual(statuses["a"]["detach"], "failed")
+        self.assertEqual(statuses["a"]["detach_error"]["type"], "RuntimeError")
+        self.assertEqual(statuses["b"]["detach"], "ok")
+
+    def test_pixel_sampling_and_candidate_statuses(self):
+        foot = {"link_prim": "/World/Actors/B/left_ankle_roll_link", "visual_prim": LEFT,
+                "world_m": [1, 2, 0], "projection": {"status": "in_frame", "pixel": [2.9, 1.4]},
+                "ray_distance_m": 3.0, "image_plane_distance_m": 2.9}
+        arrays = {"instance_id_segmentation": np.zeros((432, 768), np.uint32),
+                  "distance_to_camera": np.full((432, 768), 3.0, np.float32),
+                  "distance_to_image_plane": np.full((432, 768), 2.9, np.float32)}
+        arrays["instance_id_segmentation"][1, 2] = 7
+        info = {"idToLabels": {"7": LEFT, "8": "/World/Covers/High2/Visual"}}
+        result = candidate_pixel_result(foot, arrays, info, depth_semantics_confirmed=True)
+        self.assertEqual(result["candidate_pixel_status"], "visible_candidate_pixel")
+        self.assertEqual(result["sampled_pixel_uv"], [2, 1])
+        self.assertEqual(result["array_index_vu"], [1, 2])
+        self.assertFalse(result["is_validated_sole_contact"])
+        self.assertEqual(projected_pixel_index({"status": "in_frame", "pixel": [767.9, 431.9]})[0], (767, 431))
+        self.assertEqual(projected_pixel_index({"status": "in_frame", "pixel": [-0.1, 1]})[1],
+                         "projected_pixel_out_of_bounds")
+        self.assertEqual(projected_pixel_index({"status": "behind_camera", "pixel": [2, 1]})[1],
+                         "projection_not_in_frame")
+        arrays["instance_id_segmentation"][1, 2] = 8
+        arrays["distance_to_camera"][1, 2] = 2.0
+        arrays["distance_to_image_plane"][1, 2] = 1.95
+        blocked = candidate_pixel_result(foot, arrays, info, depth_semantics_confirmed=True)
+        self.assertEqual(blocked["candidate_pixel_status"], "occluded_candidate_pixel")
+        self.assertEqual(blocked["segmentation_prim_path"], "/World/Covers/High2/Visual")
+        self.assertLess(blocked["distance_to_camera_delta_m"], -0.03)
+        arrays["distance_to_camera"][1, 2] = 3.0
+        self.assertEqual(candidate_pixel_result(foot, arrays, info, True)["candidate_pixel_status"], "unknown")
+        arrays["distance_to_camera"][1, 2] = 2.0
+        uncertain = candidate_pixel_result(foot, arrays, info)
+        self.assertEqual(uncertain["candidate_pixel_status"], "unknown")
+        self.assertEqual(uncertain["heuristic_unverified"], "occluded_candidate_pixel")
+        self.assertEqual(uncertain["status_reason"], "depth_semantics_unconfirmed")
+        for bad in (np.nan, np.inf, 0):
+            arrays["distance_to_camera"][1, 2] = bad
+            self.assertEqual(candidate_pixel_result(foot, arrays, info, True)["candidate_pixel_status"], "unknown")
+        arrays["distance_to_camera"][1, 2] = 2.0
+        self.assertEqual(candidate_pixel_result(foot, arrays, {}, True)["candidate_pixel_status"], "unknown")
+        parent_info = {"idToLabels": {"8": "/World/Actors/B/left_ankle_roll_link"}}
+        self.assertEqual(candidate_pixel_result(foot, arrays, parent_info, True)["candidate_pixel_status"], "unknown")
+        short = dict(arrays, distance_to_camera=np.ones((1, 1), np.float32))
+        self.assertEqual(candidate_pixel_result(foot, short, info, True)["status_reason"], "array_shape_mismatch")
+        json.dumps(safe_json(result), allow_nan=False)
+
+    def test_tracked_link_visual_transforms_and_failure_isolation(self):
+        camera_path = "/World/OnboardCamera"
+        left_link = "/World/Actors/B/left_ankle_roll_link"
+        right_link = "/World/Actors/B/right_ankle_roll_link"
+        class Prim:
+            def __init__(self, path, valid=True): self.path, self.valid = path, valid
+            def IsValid(self): return self.valid
+        class Camera:
+            def GetPath(self): return camera_path
+            def GetPrim(self): return Prim(camera_path)
+        class Stage:
+            def GetPrimAtPath(self, path): return Prim(path, path != right_link)
+        class Cache:
+            def GetLocalToWorldTransform(self, prim):
+                if prim.path == left_link: raise RuntimeError("transform unavailable")
+                return [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0], [4.0, 3.0, 2.0, 1.0]]
+        class Geom:
+            XformCache = Cache
+        snap = _scene_snapshot(Stage(), Camera(), None, Geom, VISUALS)
+        self.assertEqual(snap["tracked_prims"][LEFT]["status"], "ok")
+        self.assertEqual(snap["tracked_prims"][left_link]["status"], "failed")
+        self.assertEqual(snap["tracked_prims"][right_link]["status"], "missing")
+        self.assertEqual(snap["tracked_prims"][camera_path]["status"], "ok")
+        json.dumps(safe_json(snap), allow_nan=False)
 
 
 if __name__ == "__main__":

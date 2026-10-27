@@ -23,6 +23,8 @@ from formal_geometry_diagnostic import (
 SEGMENTATION = ("instance_id_segmentation", "instance_segmentation", "semantic_segmentation")
 DEPTH = ("distance_to_camera", "distance_to_image_plane")
 CANDIDATES = SEGMENTATION + DEPTH
+PIXEL_DEPTH_TOLERANCE_M = 0.03
+PIXEL_SAMPLING_CONVENTION = "truncate nonnegative projected (u,v) toward zero; index array[v,u]"
 
 
 def interface_probe_mode_error(args):
@@ -176,6 +178,119 @@ def mask_mapping(array, info, foot_visuals):
     return result
 
 
+def projected_pixel_index(projection, width=WIDTH, height=HEIGHT):
+    """R/G1-A use top-left (u,v); integer conversion follows the prior probe check."""
+    if not isinstance(projection, dict) or projection.get("status") != "in_frame":
+        return None, "projection_not_in_frame"
+    pixel = projection.get("pixel")
+    if not isinstance(pixel, (list, tuple)) or len(pixel) != 2:
+        return None, "projected_pixel_missing"
+    try:
+        u, v = (float(pixel[0]), float(pixel[1]))
+    except (TypeError, ValueError, OverflowError):
+        return None, "projected_pixel_invalid"
+    if not math.isfinite(u) or not math.isfinite(v):
+        return None, "projected_pixel_nonfinite"
+    if not (0 <= u < width and 0 <= v < height):
+        return None, "projected_pixel_out_of_bounds"
+    return (int(u), int(v)), None
+
+
+def candidate_pixel_result(foot, arrays, segmentation_info,
+                           depth_semantics_confirmed=False,
+                           tolerance_m=PIXEL_DEPTH_TOLERANCE_M):
+    """Audit a mesh-vertex pixel; unconfirmed depth keeps final status unknown."""
+    projection = foot.get("projection", {})
+    pixel = projection.get("pixel") if isinstance(projection, dict) else None
+    result = {"candidate_link_prim": foot.get("link_prim"),
+              "candidate_visual_prim": foot.get("visual_prim"),
+              "candidate_world_m": foot.get("world_m"),
+              "projected_pixel_float_uv": pixel,
+              "pixel_sampling_convention": PIXEL_SAMPLING_CONVENTION,
+              "sampled_pixel_uv": None, "array_index_vu": None,
+              "in_frame": False, "segmentation_id": None,
+              "segmentation_prim_path": None,
+              "segmentation_matches_candidate_visual": None,
+              "distance_to_camera_sample": None,
+              "distance_to_image_plane_sample": None,
+              "predicted_ray_distance_m": foot.get("ray_distance_m"),
+              "predicted_image_plane_distance_m": foot.get("image_plane_distance_m"),
+              "distance_to_camera_delta_m": None,
+              "distance_to_image_plane_delta_m": None,
+              "depth_tolerance_m": tolerance_m,
+              "depth_semantics_confirmed": bool(depth_semantics_confirmed),
+              "candidate_pixel_status": "unknown", "heuristic_unverified": None,
+              "status_reason": None, "is_validated_sole_contact": False,
+              "scope": "candidate mesh vertex pixel relation only"}
+    def unknown(reason):
+        result["status_reason"] = reason
+        return result
+    if not isinstance(tolerance_m, (int, float)) or not math.isfinite(tolerance_m) or tolerance_m <= 0:
+        return unknown("invalid_depth_tolerance")
+    index, problem = projected_pixel_index(projection)
+    if problem:
+        return unknown(problem)
+    u, v = index
+    result.update(sampled_pixel_uv=[u, v], array_index_vu=[v, u], in_frame=True)
+    if not foot.get("visual_prim"):
+        return unknown("candidate_visual_prim_unavailable")
+    names = ("instance_id_segmentation", "distance_to_camera", "distance_to_image_plane")
+    resolved = {name: numeric_array(arrays.get(name)) for name in names}
+    if any(value is None for value in resolved.values()):
+        return unknown("required_array_unavailable")
+    if any(value.shape != (HEIGHT, WIDTH) for value in resolved.values()):
+        return unknown("array_shape_mismatch")
+    mask = resolved["instance_id_segmentation"]
+    if mask.dtype.kind not in "iu":
+        return unknown("segmentation_not_integer_id_mask")
+    identity = int(mask[v, u])
+    result["segmentation_id"] = identity
+    paths, mapping_status = id_to_paths(segmentation_info)
+    path_list = paths.get(identity, [])
+    if mapping_status != "parsed" or len(path_list) != 1:
+        return unknown("segmentation_id_unmapped_or_ambiguous")
+    path = path_list[0]
+    result["segmentation_prim_path"] = path
+    result["segmentation_matches_candidate_visual"] = path == foot["visual_prim"]
+    measured = {}
+    invalid_depth = False
+    for name, key in (("distance_to_camera", "distance_to_camera_sample"),
+                      ("distance_to_image_plane", "distance_to_image_plane_sample")):
+        value = float(resolved[name][v, u])
+        result[key] = value if math.isfinite(value) else str(value)
+        if not math.isfinite(value) or value <= 0:
+            invalid_depth = True
+        measured[name] = value
+    if invalid_depth:
+        return unknown("invalid_depth_sample")
+    try:
+        ray = float(foot["ray_distance_m"])
+        plane = float(foot["image_plane_distance_m"])
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return unknown("predicted_distance_unavailable")
+    if not all(math.isfinite(x) and x > 0 for x in (ray, plane)):
+        return unknown("predicted_distance_invalid")
+    ray_delta = measured["distance_to_camera"] - ray
+    plane_delta = measured["distance_to_image_plane"] - plane
+    result.update(distance_to_camera_delta_m=ray_delta,
+                  distance_to_image_plane_delta_m=plane_delta)
+    if path == foot["visual_prim"] and abs(ray_delta) <= tolerance_m and abs(plane_delta) <= tolerance_m:
+        hypothesis = "visible_candidate_pixel"
+    elif (path != foot["visual_prim"]
+          and not foot["visual_prim"].startswith(path + "/")
+          and not path.startswith(foot["visual_prim"] + "/")
+          and ray_delta < -tolerance_m and plane_delta < -tolerance_m):
+        hypothesis = "occluded_candidate_pixel"
+    else:
+        return unknown("id_and_depth_do_not_jointly_support_candidate_status")
+    if not depth_semantics_confirmed:
+        result["heuristic_unverified"] = hypothesis
+        return unknown("depth_semantics_unconfirmed")
+    result["candidate_pixel_status"] = hypothesis
+    result["status_reason"] = "exact_prim_and_two_depth_checks" if path == foot["visual_prim"] else "known_other_prim_and_two_nearer_depths"
+    return result
+
+
 def frame_evidence(outputs, rgb_shape):
     """Tokens and dimensions are observations, never an implicit sync contract."""
     tokens = {}
@@ -232,11 +347,29 @@ def attach_candidates(registry, product):
         except Exception as exc:
             status.update(attach="failed", attach_error=short_error(exc))
             try:
-                annotator.detach([product])
+                # Each newly created annotator is used only by this probe. Isaac
+                # Sim 5.1's Replicator example detaches such instances with no
+                # argument; passing [HydraTexture] failed in the Ubuntu run.
+                status["detach_argument"] = {"kind": "none", "value": None}
+                annotator.detach()
                 status["detach"] = "ok_after_attach_failure"
             except Exception as cleanup_exc:
+                status["detach"] = "failed_after_attach_failure"
                 status["detach_error"] = short_error(cleanup_exc)
     return statuses, attached
+
+
+def detach_candidates(attached, statuses, product_path):
+    """Detach every probe-owned annotator; one failure never masks another."""
+    for name, annotator in attached.items():
+        status = statuses[name]
+        status["detach_argument"] = {"kind": "none", "value": None,
+                                     "attached_render_product_path": product_path}
+        try:
+            annotator.detach()
+            status["detach"] = "ok"
+        except Exception as exc:
+            status.update(detach="failed", detach_error=short_error(exc))
 
 
 def collect_candidate(annotator, name, visuals, output, scenario, frame_index):
@@ -288,14 +421,33 @@ def _foot_visuals(stage, UsdGeom):
     return result
 
 
-def _scene_snapshot(stage, camera, Gf, UsdGeom):
+def _scene_snapshot(stage, camera, Gf, UsdGeom, visuals=None):
     cache = UsdGeom.XformCache()
-    result = {"camera_world_transform_rows": _rows(cache.GetLocalToWorldTransform(camera.GetPrim())),
-              "actor_roots": {}}
+    result = {"camera_world_transform_rows": None, "actor_roots": {},
+              "tracked_prims": {}}
+    tracked = [str(camera.GetPath())]
+    for side in FOOT_LINKS:
+        tracked.append("/World/Actors/B/" + side)
+        tracked.extend((visuals or {}).get(side, []))
+    for path in tracked:
+        try:
+            prim = stage.GetPrimAtPath(path)
+            if not prim.IsValid():
+                result["tracked_prims"][path] = {"status": "missing", "reason": "prim_not_found"}
+                continue
+            rows = _rows(cache.GetLocalToWorldTransform(prim))
+            result["tracked_prims"][path] = {"status": "ok", "world_transform_rows": rows}
+            if path == str(camera.GetPath()):
+                result["camera_world_transform_rows"] = rows
+        except Exception as exc:
+            result["tracked_prims"][path] = {"status": "failed", "error": short_error(exc)}
     for name in ("A", "B"):
-        prim = stage.GetPrimAtPath("/World/Actors/" + name)
-        if prim.IsValid():
-            result["actor_roots"][name] = _rows(cache.GetLocalToWorldTransform(prim))
+        try:
+            prim = stage.GetPrimAtPath("/World/Actors/" + name)
+            if prim.IsValid():
+                result["actor_roots"][name] = _rows(cache.GetLocalToWorldTransform(prim))
+        except Exception as exc:
+            result["actor_roots"][name] = {"status": "failed", "error": short_error(exc)}
     return result
 
 
@@ -371,7 +523,9 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                "same_capture_cycle_evidence": False, "environment": env,
                "candidate_foot_visuals": visuals, "samples_requested": 2, "samples_saved": 0,
                "annotators": {}, "foot_level_mapping_found": False,
-               "depth_semantics_confirmed": False, "blocked_reasons": [], "errors": [],
+               "depth_semantics_confirmed": False,
+               "pixel_depth_tolerance_m": PIXEL_DEPTH_TOLERANCE_M,
+               "blocked_reasons": [], "errors": [],
                "artifacts": [], "missing_artifacts": []}
     attached = {}
     records = []
@@ -385,11 +539,11 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                    "capture_sequence": ["snapshot_before", "pose_scene", "12 x app.update",
                                         "rgb.get_data", "annotator.get_data each", "snapshot_after"],
                    "app_update_count": 12, "orchestrator_step_count": 0,
-                   "before": _scene_snapshot(stage, camera, Gf, UsdGeom),
+                   "before": _scene_snapshot(stage, camera, Gf, UsdGeom, visuals),
                    "outputs": {}}
             records.append(rec)
             pose_scene(sample)
-            rec["after_pose"] = _scene_snapshot(stage, camera, Gf, UsdGeom)
+            rec["after_pose"] = _scene_snapshot(stage, camera, Gf, UsdGeom, visuals)
             for _ in range(12):
                 app.update()
             pixels = np.asarray(rgb.get_data())
@@ -407,7 +561,19 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                 summary["annotators"][name]["reads"][scenario] = read_status
                 if name in SEGMENTATION:
                     summary["foot_level_mapping_found"] |= item.get("mapping", {}).get("status") == "foot_visual_mapping_found"
-            rec["after_capture"] = _scene_snapshot(stage, camera, Gf, UsdGeom)
+            sampled_arrays = {}
+            for name in ("instance_id_segmentation",) + DEPTH:
+                raw_file = rec["outputs"].get(name, {}).get("raw_file")
+                if raw_file:
+                    try:
+                        sampled_arrays[name] = np.load(output / raw_file, allow_pickle=False)
+                    except Exception as exc:
+                        rec["outputs"][name]["candidate_sample_load_error"] = short_error(exc)
+            seg_info = rec["outputs"].get("instance_id_segmentation", {}).get("info")
+            rec["candidate_pixels"] = [candidate_pixel_result(foot, sampled_arrays, seg_info,
+                                        depth_semantics_confirmed=summary["depth_semantics_confirmed"])
+                                       for foot in rec["feet"]]
+            rec["after_capture"] = _scene_snapshot(stage, camera, Gf, UsdGeom, visuals)
             rec["frame_evidence"] = frame_evidence(rec["outputs"], rec["rgb"]["shape"])
             summary["samples_saved"] += 1
         summary["status"] = "passed"
@@ -415,16 +581,30 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
         fatal = exc
         summary["errors"].append(short_error(exc))
     finally:
-        for name, annotator in attached.items():
-            try:
-                annotator.detach([product])
-                summary["annotators"][name]["detach"] = "ok"
-            except Exception as exc:
-                summary["annotators"][name].update(detach="failed", detach_error=short_error(exc))
+        detach_candidates(attached, summary["annotators"], env["render_product_path"])
+        summary["detach_counts"] = {kind: sum(a["detach"] == kind for a in summary["annotators"].values())
+                                    for kind in ("ok", "failed", "not_attempted", "failed_after_attach_failure",
+                                                 "ok_after_attach_failure")}
+        statuses = [item["candidate_pixel_status"] for rec in records
+                    for item in rec.get("candidate_pixels", [])]
+        hypotheses = [item["heuristic_unverified"] for rec in records
+                      for item in rec.get("candidate_pixels", []) if item["heuristic_unverified"]]
+        summary["candidate_pixel_counts"] = {kind: statuses.count(kind) for kind in
+                                              ("visible_candidate_pixel", "occluded_candidate_pixel", "unknown")}
+        summary["heuristic_unverified_counts"] = {kind: hypotheses.count(kind) for kind in
+                                                   ("visible_candidate_pixel", "occluded_candidate_pixel")}
+        summary["link_transform_status"] = {rec["scenario"]: {moment: {
+            "ok": sum(item["status"] == "ok" for item in rec.get(moment, {}).get("tracked_prims", {}).values()),
+            "missing_or_failed": [path for path, item in rec.get(moment, {}).get("tracked_prims", {}).items()
+                                  if item["status"] != "ok"]}
+            for moment in ("before", "after_pose", "after_capture")}
+            for rec in records}
         if summary["samples_saved"] != 2:
             summary["blocked_reasons"].append("two_rgb_poses_not_captured")
         if not summary["foot_level_mapping_found"]:
             summary["blocked_reasons"].append("foot_visual_id_mapping_unverified")
+        if summary["detach_counts"]["failed"] or summary["detach_counts"]["failed_after_attach_failure"]:
+            summary["blocked_reasons"].append("probe_annotator_detach_failed")
         summary["blocked_reasons"].append("depth_semantics_and_renderer_sync_unverified")
         summary["probe_status"] = probe_execution_status(summary["samples_saved"], summary["annotators"])
         if summary["status"] == "passed" and summary["samples_saved"] != 2:
