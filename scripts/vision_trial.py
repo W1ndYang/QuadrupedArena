@@ -24,6 +24,8 @@ parser.add_argument('--g1b1-visible-spawn',action='store_true',
                     help='G1-B.1 diagnostic only: start A at (4.8,-1.0), facing north; default match spawn is unchanged')
 parser.add_argument('--geometry-diagnostic',action='store_true',
                     help='Capture two formal-scene geometry diagnostics and exit; no LLM, actions JSON or Skill commit')
+parser.add_argument('--geometry-interface-probe',action='store_true',
+                    help='Read-only formal-scene segmentation/depth interface probe; no Skill commit or asset writeback')
 parser.add_argument('--diagnostic-output-dir',type=Path,
                     help='Diagnostic artifacts directory (default: this run/geometry_diagnostic)')
 parser.add_argument('--run-dir',type=Path,required=True)
@@ -32,6 +34,9 @@ args=parser.parse_args();args.enable_cameras=True
 from formal_geometry_diagnostic import diagnostic_mode_error
 mode_error=diagnostic_mode_error(args)
 if mode_error:parser.error(mode_error)
+from geometry_interface_probe import interface_probe_mode_error
+probe_mode_error=interface_probe_mode_error(args)
+if probe_mode_error:parser.error(probe_mode_error)
 if args.diagnostic_output_dir and not args.geometry_diagnostic:parser.error('--diagnostic-output-dir requires --geometry-diagnostic')
 if (args.deepseek or args.qwen_vision or args.assessment) and (not args.semantic_skills or args.vision_smoke):parser.error('Planner modes require semantic skills and exclude fixed-command smoke')
 if sum((bool(args.deepseek),bool(args.qwen_vision),args.assessment))>1:parser.error('Choose one planner mode')
@@ -52,7 +57,7 @@ from demo_actors import Actor
 def main():
     from arena_paths import workspace_root
     root=args.run_dir;workspace=workspace_root()
-    if not args.geometry_diagnostic:
+    if not (args.geometry_diagnostic or args.geometry_interface_probe):
         for name in ('frames','observations','actions','decisions'):(root/name).mkdir()
     cfg=load_config(PROJECT/'configs/trial_rotating.json');cfg['seed']=2026102107
     if args.vision_smoke:cfg['duration']=2.
@@ -64,7 +69,7 @@ def main():
     if args.semantic_skills:
         from semantic_skills import SemanticSkills
         engine=SemanticSkills(cfg)
-    if not args.geometry_diagnostic:dump(root/'protocol.json',dict(mode='engineering_smoke' if args.vision_smoke else 'assistant_partial_observation',
+    if not (args.geometry_diagnostic or args.geometry_interface_probe):dump(root/'protocol.json',dict(mode='engineering_smoke' if args.vision_smoke else 'assistant_partial_observation',
         engine='Python kinematics/referee; Isaac online RGB only; no PhysX steps',
         decision_period_seconds=2,frame_interval_seconds=.5,horizontal_fov_degrees=90,
         camera_mount=dict(forward=.36,height=.60,pitch_degrees=-5),camera_pan_limits=[-90,90],camera_max_rate_degrees=120,
@@ -169,6 +174,22 @@ def main():
         print(f'Geometry diagnostic bundle: {Path(output).expanduser().resolve()/"diagnostic_bundle.zip"}',flush=True)
         print(f'Geometry diagnostic status: {summary["status"]}; runtime_verified=false',flush=True)
         return
+    if args.geometry_interface_probe:
+        from geometry_interface_probe import run as run_interface_probe
+        output=root/'geometry_interface_probe'
+        try:
+            summary=run_interface_probe(output,match.states[-1],cfg,stage,camera,product,rgb,rep,app,pose_scene)
+        except Exception:
+            print(f'Interface probe failed; partial artifacts: {output}',flush=True)
+            raise
+        dump(root/'result.json',dict(status='passed',mode='geometry_interface_probe',
+            probe_status=summary['probe_status'],runtime_verified=False,
+            same_frame_verified=False,probe_output_dir=str(output.resolve()),
+            diagnostic_bundle=str(output.resolve()/'diagnostic_bundle.zip')))
+        print(f'Interface probe output: {output.resolve()}',flush=True)
+        print(f'Interface probe bundle: {output.resolve()/"diagnostic_bundle.zip"}',flush=True)
+        print(f'Interface probe status: {summary["probe_status"]}; runtime_verified=false',flush=True)
+        return
     def capture():
         s=match.states[-1]
         yaw,heading,eye=pose_scene(s)
@@ -265,5 +286,5 @@ try:main()
 except Exception:
     dump(args.run_dir/'result.json',dict(status='failed',error=traceback.format_exc()))
     traceback.print_exc()
-    if args.geometry_diagnostic:raise SystemExit(1)
+    if args.geometry_diagnostic or args.geometry_interface_probe:raise SystemExit(1)
 finally:app.close(wait_for_replicator=False,skip_cleanup=True)
