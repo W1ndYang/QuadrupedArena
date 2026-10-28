@@ -74,7 +74,7 @@ timeout = 1200 if "--demo" in sys.argv else 600 if any(flag in sys.argv for flag
 if '--dockyard' in sys.argv:entrypoint='dockyard_scene.py';timeout=2400
 if '--vision-trial' in sys.argv:entrypoint='vision_trial.py';timeout=5400
 if '--geometry-diagnostic' in sys.argv:timeout=1200
-if '--geometry-interface-probe' in sys.argv:timeout=1200
+if '--geometry-interface-probe' in sys.argv:timeout=180
 if '--vision-trial' in sys.argv and '--deepseek' in sys.argv:
     from deepseek_trial import settings
     timeout=settings().get('launch_timeout_seconds',timeout)

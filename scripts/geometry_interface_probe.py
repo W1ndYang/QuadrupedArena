@@ -8,8 +8,11 @@ import hashlib
 import importlib.metadata
 import json
 import math
+import datetime
+import faulthandler
 from pathlib import Path
 import platform
+import sys
 import zipfile
 
 import numpy as np
@@ -372,6 +375,15 @@ def artifact_list(output):
                   if p.is_file() and p.name != "diagnostic_bundle.zip")
 
 
+def write_progress(output, phase, scenario=None):
+    """Persist the last reached phase even if an Isaac call never returns."""
+    item = {"phase": phase, "scenario": scenario,
+            "time_utc": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    (output / "capture_progress.json").write_text(json.dumps(item) + "\n")
+    print(f"Interface probe progress: {phase}"
+          + (f" ({scenario})" if scenario else ""), flush=True)
+
+
 def attach_candidates(registry, product):
     statuses = {}
     attached = {}
@@ -539,6 +551,7 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
     (output / "README.txt").write_text(
         "Formal scene read-only annotator probe. No visibility or same-frame claim.\n"
         "Inspect summary.json, probe_records.json, raw RGB and available .npy buffers.\n")
+    write_progress(output, "initialized")
     env = {"python": platform.python_version(), "isaacsim": _version("isaacsim"),
            "isaaclab": _version("isaaclab"), "omni_replicator_core": _version("omni.replicator.core"),
            "kit": _version("omni.kit.app"), "camera_prim": str(camera.GetPath()),
@@ -588,8 +601,11 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
     records = []
     fatal = None
     try:
+        write_progress(output, "attaching_annotators")
         summary["annotators"], attached = attach_candidates(rep.AnnotatorRegistry, product)
+        write_progress(output, "annotators_attached")
         for index, (scenario, sample) in enumerate(_scenarios(state, cfg)):
+            write_progress(output, "sample_started", scenario)
             rec = {"frame_index": index, "scenario": scenario,
                    "simulation_seconds": float(sample["t"]), "same_frame_verified": False,
                    "sync_method": "rep.orchestrator.step", "wait_for_render_requested": True,
@@ -609,10 +625,19 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
             records.append(rec)
             pose_scene(sample)
             rec["after_pose"] = _scene_snapshot(stage, camera, Gf, UsdGeom, visuals)
+            write_progress(output, "pose_complete", scenario)
             for _ in range(12):
                 app.update()
-            sync_capture_step(rep, rec)
+            write_progress(output, "updates_complete", scenario)
+            write_progress(output, "sync_step_started", scenario)
+            faulthandler.dump_traceback_later(30, file=sys.stderr)
+            try:
+                sync_capture_step(rep, rec)
+            finally:
+                faulthandler.cancel_dump_traceback_later()
+            write_progress(output, "sync_step_succeeded", scenario)
             pixels = np.asarray(rgb.get_data())
+            write_progress(output, "rgb_read_complete", scenario)
             if pixels.ndim != 3 or pixels.shape[:2] != (HEIGHT, WIDTH) or pixels.shape[2] < 3 or pixels[..., :3].std() < 1:
                 raise RuntimeError(f"Missing or blank RGB in probe frame {index}: {pixels.shape}")
             rgb_file = f"frames/{scenario}_rgb.png"
@@ -620,11 +645,13 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                           "sha256": hashlib.sha256(np.ascontiguousarray(pixels).tobytes()).hexdigest(),
                           "render_product": env["render_product_path"]}
             for name, annotator in attached.items():
+                write_progress(output, f"reading_{name}", scenario)
                 item, read_status = collect_candidate(annotator, name, visuals, output, scenario, index)
                 rec["outputs"][name] = item
                 summary["annotators"][name]["reads"][scenario] = read_status
                 if name in SEGMENTATION:
                     summary["foot_level_mapping_found"] |= item.get("mapping", {}).get("status") == "foot_visual_mapping_found"
+            write_progress(output, "annotator_reads_complete", scenario)
             Image.fromarray(pixels[..., :3].astype(np.uint8).copy()).save(output / rgb_file)
             rec["feet"] = _candidate_refs(stage, camera, Gf, UsdGeom)
             sampled_arrays = {}
@@ -649,6 +676,7 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                 "consecutive_reads_without_update": True,
                 "frame_token_status": rec["frame_evidence"]["frame_token_status"]}
             summary["samples_saved"] += 1
+            write_progress(output, "sample_complete", scenario)
         summary["status"] = "passed"
     except Exception as exc:
         fatal = exc
@@ -700,6 +728,7 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
             records, summary.get("state_switch", {}), ("instance_id_segmentation",) + DEPTH)
         summary["rgb_alignment_status"] = alignment_status(
             records, summary.get("state_switch", {}), CANDIDATES)
+        write_progress(output, "finalizing", records[-1]["scenario"] if records else None)
         (output / "probe_records.json").write_text(json.dumps(safe_json(records), ensure_ascii=False, indent=2, allow_nan=False) + "\n")
         summary["missing_artifacts"] = [f"frames/{scenario}_rgb.png" for scenario, _ in _scenarios(state, cfg)
                                         if not (output / f"frames/{scenario}_rgb.png").exists()]
@@ -711,6 +740,7 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
         with zipfile.ZipFile(output / "diagnostic_bundle.zip", "w", compression=zipfile.ZIP_DEFLATED) as bundle:
             for name in artifact_list(output):
                 bundle.write(output / name, name)
+        write_progress(output, "finished", records[-1]["scenario"] if records else None)
     if fatal:
         raise fatal
     return summary

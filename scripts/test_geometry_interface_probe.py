@@ -2,6 +2,8 @@
 
 import argparse
 import ast
+import contextlib
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -14,7 +16,7 @@ from geometry_interface_probe import (
     candidate_pixel_result, depth_invalid_reason,
     collect_candidate, detach_candidates, frame_evidence, projected_pixel_index,
     id_to_paths, interface_probe_mode_error, mask_mapping, probe_execution_status,
-    safe_json, summarize_result, sync_capture_step, valid_depth_mask,
+    safe_json, summarize_result, sync_capture_step, valid_depth_mask, write_progress,
 )
 
 
@@ -309,6 +311,17 @@ class ProbeTests(unittest.TestCase):
         samples[0]["capture_cycle_evidence"]["same_render_product"] = True
         samples[0]["sync_step_succeeded"] = False
         self.assertEqual(alignment_status(samples, switch, CANDIDATES), "unverified")
+
+    def test_progress_checkpoint_survives_an_unfinished_step(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            with contextlib.redirect_stdout(io.StringIO()):
+                write_progress(output, "updates_complete", "expected_clear")
+                write_progress(output, "sync_step_started", "expected_clear")
+            progress = json.loads((output / "capture_progress.json").read_text())
+            self.assertEqual(progress["phase"], "sync_step_started")
+            self.assertEqual(progress["scenario"], "expected_clear")
+            self.assertTrue(progress["time_utc"].endswith("+00:00"))
 
     def test_tracked_link_visual_transforms_and_failure_isolation(self):
         camera_path = "/World/OnboardCamera"
