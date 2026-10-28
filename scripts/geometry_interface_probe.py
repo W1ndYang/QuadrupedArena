@@ -82,6 +82,22 @@ def numeric_array(data):
     return array if array.dtype.kind in "biuf" else None
 
 
+def valid_depth_mask(values):
+    """Only finite, strictly positive distances can support a pixel comparison."""
+    values = np.asarray(values)
+    return np.isfinite(values) & (values > 0)
+
+
+def depth_invalid_reason(value):
+    if bool(valid_depth_mask(value)):
+        return None
+    if math.isnan(value):
+        return "nan"
+    if math.isinf(value):
+        return "positive_infinity" if value > 0 else "negative_infinity"
+    return "zero" if value == 0 else "negative_finite"
+
+
 def summarize_result(raw, kind, resolution=(WIDTH, HEIGHT)):
     data, info, result_type = split_result(raw)
     result = {"return_type": result_type, "info_type": type(info).__name__,
@@ -103,11 +119,14 @@ def summarize_result(raw, kind, resolution=(WIDTH, HEIGHT)):
             result["issue"] = "not_2d_integer_id_mask"
     elif kind in DEPTH:
         finite = np.isfinite(array)
+        positive = valid_depth_mask(array)
         values = array[finite]
         result.update(finite_count=int(finite.sum()), nan_count=int(np.isnan(array).sum()),
                       pos_inf_count=int(np.isposinf(array).sum()),
                       neg_inf_count=int(np.isneginf(array).sum()),
                       zero_count=int(np.count_nonzero(array == 0)),
+                      negative_finite_count=int(np.count_nonzero(finite & (array < 0))),
+                      finite_positive_count=int(np.count_nonzero(positive)),
                       finite_min=float(values.min()) if values.size else None,
                       finite_max=float(values.max()) if values.size else None,
                       depth_semantics_confirmed=False,
@@ -213,6 +232,7 @@ def candidate_pixel_result(foot, arrays, segmentation_info,
               "segmentation_matches_candidate_visual": None,
               "distance_to_camera_sample": None,
               "distance_to_image_plane_sample": None,
+              "invalid_depth": {},
               "predicted_ray_distance_m": foot.get("ray_distance_m"),
               "predicted_image_plane_distance_m": foot.get("image_plane_distance_m"),
               "distance_to_camera_delta_m": None,
@@ -245,6 +265,17 @@ def candidate_pixel_result(foot, arrays, segmentation_info,
         return unknown("segmentation_not_integer_id_mask")
     identity = int(mask[v, u])
     result["segmentation_id"] = identity
+    measured = {}
+    for name, key in (("distance_to_camera", "distance_to_camera_sample"),
+                      ("distance_to_image_plane", "distance_to_image_plane_sample")):
+        value = float(resolved[name][v, u])
+        result[key] = value if math.isfinite(value) else str(value)
+        reason = depth_invalid_reason(value)
+        if reason:
+            result["invalid_depth"][name] = {"raw_value": result[key], "reason": reason}
+        measured[name] = value
+    if result["invalid_depth"]:
+        return unknown("invalid_depth_sample")
     paths, mapping_status = id_to_paths(segmentation_info)
     path_list = paths.get(identity, [])
     if mapping_status != "parsed" or len(path_list) != 1:
@@ -252,17 +283,6 @@ def candidate_pixel_result(foot, arrays, segmentation_info,
     path = path_list[0]
     result["segmentation_prim_path"] = path
     result["segmentation_matches_candidate_visual"] = path == foot["visual_prim"]
-    measured = {}
-    invalid_depth = False
-    for name, key in (("distance_to_camera", "distance_to_camera_sample"),
-                      ("distance_to_image_plane", "distance_to_image_plane_sample")):
-        value = float(resolved[name][v, u])
-        result[key] = value if math.isfinite(value) else str(value)
-        if not math.isfinite(value) or value <= 0:
-            invalid_depth = True
-        measured[name] = value
-    if invalid_depth:
-        return unknown("invalid_depth_sample")
     try:
         ray = float(foot["ray_distance_m"])
         plane = float(foot["image_plane_distance_m"])
@@ -306,11 +326,45 @@ def frame_evidence(outputs, rgb_shape):
             sizes_match = False
     known = [json.dumps(token, sort_keys=True) for token in tokens.values() if token]
     return {"tokens": tokens, "rgb_token_available": False,
+            "frame_token_status": "unavailable",
             "tokens_present_for_all": False,
             "tokens_equal_if_present": bool(known) and len(set(known)) == 1,
             "dimensions_match_rgb": sizes_match and rgb_shape[:2] == [HEIGHT, WIDTH],
             "same_frame_verified": False,
-            "reason": "renderer synchronization contract not established"}
+            "reason": "no comparable RGB and annotator frame tokens"}
+
+
+def sync_capture_step(rep, record):
+    """Attempt one render-synchronized capture; preserve the original exception."""
+    record.update(sync_method="rep.orchestrator.step", wait_for_render_requested=True,
+                  sync_step_attempted=True, orchestrator_step_count=1)
+    try:
+        rep.orchestrator.step(wait_for_render=True)
+    except Exception as exc:
+        record["sync_step_error"] = short_error(exc)
+        raise
+    record["sync_step_succeeded"] = True
+
+
+def alignment_status(records, state_switch, names):
+    """Consistent state changes are evidence, but never strict frame proof."""
+    if len(records) != 2 or not state_switch.get("rgb_changed"):
+        return "unverified"
+    for record in records:
+        evidence = record.get("capture_cycle_evidence", {})
+        if not (record.get("sync_step_succeeded") and evidence.get("same_render_product")
+                and evidence.get("single_sync_step") and evidence.get("consecutive_reads_without_update")
+                and record.get("frame_evidence", {}).get("dimensions_match_rgb")):
+            return "unverified"
+        if any(not record.get("outputs", {}).get(name, {}).get("array_available")
+               for name in names):
+            return "unverified"
+    if not all(records[0]["outputs"][name].get("sha256")
+               and records[1]["outputs"][name].get("sha256")
+               and records[0]["outputs"][name]["sha256"] != records[1]["outputs"][name]["sha256"]
+               for name in names):
+        return "unverified"
+    return "empirically_consistent"
 
 
 def artifact_list(output):
@@ -520,6 +574,9 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
     visuals = _foot_visuals(stage, UsdGeom)
     summary = {"mode": "geometry_interface_probe", "status": "failed", "probe_status": "blocked",
                "runtime_verified": False, "same_frame_verified": False,
+               "sync_step_succeeded": False,
+               "segmentation_depth_alignment_status": "unverified",
+               "rgb_alignment_status": "unverified",
                "same_capture_cycle_evidence": False, "environment": env,
                "candidate_foot_visuals": visuals, "samples_requested": 2, "samples_saved": 0,
                "annotators": {}, "foot_level_mapping_found": False,
@@ -535,8 +592,16 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
         for index, (scenario, sample) in enumerate(_scenarios(state, cfg)):
             rec = {"frame_index": index, "scenario": scenario,
                    "simulation_seconds": float(sample["t"]), "same_frame_verified": False,
+                   "sync_method": "rep.orchestrator.step", "wait_for_render_requested": True,
+                   "sync_step_attempted": False, "sync_step_succeeded": False,
+                   "sync_step_error": None,
+                   "capture_cycle_evidence": {"same_render_product": False,
+                                              "single_sync_step": False,
+                                              "consecutive_reads_without_update": False,
+                                              "frame_token_status": "unavailable"},
                    "actor_state": {"xy": sample["xy"], "yaw_radians": sample["yaw"]},
                    "capture_sequence": ["snapshot_before", "pose_scene", "12 x app.update",
+                                        "rep.orchestrator.step(wait_for_render=True)",
                                         "rgb.get_data", "annotator.get_data each", "snapshot_after"],
                    "app_update_count": 12, "orchestrator_step_count": 0,
                    "before": _scene_snapshot(stage, camera, Gf, UsdGeom, visuals),
@@ -546,21 +611,22 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
             rec["after_pose"] = _scene_snapshot(stage, camera, Gf, UsdGeom, visuals)
             for _ in range(12):
                 app.update()
+            sync_capture_step(rep, rec)
             pixels = np.asarray(rgb.get_data())
             if pixels.ndim != 3 or pixels.shape[:2] != (HEIGHT, WIDTH) or pixels.shape[2] < 3 or pixels[..., :3].std() < 1:
                 raise RuntimeError(f"Missing or blank RGB in probe frame {index}: {pixels.shape}")
             rgb_file = f"frames/{scenario}_rgb.png"
-            Image.fromarray(pixels[..., :3].astype(np.uint8).copy()).save(output / rgb_file)
             rec["rgb"] = {"file": rgb_file, "shape": list(pixels.shape), "dtype": str(pixels.dtype),
                           "sha256": hashlib.sha256(np.ascontiguousarray(pixels).tobytes()).hexdigest(),
                           "render_product": env["render_product_path"]}
-            rec["feet"] = _candidate_refs(stage, camera, Gf, UsdGeom)
             for name, annotator in attached.items():
                 item, read_status = collect_candidate(annotator, name, visuals, output, scenario, index)
                 rec["outputs"][name] = item
                 summary["annotators"][name]["reads"][scenario] = read_status
                 if name in SEGMENTATION:
                     summary["foot_level_mapping_found"] |= item.get("mapping", {}).get("status") == "foot_visual_mapping_found"
+            Image.fromarray(pixels[..., :3].astype(np.uint8).copy()).save(output / rgb_file)
+            rec["feet"] = _candidate_refs(stage, camera, Gf, UsdGeom)
             sampled_arrays = {}
             for name in ("instance_id_segmentation",) + DEPTH:
                 raw_file = rec["outputs"].get(name, {}).get("raw_file")
@@ -575,6 +641,13 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                                        for foot in rec["feet"]]
             rec["after_capture"] = _scene_snapshot(stage, camera, Gf, UsdGeom, visuals)
             rec["frame_evidence"] = frame_evidence(rec["outputs"], rec["rgb"]["shape"])
+            rec["capture_cycle_evidence"] = {
+                "same_render_product": bool(all(summary["annotators"][name]["attach"] == "ok"
+                                                for name in CANDIDATES)),
+                "render_product_path": env["render_product_path"],
+                "single_sync_step": rec["orchestrator_step_count"] == 1 and rec["sync_step_succeeded"],
+                "consecutive_reads_without_update": True,
+                "frame_token_status": rec["frame_evidence"]["frame_token_status"]}
             summary["samples_saved"] += 1
         summary["status"] = "passed"
     except Exception as exc:
@@ -605,7 +678,9 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
             summary["blocked_reasons"].append("foot_visual_id_mapping_unverified")
         if summary["detach_counts"]["failed"] or summary["detach_counts"]["failed_after_attach_failure"]:
             summary["blocked_reasons"].append("probe_annotator_detach_failed")
-        summary["blocked_reasons"].append("depth_semantics_and_renderer_sync_unverified")
+        if any(rec["sync_step_error"] for rec in records):
+            summary["blocked_reasons"].append("sync_step_failed")
+        summary["blocked_reasons"].append("depth_semantics_and_strict_same_frame_unverified")
         summary["probe_status"] = probe_execution_status(summary["samples_saved"], summary["annotators"])
         if summary["status"] == "passed" and summary["samples_saved"] != 2:
             summary["status"] = "failed"
@@ -619,6 +694,12 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                                        "available_annotators": sorted(available),
                                        "all_available_buffers_changed": bool(changed)}
             summary["same_capture_cycle_evidence"] = bool(rgb_changed and changed)
+        summary["sync_step_succeeded"] = bool(len(records) == 2 and all(
+            rec["sync_step_succeeded"] for rec in records))
+        summary["segmentation_depth_alignment_status"] = alignment_status(
+            records, summary.get("state_switch", {}), ("instance_id_segmentation",) + DEPTH)
+        summary["rgb_alignment_status"] = alignment_status(
+            records, summary.get("state_switch", {}), CANDIDATES)
         (output / "probe_records.json").write_text(json.dumps(safe_json(records), ensure_ascii=False, indent=2, allow_nan=False) + "\n")
         summary["missing_artifacts"] = [f"frames/{scenario}_rgb.png" for scenario, _ in _scenarios(state, cfg)
                                         if not (output / f"frames/{scenario}_rgb.png").exists()]

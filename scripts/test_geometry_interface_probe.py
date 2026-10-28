@@ -10,10 +10,11 @@ import unittest
 import numpy as np
 
 from geometry_interface_probe import (
-    CANDIDATES, _scene_snapshot, artifact_list, attach_candidates, candidate_pixel_result,
+    CANDIDATES, DEPTH, _scene_snapshot, alignment_status, artifact_list, attach_candidates,
+    candidate_pixel_result, depth_invalid_reason,
     collect_candidate, detach_candidates, frame_evidence, projected_pixel_index,
     id_to_paths, interface_probe_mode_error, mask_mapping, probe_execution_status,
-    safe_json, summarize_result,
+    safe_json, summarize_result, sync_capture_step, valid_depth_mask,
 )
 
 
@@ -95,13 +96,37 @@ class ProbeTests(unittest.TestCase):
         json.dumps(safe_json(weird), allow_nan=False)
 
     def test_depth_stats_and_unknown_semantics(self):
-        depth = np.array([[0, 1, np.nan], [np.inf, -np.inf, 3]], dtype=np.float32)
+        depth = np.array([[0, 1, np.nan], [np.inf, -np.inf, -2]], dtype=np.float32)
         item, _ = summarize_result(depth, "distance_to_camera", (3, 2))
         self.assertEqual((item["finite_count"], item["nan_count"], item["pos_inf_count"],
                           item["neg_inf_count"], item["zero_count"]), (3, 1, 1, 1, 1))
-        self.assertEqual((item["finite_min"], item["finite_max"]), (0.0, 3.0))
+        self.assertEqual((item["finite_min"], item["finite_max"]), (-2.0, 1.0))
+        self.assertEqual((item["negative_finite_count"], item["finite_positive_count"]), (1, 1))
+        self.assertTrue(np.isposinf(depth[1, 0]))
         self.assertFalse(item["depth_semantics_confirmed"])
         self.assertIsNone(item["distance_definition"])
+
+    def test_depth_validity_and_independent_raw_buffers(self):
+        values = np.array([1.25, 0, -0.5, np.nan, np.inf, -np.inf], np.float32)
+        self.assertEqual(valid_depth_mask(values).tolist(), [True, False, False, False, False, False])
+        self.assertEqual([depth_invalid_reason(float(v)) for v in values],
+                         [None, "zero", "negative_finite", "nan", "positive_infinity", "negative_infinity"])
+        other = np.array([[0, 2]], dtype=np.float32)
+        first, first_raw = summarize_result(values.reshape(2, 3), DEPTH[0], (3, 2))
+        second, second_raw = summarize_result(other, DEPTH[1], (2, 1))
+        self.assertEqual((first["pos_inf_count"], first["finite_positive_count"]), (1, 1))
+        self.assertEqual((second["pos_inf_count"], second["finite_positive_count"]), (0, 1))
+        self.assertTrue(np.isposinf(first_raw[1, 1]))
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "frames").mkdir()
+            item, status = collect_candidate(FakeAnnotator(values.reshape(2, 3)), DEPTH[0],
+                                             VISUALS, out, "raw", 0)
+            self.assertEqual(status, "ok")
+            loaded = np.load(out / item["raw_file"], allow_pickle=False)
+            self.assertEqual(loaded.dtype, values.dtype)
+            self.assertTrue(np.isposinf(loaded[1, 1]))
+            json.dumps(safe_json(item), allow_nan=False)
 
     def test_mapping_exact_foot_and_actor_only(self):
         mask = np.array([[0, 7, 8], [7, 8, 8]], dtype=np.uint32)
@@ -213,9 +238,18 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(uncertain["candidate_pixel_status"], "unknown")
         self.assertEqual(uncertain["heuristic_unverified"], "occluded_candidate_pixel")
         self.assertEqual(uncertain["status_reason"], "depth_semantics_unconfirmed")
-        for bad in (np.nan, np.inf, 0):
-            arrays["distance_to_camera"][1, 2] = bad
-            self.assertEqual(candidate_pixel_result(foot, arrays, info, True)["candidate_pixel_status"], "unknown")
+        for name in DEPTH:
+            for bad, reason in ((np.nan, "nan"), (np.inf, "positive_infinity"),
+                                (-np.inf, "negative_infinity"), (0, "zero"),
+                                (-1, "negative_finite")):
+                arrays[name][1, 2] = bad
+                invalid = candidate_pixel_result(foot, arrays, info, True)
+                self.assertEqual(invalid["candidate_pixel_status"], "unknown")
+                self.assertEqual(invalid["status_reason"], "invalid_depth_sample")
+                self.assertEqual(invalid["invalid_depth"][name]["reason"], reason)
+                self.assertEqual(invalid["invalid_depth"][name]["raw_value"],
+                                 str(bad) if not np.isfinite(bad) else bad)
+                arrays[name][1, 2] = 2.0 if name == DEPTH[0] else 1.95
         arrays["distance_to_camera"][1, 2] = 2.0
         self.assertEqual(candidate_pixel_result(foot, arrays, {}, True)["candidate_pixel_status"], "unknown")
         parent_info = {"idToLabels": {"8": "/World/Actors/B/left_ankle_roll_link"}}
@@ -223,6 +257,58 @@ class ProbeTests(unittest.TestCase):
         short = dict(arrays, distance_to_camera=np.ones((1, 1), np.float32))
         self.assertEqual(candidate_pixel_result(foot, short, info, True)["status_reason"], "array_shape_mismatch")
         json.dumps(safe_json(result), allow_nan=False)
+
+    def test_sync_step_success_failure_and_conservative_alignment(self):
+        class Orchestrator:
+            def __init__(self, fail=False): self.fail, self.calls = fail, []
+            def step(self, **kwargs):
+                self.calls.append(kwargs)
+                if self.fail: raise RuntimeError("render failed")
+        record = {"sync_step_attempted": False, "sync_step_succeeded": False,
+                  "sync_step_error": None, "orchestrator_step_count": 0}
+        class Rep:
+            def __init__(self, orchestrator): self.orchestrator = orchestrator
+        good = Orchestrator()
+        sync_capture_step(Rep(good), record)
+        self.assertEqual(good.calls, [{"wait_for_render": True}])
+        self.assertTrue(record["sync_step_attempted"] and record["sync_step_succeeded"])
+        self.assertIsNone(record["sync_step_error"])
+        self.assertEqual(record["orchestrator_step_count"], 1)
+        bad = Orchestrator(fail=True)
+        failed = dict(record, sync_step_attempted=False, sync_step_succeeded=False,
+                      sync_step_error=None, orchestrator_step_count=0)
+        with self.assertRaisesRegex(RuntimeError, "render failed"):
+            sync_capture_step(Rep(bad), failed)
+        self.assertEqual(bad.calls, [{"wait_for_render": True}])
+        self.assertFalse(failed["sync_step_succeeded"])
+        self.assertEqual(failed["sync_step_error"]["type"], "RuntimeError")
+        self.assertEqual(failed["orchestrator_step_count"], 1)
+        unavailable = dict(failed, sync_step_attempted=False, sync_step_error=None,
+                           orchestrator_step_count=0)
+        with self.assertRaises(AttributeError):
+            sync_capture_step(object(), unavailable)
+        self.assertEqual(unavailable["sync_step_error"]["type"], "AttributeError")
+        self.assertFalse(unavailable["sync_step_succeeded"])
+
+        def sample(hash_suffix):
+            return {"sync_step_succeeded": True,
+                    "capture_cycle_evidence": {"same_render_product": True, "single_sync_step": True,
+                                               "consecutive_reads_without_update": True},
+                    "frame_evidence": {"dimensions_match_rgb": True,
+                                       "frame_token_status": "unavailable", "same_frame_verified": False},
+                    "outputs": {name: {"array_available": True, "sha256": name + hash_suffix}
+                                for name in CANDIDATES}}
+        samples = [sample("a"), sample("b")]
+        switch = {"rgb_changed": True}
+        self.assertEqual(alignment_status(samples, switch, ("instance_id_segmentation",) + DEPTH),
+                         "empirically_consistent")
+        self.assertEqual(alignment_status(samples, switch, CANDIDATES), "empirically_consistent")
+        self.assertFalse(any(s["frame_evidence"]["same_frame_verified"] for s in samples))
+        samples[0]["capture_cycle_evidence"]["same_render_product"] = False
+        self.assertEqual(alignment_status(samples, switch, CANDIDATES), "unverified")
+        samples[0]["capture_cycle_evidence"]["same_render_product"] = True
+        samples[0]["sync_step_succeeded"] = False
+        self.assertEqual(alignment_status(samples, switch, CANDIDATES), "unverified")
 
     def test_tracked_link_visual_transforms_and_failure_isolation(self):
         camera_path = "/World/OnboardCamera"
