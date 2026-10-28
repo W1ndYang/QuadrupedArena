@@ -1,9 +1,10 @@
 """Simulator-derived foot sighting for the formal vision scene.
 
 The decision core is Isaac-free. ``observe_current_scene`` reads live USD and
-PhysX state only when called from the explicit one-shot vision trial mode.
+PhysX state only in explicit synthetic vision modes.
 """
 
+import copy
 import math
 import random
 
@@ -132,6 +133,109 @@ def handoff_to_skill(record, engine, packet):
                                "camera_command": camera_command,
                                "skill_status": skill_status}
     return result
+
+
+VALIDATION_CASES = ("clear_initial", "high2_occluded", "moved_clear")
+
+
+def validation_pose(index, state, cfg):
+    """Author three finite diagnostic poses without changing match configuration."""
+    if index not in range(len(VALIDATION_CASES)):
+        raise ValueError("Unknown synthetic validation case")
+    posed = copy.deepcopy(state)
+    posed["speed"] = [0.0, 0.0]
+    posed["xy"][1] = list(cfg["start_b"])
+    if index == 1:
+        posed["xy"][0] = [0.3, 1.8]
+        posed["yaw"][0] = math.atan2(posed["xy"][1][1] - 1.8,
+                                       posed["xy"][1][0] - 0.3)
+    else:
+        posed["xy"][0] = [4.8, -1.0]
+        posed["yaw"][0] = math.pi / 2
+        if index == 2:
+            posed["xy"][1] = [cfg["start_b"][0] - 0.4,
+                               cfg["start_b"][1] - 0.4]
+    return {"name": VALIDATION_CASES[index], "state": posed,
+            "authored_actor_xy": copy.deepcopy(posed["xy"]),
+            "reason": ("Previously checked clear A view" if index == 0 else
+                       "A view through existing High2 cover" if index == 1 else
+                       "B moved 0.4 m west and south; A returns to clear view")}
+
+
+def run_validation_cases(engine, sample_case, on_case=None):
+    """Call a fresh scene sampler three times, then assess Skill memory changes."""
+    records = []
+    for index, name in enumerate(VALIDATION_CASES):
+        before = copy.deepcopy(engine.memory.track)
+        entry = {"case": name, "case_index": index, "start_status": "started",
+                 "status": "running",
+                 "memory_before": before, "same_frame_verified": False,
+                 "sync_integration_status": "blocked"}
+        if on_case is not None:
+            on_case(records + [copy.deepcopy(entry)])
+        try:
+            sample = sample_case(index, name)
+            frame, packet, synthetic = sample["frame"], sample["packet"], sample["synthetic"]
+            entry.update({key: value for key, value in sample.items()
+                          if key not in ("frame", "packet", "synthetic")})
+            entry.update(frame=frame, observation_id=packet["observation_id"],
+                         simulation_seconds=packet["simulation_seconds"])
+            if (packet["observation_id"] != index or packet["frames"] != [frame] or
+                    frame["simulation_seconds"] != packet["simulation_seconds"] or
+                    (records and frame["simulation_seconds"] <= records[-1].get("simulation_seconds", -math.inf))):
+                raise ValueError("Non-unique or mismatched current observation frame/time")
+            entry["synthetic"] = handoff_to_skill(synthetic, engine, packet)
+            after = copy.deepcopy(engine.memory.track)
+            entry["memory_after"] = after
+            handoff = entry["synthetic"]["skill_handoff"]["status"]
+            candidates = synthetic.get("candidates", [])
+            if index == 1:
+                in_frame = [c for c in candidates if c.get("projection", {}).get("in_frame") is True]
+                occluded = bool(in_frame) and all(
+                    c.get("visibility", {}).get("status") == "occluded" and
+                    "raycast" in c for c in in_frame)
+                ok = (occluded and synthetic.get("sighting") is None and
+                      handoff == "not_attempted_no_sighting" and after == before)
+                entry["checks"] = {"in_frame_occlusion": occluded,
+                                   "no_sighting": synthetic.get("sighting") is None,
+                                   "no_commit_or_memory_refresh": after == before}
+                entry["no_sighting_reason"] = synthetic.get("reason")
+            else:
+                sighting = synthetic.get("sighting")
+                visible = any(c.get("projection", {}).get("in_frame") is True and
+                              c.get("visibility", {}).get("status") == "visible" for c in candidates)
+                ok = (visible and sighting is not None and
+                      sighting["time"] == frame["simulation_seconds"] and
+                      handoff == "accepted_and_committed" and
+                      after.get("seen_at") == frame["simulation_seconds"] and
+                      after.get("feet") == sighting["feet"])
+                entry["checks"] = {"in_frame_visible": visible,
+                                   "fresh_sighting": sighting is not None and
+                                   sighting["time"] == frame["simulation_seconds"],
+                                   "memory_updated": after != before and
+                                   after.get("seen_at") == frame["simulation_seconds"]}
+                if index == 2:
+                    first = records[0].get("synthetic", {})
+                    changed = (entry.get("authored_actor_xy", [None, None])[1] !=
+                               records[1].get("authored_actor_xy", [None, None])[1] and
+                               synthetic.get("raw_pixel") != first.get("raw_pixel"))
+                    entry["checks"]["target_and_raw_projection_changed"] = changed
+                    ok = ok and changed
+            entry["status"] = "passed" if ok else "partial"
+            if not ok:
+                entry["reason"] = "case_acceptance_checks_failed"
+        except Exception as exc:
+            entry["status"] = "partial"
+            entry["error"] = f"{type(exc).__name__}: {exc}"
+            entry["memory_after"] = copy.deepcopy(engine.memory.track)
+        entry["end_status"] = entry["status"]
+        records.append(entry)
+        if on_case is not None:
+            on_case(records)
+    return {"status": "passed" if all(r["status"] == "passed" for r in records) else "partial",
+            "mode": "synthetic_vision_mvp_validation", "source": "simulator_geometry_truth",
+            "sync_integration_status": "blocked", "same_frame_verified": False,
+            "cases": records}
 
 
 def observe_current_scene(stage, camera, packet, frame, cfg, image_size,
