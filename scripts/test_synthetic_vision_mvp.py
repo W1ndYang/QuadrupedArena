@@ -1,6 +1,7 @@
 """Isaac-free contract tests for the simulator-derived sighting MVP."""
 
 import copy
+import math
 from pathlib import Path
 import unittest
 
@@ -10,6 +11,7 @@ from semantic_skills import SemanticSkills
 from vision_core import VisionMatch, public_packet
 from synthetic_vision_mvp import (
     build_noisy_sighting, handoff_to_skill, run_validation_cases,
+    smoke_observation, smoke_request, summarize_skill_runtime_smoke,
     validation_pose, visibility_from_ray,
 )
 
@@ -211,6 +213,96 @@ class SyntheticVisionMvpTests(unittest.TestCase):
                                      source.index("def capture():") if "def capture():" in source else
                                      source.index("def capture(state=None):")),
                         source.index("window=[capture()]"))
+        self.assertNotIn("rep.orchestrator.step(", source)
+
+    def test_runtime_smoke_recomputes_and_executes_native_skills(self):
+        cfg = copy.deepcopy(self.cfg)
+        cfg["seed"] = 2026102107
+        match = VisionMatch(cfg)
+        engine = SemanticSkills(cfg)
+        records = []
+        calls = []
+        for index in range(4):
+            state = match.states[-1]
+            f = {**frame(), "file": f"frames/{index:03d}_{state['t']:05.2f}.png",
+                 "simulation_seconds": state["t"],
+                 "camera_eye": [state["xy"][0][0] + .36, state["xy"][0][1], .6],
+                 "camera_world_yaw_degrees": 0.}
+            packet = public_packet(index, state, [f], cfg["start_b"])
+            def sample(current_packet, current_frame):
+                calls.append((current_packet["observation_id"],
+                              current_frame["simulation_seconds"],
+                              tuple(match.states[-1]["xy"][0])))
+                current_a_x = match.states[-1]["xy"][0][0]
+                c = candidate((400.0 - 5.0 * (current_a_x - cfg["start_a"][0]), 250.0))
+                if index == 1:
+                    c["visibility"] = {"status": "occluded"}
+                if index == 2:
+                    c["visibility"] = {"status": "unknown"}
+                if index == 3:
+                    c["projection"]["in_frame"] = False
+                return build_noisy_sighting([c], current_packet, current_frame, 768, 432,
+                                            seed=index, pixel_noise_std=0)
+            synthetic = smoke_observation(packet, f, sample)
+            before = copy.deepcopy(engine.memory.track)
+            record = {"observation_id": index, "simulation_seconds": state["t"],
+                      "frame": f, "synthetic": synthetic}
+            if index == 3:
+                records.append(record)
+                break
+            request = smoke_request(index, packet, synthetic["sighting"])
+            self.assertEqual(set(request), {"observation_id", "skill", "params", "reason"})
+            self.assertEqual("sighting" in request["params"], index == 0)
+            engine.validate(request, packet)
+            action, route, camera, status = engine.commit(request, packet)
+            match.compile(action)
+            self.assertIn(action["skill"], ("MOVE", "HOLD", "SCAN"))
+            match.apply(action, route)
+            before_xy = list(match.states[-1]["xy"][0])
+            for step in range(100):
+                own = public_packet(index, match.states[-1], [], cfg["start_b"])
+                interruption = engine.tick(own)
+                if interruption:
+                    match.apply(*interruption)
+                else:
+                    for key in ("attack", "facing"):
+                        match.active[key] = engine.action[key]
+                match.advance(cfg["dt"])
+            moved = math.dist(before_xy, match.states[-1]["xy"][0]) > .02
+            record.update(action_request=request, action_status="executed",
+                          actual_state_change=moved,
+                          sighting_committed=index == 0 and engine.memory.track["feet"] == synthetic["sighting"]["feet"],
+                          memory_check_passed=(engine.memory.track == before if index else
+                                               engine.memory.track["seen_at"] == 0.0))
+            if index == 1:
+                self.assertEqual(engine.memory.track["seen_at"], before["seen_at"])
+            records.append(record)
+        self.assertEqual(len(calls), 4)
+        self.assertEqual([item[1] for item in calls], [0., 2., 4., 6.])
+        self.assertNotEqual(calls[0][2], calls[1][2])
+        self.assertNotEqual(records[0]["synthetic"]["raw_pixel"],
+                            records[1]["synthetic"]["candidates"][0]["projection"]["pixel"])
+        summary = summarize_skill_runtime_smoke(records)
+        self.assertEqual(summary["status"], "passed")
+        self.assertTrue(summary["checks"]["actual_state_change"])
+        self.assertEqual(summary["checks"]["sighting_commits"], 1)
+
+    def test_runtime_smoke_does_not_pass_on_request_acceptance_alone(self):
+        records = [{"observation_id": index, "simulation_seconds": 2. * index,
+                    "frame": {"file": f"frames/{index:03d}.png"},
+                    **({"action_request": {"skill": "MOVE_TO"}, "action_status": "executed",
+                        "actual_state_change": False, "sighting_committed": index == 0,
+                        "memory_check_passed": True} if index < 3 else {})}
+                   for index in range(4)]
+        result = summarize_skill_runtime_smoke(records)
+        self.assertEqual(result["status"], "partial")
+        self.assertFalse(result["checks"]["actual_state_change"])
+
+    def test_runtime_smoke_parser_isolated_from_diagnostic_poses(self):
+        source = Path(__file__).with_name("vision_trial.py").read_text()
+        self.assertIn("--synthetic-vision-skill-runtime-smoke", source)
+        self.assertIn("sum((args.synthetic_vision_mvp, args.synthetic_vision_mvp_validation,", source)
+        self.assertNotIn("args.synthetic_vision_skill_runtime_smoke", source.split("if args.g1b1_visible_spawn or", 1)[1].split("\n", 1)[0])
         self.assertNotIn("rep.orchestrator.step(", source)
 
 

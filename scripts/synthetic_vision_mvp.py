@@ -137,6 +137,63 @@ def handoff_to_skill(record, engine, packet):
 
 VALIDATION_CASES = ("clear_initial", "high2_occluded", "moved_clear")
 
+SMOKE_SKILLS = (("MOVE_TO", {"target": "P2", "risk": "fast"}),
+                ("OBSERVE", {"direction": "north"}),
+                ("MOVE_TO", {"target": "P2", "risk": "fast"}))
+
+
+def smoke_request(index, packet, sighting):
+    """Finite driver of existing Skill requests; no inferred tactical policy."""
+    if index not in range(len(SMOKE_SKILLS)) or packet["observation_id"] != index:
+        raise ValueError("Smoke action index does not match observation")
+    skill, fixed_params = SMOKE_SKILLS[index]
+    params = dict(fixed_params)
+    if sighting is not None:
+        params["sighting"] = sighting
+    return {"observation_id": index, "skill": skill, "params": params,
+            "reason": "Finite smoke_test_driver, not an LLM policy"}
+
+
+def smoke_observation(packet, frame, sample_scene):
+    """Sample live scene once for this packet; never reuse a previous sighting."""
+    if packet.get("frames", [])[-1:] != [frame] or packet.get("simulation_seconds") != frame.get("simulation_seconds"):
+        raise ValueError("Smoke frame must be the current packet frame")
+    try:
+        synthetic = sample_scene(packet, frame)
+    except Exception as exc:
+        synthetic = {"status": "not_emitted", "reason": f"adapter_failed: {type(exc).__name__}: {exc}",
+                     "sighting": None, "candidates": [], "source": "simulator_geometry_truth",
+                     "simulation_time_seconds": frame["simulation_seconds"],
+                     "sync_integration_status": "blocked", "same_frame_verified": False}
+    sighting = synthetic.get("sighting")
+    if sighting is not None and sighting.get("time") != frame["simulation_seconds"]:
+        raise ValueError("Synthetic sighting does not match current frame time")
+    return synthetic
+
+
+def summarize_skill_runtime_smoke(records):
+    """Require actual executed motion and sighting commit for a passed smoke."""
+    actions = [record for record in records if "action_request" in record]
+    observed = [(record.get("observation_id"), record.get("simulation_seconds"),
+                 record.get("frame", {}).get("file")) for record in records]
+    unique_observations = (len(observed) == 4 and len(set(observed)) == 4 and
+                           all(observed[i][0] == i and observed[i][1] is not None and
+                               observed[i][2] for i in range(len(observed))) and
+                           all(observed[i][1] < observed[i + 1][1] for i in range(3)))
+    movement = any(record.get("actual_state_change", False) for record in actions)
+    sighting_commits = sum(record.get("sighting_committed", False) for record in actions)
+    executed = len(actions) == 3 and all(record.get("action_status") == "executed" for record in actions)
+    memory_consistent = all(record.get("memory_check_passed") is True for record in actions)
+    status = "passed" if unique_observations and movement and sighting_commits and executed and memory_consistent else "partial"
+    return {"status": status, "mode": "synthetic_vision_skill_runtime_smoke",
+            "driver": "smoke_test_driver", "source": "simulator_geometry_truth",
+            "sync_integration_status": "blocked", "same_frame_verified": False,
+            "checks": {"unique_fresh_observations": unique_observations,
+                       "actual_state_change": movement, "sighting_commits": sighting_commits,
+                       "three_native_actions_executed": executed,
+                       "memory_consistent": memory_consistent},
+            "cycles": records}
+
 
 def validation_pose(index, state, cfg):
     """Author three finite diagnostic poses without changing match configuration."""

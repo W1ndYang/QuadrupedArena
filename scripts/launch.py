@@ -35,6 +35,7 @@ if "--help" in sys.argv:
     print("--vision-trial --geometry-interface-probe --headless: read-only formal-scene segmentation/depth interface probe; no Skill commit or asset writeback.")
     print("--vision-trial --semantic-skills --synthetic-vision-mvp --headless: one current-scene synthetic foot sighting, Skill handoff, then exit; no external action or API.")
     print("--vision-trial --semantic-skills --synthetic-vision-mvp-validation --headless: three finite fresh sighting cycles, then exit; no external action or API.")
+    print("--vision-trial --semantic-skills --synthetic-vision-skill-runtime-smoke --headless: three native Skill actions in the normal loop with fresh synthetic observations; no external input or API.")
     print("--vision-trial --semantic-skills --deepseek --headless: paid official DeepSeek Flash RGB planner, effort from config.")
     print("--vision-trial --semantic-skills --qwen-vision max|min --headless: paid Qwen3.6-27B public RGB; default max thinking budget or thinking off.")
     print("--vision-trial --semantic-skills --assessment --headless: external assistant, same four-field decision/assessment schema.")
@@ -48,6 +49,11 @@ if "--synthetic-vision-mvp" in sys.argv and not {"--vision-trial", "--semantic-s
     raise SystemExit("--synthetic-vision-mvp requires --vision-trial --semantic-skills")
 if "--synthetic-vision-mvp-validation" in sys.argv and not {"--vision-trial", "--semantic-skills"}.issubset(sys.argv):
     raise SystemExit("--synthetic-vision-mvp-validation requires --vision-trial --semantic-skills")
+if "--synthetic-vision-skill-runtime-smoke" in sys.argv and not {"--vision-trial", "--semantic-skills"}.issubset(sys.argv):
+    raise SystemExit("--synthetic-vision-skill-runtime-smoke requires --vision-trial --semantic-skills")
+if sum(flag in sys.argv for flag in ("--synthetic-vision-mvp", "--synthetic-vision-mvp-validation",
+                                     "--synthetic-vision-skill-runtime-smoke")) > 1:
+    raise SystemExit("Choose one synthetic vision mode")
 
 gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv"], capture_output=True, text=True)
 if gpu.returncode:
@@ -83,6 +89,7 @@ if '--geometry-diagnostic' in sys.argv:timeout=1200
 if '--geometry-interface-probe' in sys.argv:timeout=180
 if '--synthetic-vision-mvp' in sys.argv:timeout=180
 if '--synthetic-vision-mvp-validation' in sys.argv:timeout=300
+if '--synthetic-vision-skill-runtime-smoke' in sys.argv:timeout=300
 if '--vision-trial' in sys.argv and '--deepseek' in sys.argv:
     from deepseek_trial import settings
     timeout=settings().get('launch_timeout_seconds',timeout)
