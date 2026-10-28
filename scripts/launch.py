@@ -33,6 +33,7 @@ if "--help" in sys.argv:
     print("--vision-trial --geometry-diagnostic --headless: capture two formal-scene geometry samples, bundle them, and exit; no LLM or actions JSON.")
     print("  --diagnostic-output-dir PATH: optional diagnostic artifact directory; default is the generated run/geometry_diagnostic.")
     print("--vision-trial --geometry-interface-probe --headless: read-only formal-scene segmentation/depth interface probe; no Skill commit or asset writeback.")
+    print("--vision-trial --semantic-skills --synthetic-vision-mvp --headless: one current-scene synthetic foot sighting, Skill handoff, then exit; no external action or API.")
     print("--vision-trial --semantic-skills --deepseek --headless: paid official DeepSeek Flash RGB planner, effort from config.")
     print("--vision-trial --semantic-skills --qwen-vision max|min --headless: paid Qwen3.6-27B public RGB; default max thinking budget or thinking off.")
     print("--vision-trial --semantic-skills --assessment --headless: external assistant, same four-field decision/assessment schema.")
@@ -42,6 +43,8 @@ if "--geometry-diagnostic" in sys.argv and "--vision-trial" not in sys.argv:
     raise SystemExit("--geometry-diagnostic requires --vision-trial")
 if "--geometry-interface-probe" in sys.argv and "--vision-trial" not in sys.argv:
     raise SystemExit("--geometry-interface-probe requires --vision-trial")
+if "--synthetic-vision-mvp" in sys.argv and not {"--vision-trial", "--semantic-skills"}.issubset(sys.argv):
+    raise SystemExit("--synthetic-vision-mvp requires --vision-trial --semantic-skills")
 
 gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv"], capture_output=True, text=True)
 if gpu.returncode:
@@ -75,6 +78,7 @@ if '--dockyard' in sys.argv:entrypoint='dockyard_scene.py';timeout=2400
 if '--vision-trial' in sys.argv:entrypoint='vision_trial.py';timeout=5400
 if '--geometry-diagnostic' in sys.argv:timeout=1200
 if '--geometry-interface-probe' in sys.argv:timeout=180
+if '--synthetic-vision-mvp' in sys.argv:timeout=180
 if '--vision-trial' in sys.argv and '--deepseek' in sys.argv:
     from deepseek_trial import settings
     timeout=settings().get('launch_timeout_seconds',timeout)

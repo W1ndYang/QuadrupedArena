@@ -26,11 +26,23 @@ parser.add_argument('--geometry-diagnostic',action='store_true',
                     help='Capture two formal-scene geometry diagnostics and exit; no LLM, actions JSON or Skill commit')
 parser.add_argument('--geometry-interface-probe',action='store_true',
                     help='Read-only formal-scene segmentation/depth interface probe; no Skill commit or asset writeback')
+parser.add_argument('--synthetic-vision-mvp',action='store_true',
+                    help='One-shot simulator-derived foot sighting, Skill validation and commit; no external action')
+parser.add_argument('--synthetic-pixel-noise-std',type=float,default=1.0)
+parser.add_argument('--synthetic-miss-probability',type=float,default=0.0)
+parser.add_argument('--synthetic-seed',type=int,default=20261028)
 parser.add_argument('--diagnostic-output-dir',type=Path,
                     help='Diagnostic artifacts directory (default: this run/geometry_diagnostic)')
 parser.add_argument('--run-dir',type=Path,required=True)
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args();args.enable_cameras=True
+if args.synthetic_vision_mvp and (not args.vision_trial or not args.semantic_skills or
+        args.geometry_diagnostic or args.geometry_interface_probe or args.vision_smoke or
+        args.deepseek or args.qwen_vision or args.assessment or args.g1b1_visible_spawn or
+        args.diagnostic_output_dir):
+    parser.error('--synthetic-vision-mvp requires --vision-trial --semantic-skills and excludes other diagnostic/planner modes')
+if args.synthetic_pixel_noise_std<0 or not math.isfinite(args.synthetic_pixel_noise_std) or not 0<=args.synthetic_miss_probability<=1 or not math.isfinite(args.synthetic_miss_probability):
+    parser.error('Invalid synthetic sighting noise or miss probability')
 from formal_geometry_diagnostic import diagnostic_mode_error
 mode_error=diagnostic_mode_error(args)
 if mode_error:parser.error(mode_error)
@@ -61,10 +73,10 @@ def main():
         for name in ('frames','observations','actions','decisions'):(root/name).mkdir()
     cfg=load_config(PROJECT/'configs/trial_rotating.json');cfg['seed']=2026102107
     if args.vision_smoke:cfg['duration']=2.
-    if args.g1b1_visible_spawn:
-        # Only this explicit G1-B.1 diagnostic run moves A; keep B and the arena intact.
+    if args.g1b1_visible_spawn or args.synthetic_vision_mvp:
+        # Explicit sighting modes use the previously checked clear A viewpoint.
         cfg['start_a']=[4.8,-1.0]
-    match=VisionMatch(cfg,initial_a_yaw=math.pi/2 if args.g1b1_visible_spawn else 0.);rig=CameraRig()
+    match=VisionMatch(cfg,initial_a_yaw=math.pi/2 if (args.g1b1_visible_spawn or args.synthetic_vision_mvp) else 0.);rig=CameraRig()
     engine=None;execution=[];api_planner=None
     if args.semantic_skills:
         from semantic_skills import SemanticSkills
@@ -90,6 +102,13 @@ def main():
             execution='Known-map risk-weighted routes; local goal selection and turn/acceleration ETA. Never access current opponent truth.',
             differences_from_previous='Semantic skills + short output + visual-estimate-only attack gating + programmatic camera. Same match rules, seed, map, 2s decision / 0.5s RGB cadence. Not a pure model-speed A/B.',
             online_reason_limit_characters=100,api_model_change=False)
+        if args.synthetic_vision_mvp:
+            protocol.update(mode='simulator_derived_synthetic_vision_mvp',
+                perception='Current USD camera/G1 mesh and PhysX cover visibility produce a noisy foot pixel; not RGB-only recognition.',
+                sighting_source='simulator_geometry_truth',same_frame_verified=False,
+                sync_integration_status='blocked',automatic_one_shot=True,
+                synthetic_seed=args.synthetic_seed,pixel_noise_std=args.synthetic_pixel_noise_std,
+                miss_probability=args.synthetic_miss_probability)
         dump(root/'protocol.json',protocol)
     if args.deepseek or args.qwen_vision:
         from deepseek_trial import motion_request
@@ -182,8 +201,9 @@ def main():
         except Exception:
             print(f'Interface probe failed; partial artifacts: {output}',flush=True)
             raise
-        dump(root/'result.json',dict(status='passed',mode='geometry_interface_probe',
-            probe_status=summary['probe_status'],runtime_verified=False,
+        dump(root/'result.json',dict(status=summary['status'],mode='geometry_interface_probe',
+            probe_status=summary['probe_status'],sync_integration_status=summary['sync_integration_status'],
+            runtime_verified=False,
             same_frame_verified=False,probe_output_dir=str(output.resolve()),
             diagnostic_bundle=str(output.resolve()/'diagnostic_bundle.zip')))
         print(f'Interface probe output: {output.resolve()}',flush=True)
@@ -201,6 +221,28 @@ def main():
             camera_pan_degrees=rig.pan,camera_world_yaw_degrees=math.degrees(heading),camera_eye=eye.tolist(),horizontal_fov_degrees=90)
         frames.append(frame);dump(root/'frame_index.json',frames)
         return frame
+    if args.synthetic_vision_mvp:
+        from synthetic_vision_mvp import observe_current_scene,handoff_to_skill
+        frame=capture()
+        packet=observe([frame])
+        packet['perception']='One-shot simulator-derived synthetic foot pixel; RGB saved for review, not used for detection.'
+        dump(root/'observations/000.json',packet)
+        with Image.open(root/frame['file']) as image:image_size=image.size
+        synthetic=observe_current_scene(stage,camera,packet,frame,cfg,image_size,
+            seed=args.synthetic_seed,pixel_noise_std=args.synthetic_pixel_noise_std,
+            miss_probability=args.synthetic_miss_probability)
+        synthetic=handoff_to_skill(synthetic,engine,packet)
+        dump(root/'synthetic_vision_mvp.json',synthetic)
+        accepted=synthetic['skill_handoff']['status']=='accepted_and_committed'
+        dump(root/'result.json',dict(status='passed' if accepted else 'partial',
+            mode='simulator_derived_synthetic_vision_mvp',sighting_source='simulator_geometry_truth',
+            sync_integration_status='blocked',same_frame_verified=False,
+            observation_file='observations/000.json',diagnostic_file='synthetic_vision_mvp.json',
+            sighting_emitted=synthetic['status']=='emitted',
+            skill_handoff_status=synthetic['skill_handoff']['status']))
+        print(f'Synthetic vision MVP: {synthetic["status"]}; '
+              f'Skill: {synthetic["skill_handoff"]["status"]}; same_frame_verified=false',flush=True)
+        return
     window=[capture()]
     while not match.ref.finished:
         index=len(match.decisions);packet=observe(window)
@@ -286,5 +328,5 @@ try:main()
 except Exception:
     dump(args.run_dir/'result.json',dict(status='failed',error=traceback.format_exc()))
     traceback.print_exc()
-    if args.geometry_diagnostic or args.geometry_interface_probe:raise SystemExit(1)
+    if args.geometry_diagnostic or args.geometry_interface_probe or args.synthetic_vision_mvp:raise SystemExit(1)
 finally:app.close(wait_for_replicator=False,skip_cleanup=True)

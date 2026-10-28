@@ -235,6 +235,9 @@ def run_isaac(output, result):
             # Capture-on-play is disabled above. Physics/render steps alone do
             # not request an Annotator frame; Isaac Sim 5.1's standalone
             # Replicator example explicitly steps the orchestrator here.
+            # This standalone experiment is isolated. The same call in the
+            # formal AppLauncher scene is runtime-blocked (U2.1); never reuse
+            # this capture path for the formal synthetic sighting MVP.
             capture = {"attempts": 1, "rt_subframes": 4,
                        "delta_time": 0.0, "pause_timeline": False}
             try:

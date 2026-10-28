@@ -58,6 +58,16 @@ class FakeRegistry:
 
 
 class ProbeTests(unittest.TestCase):
+    def test_formal_probe_run_never_enters_blocked_sync_helper(self):
+        source = Path(__file__).with_name("geometry_interface_probe.py").read_text()
+        tree = ast.parse(source)
+        run = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                   and node.name == "run")
+        calls = [node.func.id for node in ast.walk(run) if isinstance(node, ast.Call)
+                 and isinstance(node.func, ast.Name)]
+        self.assertNotIn("sync_capture_step", calls)
+        self.assertIn("write_progress", calls)
+
     def test_cli_conflicts_and_isolated_branch(self):
         base = dict(geometry_interface_probe=True, vision_trial=True,
                     geometry_diagnostic=False, vision_smoke=False, semantic_skills=False,

@@ -9,10 +9,8 @@ import importlib.metadata
 import json
 import math
 import datetime
-import faulthandler
 from pathlib import Path
 import platform
-import sys
 import zipfile
 
 import numpy as np
@@ -338,7 +336,11 @@ def frame_evidence(outputs, rgb_shape):
 
 
 def sync_capture_step(rep, record):
-    """Attempt one render-synchronized capture; preserve the original exception."""
+    """Legacy mock-tested helper; formal AppLauncher run must not call it.
+
+    Ubuntu runs stalled inside this Replicator step, so the actual probe path
+    records sync_integration_status=blocked and uses app.update capture.
+    """
     record.update(sync_method="rep.orchestrator.step", wait_for_render_requested=True,
                   sync_step_attempted=True, orchestrator_step_count=1)
     try:
@@ -587,6 +589,8 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
     visuals = _foot_visuals(stage, UsdGeom)
     summary = {"mode": "geometry_interface_probe", "status": "failed", "probe_status": "blocked",
                "runtime_verified": False, "same_frame_verified": False,
+               "sync_integration_status": "blocked",
+               "sync_blocked_reason": "orchestrator_step_stalled_in_formal_app_launcher_runtime",
                "sync_step_succeeded": False,
                "segmentation_depth_alignment_status": "unverified",
                "rgb_alignment_status": "unverified",
@@ -608,16 +612,17 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
             write_progress(output, "sample_started", scenario)
             rec = {"frame_index": index, "scenario": scenario,
                    "simulation_seconds": float(sample["t"]), "same_frame_verified": False,
-                   "sync_method": "rep.orchestrator.step", "wait_for_render_requested": True,
+                   "sync_method": None, "wait_for_render_requested": False,
                    "sync_step_attempted": False, "sync_step_succeeded": False,
                    "sync_step_error": None,
+                   "sync_blocked_method": "rep.orchestrator.step(wait_for_render=True)",
+                   "sync_blocked_reason": summary["sync_blocked_reason"],
                    "capture_cycle_evidence": {"same_render_product": False,
                                               "single_sync_step": False,
                                               "consecutive_reads_without_update": False,
                                               "frame_token_status": "unavailable"},
                    "actor_state": {"xy": sample["xy"], "yaw_radians": sample["yaw"]},
                    "capture_sequence": ["snapshot_before", "pose_scene", "12 x app.update",
-                                        "rep.orchestrator.step(wait_for_render=True)",
                                         "rgb.get_data", "annotator.get_data each", "snapshot_after"],
                    "app_update_count": 12, "orchestrator_step_count": 0,
                    "before": _scene_snapshot(stage, camera, Gf, UsdGeom, visuals),
@@ -629,13 +634,7 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
             for _ in range(12):
                 app.update()
             write_progress(output, "updates_complete", scenario)
-            write_progress(output, "sync_step_started", scenario)
-            faulthandler.dump_traceback_later(30, file=sys.stderr)
-            try:
-                sync_capture_step(rep, rec)
-            finally:
-                faulthandler.cancel_dump_traceback_later()
-            write_progress(output, "sync_step_succeeded", scenario)
+            write_progress(output, "unsynchronized_capture_started", scenario)
             pixels = np.asarray(rgb.get_data())
             write_progress(output, "rgb_read_complete", scenario)
             if pixels.ndim != 3 or pixels.shape[:2] != (HEIGHT, WIDTH) or pixels.shape[2] < 3 or pixels[..., :3].std() < 1:
@@ -677,7 +676,7 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
                 "frame_token_status": rec["frame_evidence"]["frame_token_status"]}
             summary["samples_saved"] += 1
             write_progress(output, "sample_complete", scenario)
-        summary["status"] = "passed"
+        summary["status"] = "partial"
     except Exception as exc:
         fatal = exc
         summary["errors"].append(short_error(exc))
@@ -706,8 +705,7 @@ def run(output_dir, state, cfg, stage, camera, product, rgb, rep, app, pose_scen
             summary["blocked_reasons"].append("foot_visual_id_mapping_unverified")
         if summary["detach_counts"]["failed"] or summary["detach_counts"]["failed_after_attach_failure"]:
             summary["blocked_reasons"].append("probe_annotator_detach_failed")
-        if any(rec["sync_step_error"] for rec in records):
-            summary["blocked_reasons"].append("sync_step_failed")
+        summary["blocked_reasons"].append("sync_integration_blocked_after_target_runtime_stall")
         summary["blocked_reasons"].append("depth_semantics_and_strict_same_frame_unverified")
         summary["probe_status"] = probe_execution_status(summary["samples_saved"], summary["annotators"])
         if summary["status"] == "passed" and summary["samples_saved"] != 2:
