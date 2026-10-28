@@ -139,6 +139,9 @@ VALIDATION_CASES = ("clear_initial", "high2_occluded", "moved_clear")
 
 SMOKE_SKILLS = (("MOVE_TO", {"target": "P2", "risk": "fast"}),
                 ("OBSERVE", {"direction": "north"}),
+                ("MOVE_TO", {"target": "P2", "risk": "fast"}),
+                # Repeat the existing native request so the 5.5 s sample reaches
+                # a real decision at 6.0 s; no pose or OBSERVE-direction change.
                 ("MOVE_TO", {"target": "P2", "risk": "fast"}))
 
 
@@ -171,8 +174,54 @@ def smoke_observation(packet, frame, sample_scene):
     return synthetic
 
 
-def summarize_skill_runtime_smoke(records):
-    """Require actual executed motion and sighting commit for a passed smoke."""
+def sample_visibility(synthetic):
+    """Compact manifest label; detailed per-foot evidence stays in the frame JSON."""
+    candidates = synthetic.get("candidates", [])
+    if not candidates or all(c.get("error") for c in candidates):
+        return "invalid"
+    in_frame = [c for c in candidates if c.get("projection", {}).get("in_frame") is True]
+    if not in_frame:
+        return "out_of_view"
+    if any(c.get("visibility", {}).get("status") == "visible" for c in in_frame):
+        return "visible"
+    if all(c.get("visibility", {}).get("status") == "occluded" for c in in_frame):
+        return "occluded"
+    return "unknown"
+
+
+def build_window_context(window_id, samples):
+    """Package one bootstrap frame or four fresh half-second observations."""
+    bootstrap = window_id == 0
+    expected = 1 if bootstrap else 4
+    if len(samples) != expected:
+        raise ValueError(f"Window {window_id} requires {expected} samples")
+    times = [sample["simulation_seconds"] for sample in samples]
+    ids = [sample["observation_id"] for sample in samples]
+    files = [sample["frame_file"] for sample in samples]
+    if (len(set(ids)) != expected or len(set(files)) != expected or
+            any(not isinstance(t, (int, float)) or not math.isfinite(t) for t in times) or
+            any(not math.isclose(times[i + 1] - times[i], .5, abs_tol=1e-8)
+                for i in range(expected - 1)) or
+            not math.isclose(times[-1], 2.0 * window_id, abs_tol=1e-8)):
+        raise ValueError("Window sample IDs, frame files or simulation times are inconsistent")
+    frames = [{key: sample.get(key) for key in
+               ("observation_id", "simulation_seconds", "frame_file", "packet_file",
+                "synthetic_file", "status", "reason", "seed", "sighting", "ingest_status",
+                "visibility_statuses")}
+              for sample in samples]
+    valid = [sample for sample in samples if sample.get("ingest_status") == "accepted"]
+    last = None if not valid else {key: valid[-1].get(key) for key in
+                                    ("observation_id", "simulation_seconds", "frame_file",
+                                     "synthetic_file", "sighting")}
+    return {"window_id": window_id, "bootstrap": bootstrap,
+            "start_simulation_seconds": times[0], "end_simulation_seconds": times[-1],
+            "frames": frames, "last_valid_sighting": last,
+            "no_valid_sighting": last is None,
+            "sync_integration_status": "blocked", "same_frame_verified": False}
+
+
+def summarize_skill_runtime_smoke(records, windows=None, frame_samples=None):
+    """Assess finite native actions, frame cadence and window evidence."""
     actions = [record for record in records if "action_request" in record]
     observed = [(record.get("observation_id"), record.get("simulation_seconds"),
                  record.get("frame", {}).get("file")) for record in records]
@@ -184,6 +233,47 @@ def summarize_skill_runtime_smoke(records):
     sighting_commits = sum(record.get("sighting_committed", False) for record in actions)
     executed = len(actions) == 3 and all(record.get("action_status") == "executed" for record in actions)
     memory_consistent = all(record.get("memory_check_passed") is True for record in actions)
+    if windows is not None and frame_samples is not None:
+        executed = len(actions) == 4 and all(record.get("action_status") == "executed" for record in actions)
+        window_ok = (len(windows) == 5 and windows[0].get("bootstrap") is True and
+                     all(len(windows[i]["frames"]) == 4 for i in (1, 2, 3, 4)) and
+                     all(windows[i]["window_id"] == i for i in range(5)))
+        window_refs = [frame for window in windows for frame in window.get("frames", [])]
+        refs_match = len(window_refs) == len(frame_samples) and all(
+            all(window_refs[i].get(key) == frame_samples[i].get(key) for key in
+                ("observation_id", "simulation_seconds", "frame_file", "packet_file",
+                 "synthetic_file", "sighting"))
+            for i in range(len(frame_samples)))
+        sample_times = [s["simulation_seconds"] for s in frame_samples]
+        sampling_ok = (len(frame_samples) == 17 and
+                       all(math.isclose(sample_times[i], .5 * i, abs_tol=1e-8)
+                           for i in range(len(frame_samples))) and
+                       all(s["observation_id"] == i for i, s in enumerate(frame_samples)) and
+                       len({s["frame_file"] for s in frame_samples}) == 17)
+        decision_times = [record.get("simulation_seconds") for record in actions]
+        decision_ok = len(decision_times) == 4 and all(
+            math.isclose(decision_times[i], 2.0 * i, abs_tol=1e-8) for i in range(4))
+        ingest_ok = all(s.get("memory_check_passed") is True for s in frame_samples)
+        processing_ok = all(s.get("ingest_status") != "rejected" and
+                            not str(s.get("reason", "")).startswith("adapter_failed:")
+                            for s in frame_samples)
+        sighting_ingests = sum(s.get("ingest_status") == "accepted" for s in frame_samples)
+        status = "passed" if (window_ok and refs_match and sampling_ok and decision_ok and
+                              ingest_ok and processing_ok and memory_consistent and executed and movement) else "partial"
+        return {"status": status, "mode": "synthetic_vision_skill_runtime_smoke",
+                "driver": "smoke_test_driver", "source": "simulator_geometry_truth",
+                "sync_integration_status": "blocked", "same_frame_verified": False,
+                "checks": {"five_windows_including_bootstrap": window_ok,
+                           "window_refs_match_samples": refs_match,
+                           "half_second_samples": sampling_ok,
+                           "two_second_decisions": decision_ok,
+                           "frame_memory_consistent": ingest_ok,
+                           "frame_processing_ok": processing_ok,
+                           "actual_state_change": movement,
+                           "frame_sighting_ingests": sighting_ingests,
+                           "four_native_actions_executed": executed,
+                           "decision_memory_consistent": memory_consistent},
+                "windows": windows, "frame_samples": frame_samples, "cycles": records}
     status = "passed" if unique_observations and movement and sighting_commits and executed and memory_consistent else "partial"
     return {"status": status, "mode": "synthetic_vision_skill_runtime_smoke",
             "driver": "smoke_test_driver", "source": "simulator_geometry_truth",

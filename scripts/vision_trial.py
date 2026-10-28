@@ -123,7 +123,7 @@ def main():
                                 validation_case_count=3)
             if args.synthetic_vision_skill_runtime_smoke:
                 protocol.update(engine='Normal Python match and Skill execution; Isaac RGB plus current USD/PhysX geometry query',
-                                driver='smoke_test_driver',native_skill_actions=3,
+                                driver='smoke_test_driver',native_skill_actions=4,
                                 diagnostic_pose_override=False)
         dump(root/'protocol.json',protocol)
     if args.deepseek or args.qwen_vision:
@@ -307,8 +307,11 @@ def main():
         return
     smoke_mode=args.synthetic_vision_skill_runtime_smoke
     if smoke_mode:
-        from synthetic_vision_mvp import smoke_observation, smoke_request, summarize_skill_runtime_smoke, observe_current_scene
-        smoke_cycles=[]
+        from synthetic_vision_mvp import (build_window_context, observe_current_scene,
+            sample_visibility, smoke_observation, smoke_request, summarize_skill_runtime_smoke)
+        smoke_cycles=[];frame_samples=[];smoke_windows=[]
+        for name in ('observations/frames','synthetic_vision_frames','synthetic_vision_windows'):
+            (root/name).mkdir(parents=True,exist_ok=True)
         def stage_actor_state():
             cache=UsdGeom.XformCache()
             anchors={};forward_axes={}
@@ -331,30 +334,73 @@ def main():
             dump(root/'synthetic_vision_skill_runtime_smoke.json',dict(status='running',
                 mode='synthetic_vision_skill_runtime_smoke',driver='smoke_test_driver',
                 source='simulator_geometry_truth',sync_integration_status='blocked',
-                same_frame_verified=False,cycles=smoke_cycles))
+                same_frame_verified=False,frame_samples=frame_samples,
+                windows=smoke_windows,cycles=smoke_cycles))
+        def sample_synthetic_frame(frame):
+            sample_id=len(frame_samples)
+            if sample_id!=len(frames)-1 or frame['simulation_seconds']!=match.t:
+                raise ValueError('Frame sample must follow the current simulation state')
+            packet=public_packet(sample_id,match.states[-1],[frame],cfg['start_b'])
+            packet['skills']=engine.public(match.t)
+            packet['perception']='Single current simulator-derived synthetic observation; RGB is review evidence.'
+            packet_file=f'observations/frames/{sample_id:03d}.json'
+            synthetic_file=f'synthetic_vision_frames/{sample_id:03d}.json'
+            dump(root/packet_file,packet)
+            with Image.open(root/frame['file']) as image:image_size=image.size
+            synthetic=smoke_observation(packet,frame,
+                lambda current_packet,current_frame: observe_current_scene(
+                    stage,camera,current_packet,current_frame,cfg,image_size,
+                    seed=args.synthetic_seed+sample_id,pixel_noise_std=args.synthetic_pixel_noise_std,
+                    miss_probability=args.synthetic_miss_probability))
+            before=copy.deepcopy(engine.memory.track)
+            sighting=synthetic.get('sighting')
+            ingest_status='not_attempted_no_sighting'
+            ingest_error=None
+            if sighting is not None:
+                try:
+                    engine.observe_sighting(sighting,packet)
+                    ingest_status='accepted'
+                except Exception as exc:
+                    ingest_status='rejected'
+                    ingest_error=f'{type(exc).__name__}: {exc}'
+            after=copy.deepcopy(engine.memory.track)
+            memory_ok=(after.get('seen_at')==sighting['time'] and
+                       after.get('feet')==sighting['feet']) if ingest_status=='accepted' else (
+                       after==before and sighting is None)
+            sample=dict(observation_id=sample_id,simulation_seconds=frame['simulation_seconds'],
+                frame_file=frame['file'],packet_file=packet_file,synthetic_file=synthetic_file,
+                status=sample_visibility(synthetic),reason=synthetic.get('reason'),
+                seed=args.synthetic_seed+sample_id,sighting=sighting,
+                ingest_status=ingest_status,ingest_error=ingest_error,
+                memory_before=before,memory_after=after,memory_check_passed=memory_ok,
+                visibility_statuses=[c.get('visibility',{}).get('status') for c in synthetic.get('candidates',[])],
+                sync_integration_status='blocked',same_frame_verified=False)
+            dump(root/synthetic_file,dict(**sample,synthetic=synthetic))
+            frame_samples.append(sample);save_smoke_progress()
+            return sample
     window=[capture()]
+    if smoke_mode:window_samples=[sample_synthetic_frame(window[-1])]
     while not match.ref.finished:
         index=len(match.decisions);packet=observe(window)
         smoke_record=None
         if smoke_mode:
             packet['perception']='Current simulator-derived synthetic foot pixel; RGB saved for review, not used for detection.'
+            context=build_window_context(index,window_samples)
+            context['terminal_without_decision']=index>=4
+            context_file='synthetic_vision_windows/bootstrap.json' if index==0 else f'synthetic_vision_windows/window_{index:03d}.json'
+            dump(root/context_file,context)
+            smoke_windows.append(context)
+            packet['synthetic_vision_window']=context
             dump(root/'observations'/f'{index:03d}.json',packet)
             frame=window[-1]
             smoke_record=dict(cycle_index=index,start_status='started',end_status='running',
                 observation_id=packet['observation_id'],simulation_seconds=packet['simulation_seconds'],
                 frame=frame,actor_before=stage_actor_state(),
                 memory_before=copy.deepcopy(engine.memory.track),
+                window_context_file=context_file,window_last_valid_sighting=context['last_valid_sighting'],
                 sync_integration_status='blocked',same_frame_verified=False)
             smoke_cycles.append(smoke_record);save_smoke_progress()
-            with Image.open(root/frame['file']) as image:image_size=image.size
-            synthetic=smoke_observation(packet,frame,
-                lambda current_packet,current_frame: observe_current_scene(
-                    stage,camera,current_packet,current_frame,cfg,image_size,
-                    seed=args.synthetic_seed+index,pixel_noise_std=args.synthetic_pixel_noise_std,
-                    miss_probability=args.synthetic_miss_probability))
-            smoke_record['synthetic']=synthetic
-            smoke_record['no_sighting_reason']=synthetic.get('reason') if synthetic.get('sighting') is None else None
-            if index>=3:
+            if index>=4:
                 smoke_record.update(end_status='observed_no_action',
                     action_status='not_requested_terminal_observation',
                     validator_status='not_attempted',skill_commit_status='not_attempted',
@@ -362,11 +408,13 @@ def main():
                     memory_check_passed=True)
                 save_smoke_progress()
         if not smoke_mode:dump(root/'observations'/f'{index:03d}.json',packet)
-        if smoke_mode and index>=3:break
+        if smoke_mode and index>=4:break
         ready=time.monotonic();readyutc=datetime.datetime.now(datetime.timezone.utc).isoformat()
         api_timing=None
         if smoke_mode:
-            request=smoke_request(index,packet,synthetic.get('sighting'))
+            # Frame sightings were validated and ingested at their own 0.5 s timestamps.
+            # The native Skill decision reads memory; it does not replay a prior sighting.
+            request=smoke_request(index,packet,None)
             smoke_record['action_request']=request
             smoke_record['action_status']='requested'
             save_smoke_progress()
@@ -410,20 +458,16 @@ def main():
             if smoke_mode:
                 smoke_record['skill_commit_status']='accepted'
                 smoke_record['memory_after_commit']=copy.deepcopy(engine.memory.track)
-                sighting=synthetic.get('sighting')
-                smoke_record['sighting_committed']=bool(sighting is not None and
-                    engine.memory.track.get('seen_at')==packet['simulation_seconds'] and
-                    engine.memory.track.get('feet')==sighting['feet'])
-                smoke_record['memory_check_passed']=(
-                    smoke_record['sighting_committed'] if sighting is not None else
-                    engine.memory.track==smoke_record['memory_before'])
+                smoke_record['sighting_committed']=False
+                smoke_record['memory_check_passed']=engine.memory.track==smoke_record['memory_before']
         else:action=request['action'];camera_command=request['camera']
         decision=dict(**request,simulation_seconds=match.t,observation_file=f'observations/{index:03d}.json',
             observation_ready_utc=readyutc,decision_accepted_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),decision_wait_seconds=elapsed,tokens=None)
         if api_timing:decision.update(tokens=api_timing['tokens'],api=api_timing)
         if engine:decision.update(compiled_action=action.copy(),compiled_skill=compiled,skill_compile_seconds=time.monotonic()-compile_started)
         match.decisions.append(decision);dump(root/'decisions'/f'{index:03d}.json',decision)
-        match.apply(action,route);window=[frames[-1]]
+        match.apply(action,route);window=[] if smoke_mode else [frames[-1]]
+        if smoke_mode:window_samples=[]
         for step in range(1,101):
             if engine:
                 own_packet=observe([]);interruption=engine.tick(own_packet)
@@ -435,7 +479,9 @@ def main():
             if engine and abs(match.t-cfg['collapse']['time'])<1e-8 and not match.ref.finished:
                 action,route,camera_command,compiled=engine.plan(observe([]));match.apply(action,route)
                 execution.append(dict(time=match.t,event='known_map_replan',compiled=compiled))
-            if step%25==0 or match.ref.finished:window.append(capture())
+            if step%25==0 or match.ref.finished:
+                frame=capture();window.append(frame)
+                if smoke_mode:window_samples.append(sample_synthetic_frame(frame))
             if engine and (step%25==0 or match.ref.finished):execution.append(dict(time=match.t,**engine.public(match.t),camera_command=camera_command))
             if match.ref.finished:break
         if smoke_mode:
@@ -452,7 +498,7 @@ def main():
                 actual_state_change=bool(match_changed and stage_changed))
             save_smoke_progress()
     if smoke_mode:
-        summary=summarize_skill_runtime_smoke(smoke_cycles)
+        summary=summarize_skill_runtime_smoke(smoke_cycles,smoke_windows,frame_samples)
         dump(root/'synthetic_vision_skill_runtime_smoke.json',summary)
         dump(root/'result.json',dict(status=summary['status'],mode=summary['mode'],
             checks=summary['checks'],diagnostic_file='synthetic_vision_skill_runtime_smoke.json',

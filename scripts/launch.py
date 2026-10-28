@@ -35,7 +35,7 @@ if "--help" in sys.argv:
     print("--vision-trial --geometry-interface-probe --headless: read-only formal-scene segmentation/depth interface probe; no Skill commit or asset writeback.")
     print("--vision-trial --semantic-skills --synthetic-vision-mvp --headless: one current-scene synthetic foot sighting, Skill handoff, then exit; no external action or API.")
     print("--vision-trial --semantic-skills --synthetic-vision-mvp-validation --headless: three finite fresh sighting cycles, then exit; no external action or API.")
-    print("--vision-trial --semantic-skills --synthetic-vision-skill-runtime-smoke --headless: three native Skill actions in the normal loop with fresh synthetic observations; no external input or API.")
+    print("--vision-trial --semantic-skills --synthetic-vision-skill-runtime-smoke --headless: four native Skill actions in the normal loop with fresh half-second synthetic observations; no external input or API.")
     print("--vision-trial --semantic-skills --deepseek --headless: paid official DeepSeek Flash RGB planner, effort from config.")
     print("--vision-trial --semantic-skills --qwen-vision max|min --headless: paid Qwen3.6-27B public RGB; default max thinking budget or thinking off.")
     print("--vision-trial --semantic-skills --assessment --headless: external assistant, same four-field decision/assessment schema.")

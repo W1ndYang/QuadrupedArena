@@ -98,8 +98,17 @@ class SemanticSkills:
         if params.get('target','active') not in ['active']+[p['name'] for p in self.cfg['arena']['task_points']]:raise ValueError('Use a known target name')
         if 'cover' in params and params['cover'] not in [c['name'] for c in self.cfg['arena']['covers']]:raise ValueError('Unknown cover')
         if params.get('direction','scan') not in ('scan','threat','north','south','east','west'):raise ValueError('Unknown observation direction')
-        candidate=copy.deepcopy(self.memory);candidate.update(params.get('sighting'),packet)
+        return self._validated_memory(params.get('sighting'),packet)
+
+    def _validated_memory(self,sighting,packet):
+        candidate=copy.deepcopy(self.memory)
+        candidate.update(sighting,packet)
         return candidate
+
+    def observe_sighting(self,sighting,packet):
+        """Ingest one validated frame sighting without a Skill action decision."""
+        self.memory=self._validated_memory(sighting,packet)
+        return copy.deepcopy(self.memory.track)
 
     def public(self,t):return dict(skill_status=copy.deepcopy(self.status),visual_memory=self.memory.public(t))
 

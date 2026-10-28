@@ -10,8 +10,8 @@ from llm_trial import PROJECT
 from semantic_skills import SemanticSkills
 from vision_core import VisionMatch, public_packet
 from synthetic_vision_mvp import (
-    build_noisy_sighting, handoff_to_skill, run_validation_cases,
-    smoke_observation, smoke_request, summarize_skill_runtime_smoke,
+    build_noisy_sighting, build_window_context, handoff_to_skill, run_validation_cases,
+    sample_visibility, smoke_observation, smoke_request, summarize_skill_runtime_smoke,
     validation_pose, visibility_from_ray,
 )
 
@@ -100,6 +100,7 @@ class SyntheticVisionMvpTests(unittest.TestCase):
                                       miss_probability=1.0)
         self.assertIsNone(missed["sighting"])
         self.assertEqual(missed["reason"], "synthetic_miss")
+        self.assertEqual(sample_visibility(missed), "visible")
         out = build_noisy_sighting([candidate((0.1, 0.1))], packet, frame(), 768, 432,
                                    seed=1, pixel_noise_std=1000000.0)
         self.assertIsNone(out["sighting"])
@@ -304,6 +305,114 @@ class SyntheticVisionMvpTests(unittest.TestCase):
         self.assertIn("sum((args.synthetic_vision_mvp, args.synthetic_vision_mvp_validation,", source)
         self.assertNotIn("args.synthetic_vision_skill_runtime_smoke", source.split("if args.g1b1_visible_spawn or", 1)[1].split("\n", 1)[0])
         self.assertNotIn("rep.orchestrator.step(", source)
+
+    def test_half_second_windows_keep_55_sighting_at_its_own_time(self):
+        engine = SemanticSkills(self.cfg)
+        samples = []
+        decisions = []
+        for sample_id in range(17):
+            t = sample_id * .5
+            f = {**frame(), "file": f"frames/{sample_id:03d}_{t:05.2f}.png",
+                 "simulation_seconds": t}
+            state = copy.deepcopy(VisionMatch(self.cfg).states[-1]);state["t"] = t
+            packet = public_packet(sample_id, state, [f], self.cfg["start_b"])
+            c = candidate((400.0 + sample_id, 250.0))
+            if sample_id != 11:
+                c["visibility"] = {"status": "unknown"}
+            synthetic = build_noisy_sighting([c], packet, f, 768, 432,
+                                              seed=sample_id, pixel_noise_std=0)
+            before = copy.deepcopy(engine.memory.track)
+            if synthetic["sighting"] is not None:
+                engine.observe_sighting(synthetic["sighting"], packet)
+            sample = dict(observation_id=sample_id, simulation_seconds=t,
+                          frame_file=f["file"],packet_file=f"observations/frames/{sample_id:03d}.json",
+                          synthetic_file=f"synthetic_vision_frames/{sample_id:03d}.json",
+                          status=sample_visibility(synthetic),reason=synthetic["reason"],
+                          seed=sample_id,sighting=synthetic["sighting"],
+                          ingest_status="accepted" if synthetic["sighting"] else "not_attempted_no_sighting",
+                          memory_check_passed=True,
+                          visibility_statuses=[c["visibility"]["status"]])
+            samples.append(sample)
+            if sample_id == 0:
+                bootstrap = build_window_context(0, samples)
+                decisions.append(bootstrap)
+            elif sample_id % 4 == 0:
+                context = build_window_context(sample_id // 4, samples[-4:])
+                decisions.append(context)
+                if sample_id == 12:
+                    self.assertEqual(context["last_valid_sighting"]["simulation_seconds"], 5.5)
+                    self.assertEqual(context["frames"][-1]["simulation_seconds"], 6.0)
+                    self.assertIsNone(context["frames"][-1]["sighting"])
+                    self.assertEqual(engine.memory.track["seen_at"], 5.5)
+                    self.assertEqual(engine.sequence, 0)
+                    decision_packet = public_packet(3, state, [f], self.cfg["start_b"])
+                    request = smoke_request(3, decision_packet, None)
+                    engine.validate(request, decision_packet)
+                    engine.commit(request, decision_packet)
+                    self.assertEqual(engine.memory.track["seen_at"], 5.5)
+                    self.assertNotIn("sighting", request["params"])
+            elif sample_id > 11:
+                self.assertEqual(engine.memory.track, before)
+        self.assertEqual([x["end_simulation_seconds"] for x in decisions], [0., 2., 4., 6., 8.])
+        self.assertEqual([[f["simulation_seconds"] for f in x["frames"]] for x in decisions[1:]],
+                         [[.5, 1., 1.5, 2.], [2.5, 3., 3.5, 4.],
+                          [4.5, 5., 5.5, 6.], [6.5, 7., 7.5, 8.]])
+        self.assertEqual(len({s["observation_id"] for s in samples}), 17)
+        self.assertEqual(engine.sequence, 1)  # Only the explicit 6.0 s request decided.
+        request = smoke_request(2, public_packet(2, state, [f], self.cfg["start_b"]), None)
+        self.assertNotIn("sighting", request["params"])
+        self.assertEqual(request["skill"], "MOVE_TO")
+
+    def test_window_rejects_duplicate_and_wrong_time_samples(self):
+        samples = [dict(observation_id=i,simulation_seconds=.5 * (i + 1),
+                        frame_file=f"frames/{i:03d}.png",ingest_status="not_attempted_no_sighting")
+                   for i in range(4)]
+        self.assertTrue(build_window_context(1,samples)["no_valid_sighting"])
+        bad = copy.deepcopy(samples);bad[2]["observation_id"] = bad[1]["observation_id"]
+        with self.assertRaises(ValueError):build_window_context(1,bad)
+        bad = copy.deepcopy(samples);bad[2]["simulation_seconds"] = 1.6
+        with self.assertRaises(ValueError):build_window_context(1,bad)
+        with self.assertRaises(ValueError):build_window_context(1,samples[:3])
+
+    def test_frame_ingest_uses_visual_memory_validator_and_preserves_old_time(self):
+        engine = SemanticSkills(self.cfg)
+        f = {**frame(), "simulation_seconds": 5.5, "file": "frames/011_05.50.png"}
+        state = copy.deepcopy(VisionMatch(self.cfg).states[-1]);state["t"] = 5.5
+        packet = public_packet(11,state,[f],self.cfg["start_b"])
+        engine.observe_sighting({"time": 5.5, "feet": [400.0,250.0]},packet)
+        self.assertEqual(engine.memory.track["seen_at"],5.5)
+        self.assertEqual(engine.sequence,0)
+        old = copy.deepcopy(engine.memory.track)
+        f2 = {**f,"simulation_seconds": 6.0,"file": "frames/012_06.00.png"}
+        state["t"] = 6.0
+        packet2 = public_packet(12,state,[f2],self.cfg["start_b"])
+        engine.observe_sighting(None,packet2)
+        self.assertEqual(engine.memory.track,old)
+        with self.assertRaisesRegex(ValueError,"input frame"):
+            engine.observe_sighting({"time": 5.5,"feet": [400.0,250.0]},packet2)
+        self.assertEqual(engine.memory.track,old)
+
+    def test_windowed_summary_checks_timing_without_forcing_sighting(self):
+        samples = [dict(observation_id=i,simulation_seconds=.5*i,
+                        frame_file=f"frames/{i:03d}.png",ingest_status="not_attempted_no_sighting",
+                        memory_check_passed=True) for i in range(17)]
+        windows = [build_window_context(0,samples[:1])]+[
+            build_window_context(i,samples[1+4*(i-1):1+4*i]) for i in (1,2,3,4)]
+        records = [dict(observation_id=i,simulation_seconds=2.*i,
+                        action_request={"skill":"MOVE_TO"},action_status="executed",
+                        actual_state_change=i==0,memory_check_passed=True) for i in range(4)]
+        records.append(dict(observation_id=4,simulation_seconds=8.0))
+        result = summarize_skill_runtime_smoke(records,windows,samples)
+        self.assertEqual(result["status"],"passed")
+        self.assertEqual(result["checks"]["frame_sighting_ingests"],0)
+        bad = copy.deepcopy(samples);bad[11]["simulation_seconds"] = 5.6
+        self.assertEqual(summarize_skill_runtime_smoke(records,windows,bad)["status"],"partial")
+        bad = copy.deepcopy(samples);bad[11]["reason"] = "adapter_failed: RuntimeError: unavailable"
+        self.assertEqual(summarize_skill_runtime_smoke(records,windows,bad)["status"],"partial")
+        bad_windows = copy.deepcopy(windows)
+        bad_windows[3]["frames"][2]["frame_file"] = "frames/stale.png"
+        self.assertFalse(summarize_skill_runtime_smoke(records,bad_windows,samples)
+                         ["checks"]["window_refs_match_samples"])
 
 
 if __name__ == "__main__":
