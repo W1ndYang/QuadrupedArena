@@ -148,6 +148,51 @@ class OracleStateV1Tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             encode_limited(obs, cfg2, RegionCatalog.from_config(cfg2))
 
+    def test_limited_visual_region_respects_public_uncertainty_and_hidden_truth(self):
+        cfg, match, engine, catalog, packet = fixture()
+        initial = limited_from_public(packet, (None,), cfg)
+        self.assertEqual(dict(encode_limited(initial, cfg, catalog).fields)["A.visual_track_region"], "target_P2")
+        self.assertIsNone(catalog.locate_uncertain(tuple(cfg["start_b"]), .6, "pre_collapse"))
+        self.assertIsNone(catalog.locate_uncertain((-1. + .5, 3.25), .1, "pre_collapse"))
+        self.assertEqual(catalog.locate_uncertain((-4., .5), .6, "pre_collapse"), "open_traversable")
+        public_packet_with_track = copy.deepcopy(packet)
+        memory = public_packet_with_track["skills"]["visual_memory"]
+        memory.update(xy=[-4., .5], seen_at=0., source="rgb_foot_pixel",
+                      base_uncertainty=.6, age=0., uncertainty_radius=.6, aim_usable=True)
+        observed = limited_from_public(public_packet_with_track, (None,), cfg)
+        limited = encode_limited(observed, cfg, catalog)
+        self.assertEqual(dict(limited.fields)["A.visual_track_region"], "open_traversable")
+        self.assertEqual(dict(encode_limited(replace(observed, memory_xy=(-1., 3.25)), cfg, catalog).fields)
+                         ["A.visual_track_region"], "unknown")
+        self.assertEqual(dict(encode_limited(replace(observed, memory_uncertainty_radius=2.), cfg, catalog).fields)
+                         ["A.visual_track_region"], "unknown")
+        self.assertEqual(dict(encode_limited(replace(observed, memory_xy=None, memory_seen_at=None,
+                                                     memory_uncertainty_radius=None), cfg, catalog).fields)
+                         ["A.visual_track_region"], "unknown")
+        self.assertEqual(dict(encode_limited(replace(observed, memory_xy=None, memory_expired=True,
+                                                     memory_uncertainty_radius=None), cfg, catalog).fields)
+                         ["A.visual_track_region"], "unknown")
+        expired = replace(observed, t=6., observation_id=3,
+                          frames=tuple(replace(observed.frames[0], time=t) for t in (4.5, 5., 5.5, 6.)),
+                          previous_action_id=action_catalog(cfg)[0].template_id,
+                          memory_xy=None, memory_seen_at=0., memory_source=None,
+                          memory_expired=True, memory_uncertainty_radius=None)
+        self.assertEqual(encode_limited(expired, cfg, catalog).status, "valid")
+        self.assertEqual(dict(encode_limited(expired, cfg, catalog).fields)["A.visual_track_region"], "unknown")
+        # A feet pixel projecting to the P2 centre still cannot certify the
+        # entire fresh 0.6 m sighting disk inside P2's 0.55 m radius.
+        centre_frame = replace(observed.frames[0], camera_eye=(-1.881407077, 3.25, .6),
+                               feet=(384., 431.))
+        self.assertEqual(dict(encode_limited(replace(observed, frames=(centre_frame,)), cfg, catalog).fields)
+                         ["window.latest_sighting_region"], "unknown")
+        full_before = encode_full(capture_reference(match, engine, CameraRig()), cfg, catalog)
+        match.b.xy[:] = [3.7, 1.5]
+        match.human.state = "ELIMINATED"
+        self.assertEqual(limited, encode_limited(limited_from_public(public_packet_with_track, (None,), cfg), cfg, catalog))
+        full_after = encode_full(capture_reference(match, engine, CameraRig()), cfg, catalog)
+        self.assertNotEqual(full_before.state_id, full_after.state_id)
+        self.assertEqual(dict(full_after.fields)["B.region_id"], "cover_High2")
+
     def test_fixed_reference_eta_and_limited_motion_isolation(self):
         cfg, match, engine, catalog, packet = fixture()
         original = encode_full(capture_reference(match, engine, CameraRig()), cfg, catalog)
@@ -187,6 +232,11 @@ class OracleStateV1Tests(unittest.TestCase):
         record = encode_boundary(match, engine, CameraRig(), packet, (None,), cfg, catalog)
         self.assertEqual(record["full"]["status"], "valid")
         self.assertEqual(record["limited"]["status"], "valid")
+        self.assertIn("B.region_id", record["full"])
+        self.assertNotIn("B.region_id", record["limited"])
+        self.assertEqual(record["limited"]["A.visual_track_region"],
+                         dict(encode_limited(limited_from_public(packet, (None,), cfg), cfg, catalog).fields)
+                         ["A.visual_track_region"])
         self.assertEqual(record["frame_count"], 1)
         self.assertEqual(record["render_sync_quality"], "blocked")
         self.assertNotIn("threshold", str(record))

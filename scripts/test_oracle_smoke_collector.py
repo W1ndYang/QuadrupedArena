@@ -26,6 +26,11 @@ BOUNDARY = {
 
 
 class CollectorTests(unittest.TestCase):
+    def setUp(self):
+        runtime_environment = patch.dict(os.environ, {"ARENA_PYTHON": sys.executable})
+        runtime_environment.start()
+        self.addCleanup(runtime_environment.stop)
+
     def make_collector(self, root: Path, *, diagnostic=True, diagnostic_payload=None, sleep=0, smoke_exit=0,
                        first_test_exit=0, timeout=10):
         runtime_parent = root / "runtime_parent"
@@ -41,9 +46,9 @@ class CollectorTests(unittest.TestCase):
                 "(p/'frames').mkdir();(p/'frames'/'image.png').write_bytes(b'fake image'); "
                 + (f"(p/'oracle_state_diagnostic.json').write_text({payload!r}); " if diagnostic else "")
                 + f"time.sleep({sleep}); sys.exit({smoke_exit})")
-        tests = (("oracle", (sys.executable, "-c", f"raise SystemExit({first_test_exit})")),
-                 ("related", (sys.executable, "-c", "print('related passed')")),
-                 ("diff_check", (sys.executable, "-c", "print('diff passed')")))
+        tests = (("oracle", ("-c", f"raise SystemExit({first_test_exit})")),
+                 ("related", ("-c", "print('related passed')")),
+                 ("diff_check", ("git", "diff", "--check")))
         return Collector(REPO, root / "output", smoke_command=(sys.executable, "-c", code, str(runtime)),
                          test_commands=tests, timeout_seconds=timeout,
                          runtime_parent=runtime_parent)
@@ -94,6 +99,60 @@ class CollectorTests(unittest.TestCase):
             self.assertEqual(summary["tests"]["diff_check"]["status"], "success")
             self.assertTrue(collector.archive.exists())
             self.assertGreater(size, 0)
+
+    def test_runtime_python_is_used_and_recorded_for_both_test_groups(self):
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"ARENA_PYTHON": sys.executable}):
+            collector = self.make_collector(Path(temp))
+            summary, _, _ = collector.run()
+            expected = str(Path(sys.executable).absolute())
+            self.assertEqual(summary["smoke"]["status"], "success")
+            for name in ("oracle", "related"):
+                record = summary["tests"][name]
+                self.assertEqual(record["status"], "success")
+                self.assertEqual(record["interpreter"], expected)
+                self.assertEqual(record["interpreter_probe"]["status"], "success")
+                log = (collector.directory / record["log"]).read_text()
+                self.assertIn(expected + " -c", log)
+                self.assertIn("Runtime Python --version: Python ", log)
+                self.assertIn('NumPy import/version: {"status": "success", "version":', log)
+            self.assertEqual(summary["tests"]["diff_check"]["status"], "success")
+            self.assertIn("Command: git diff --check", (collector.directory / "tests/diff_check.log").read_text())
+
+    def test_missing_or_nonexecutable_runtime_python_blocks_tests_without_fallback(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            not_executable = root / "not_executable_python"
+            not_executable.write_text("#!/bin/sh\nexit 0\n")
+            for index, configured in enumerate((str(root / "missing_python"), str(not_executable))):
+                with self.subTest(configured=configured), patch.dict(os.environ, {"ARENA_PYTHON": configured}):
+                    collector = self.make_collector(root / f"case_{index}")
+                    summary, size, _ = collector.run()
+                    self.assertEqual(summary["smoke"]["status"], "success")
+                    self.assertGreater(size, 0)
+                    self.assertEqual(summary["tests"]["oracle"]["status"], "blocked")
+                    self.assertEqual(summary["tests"]["related"]["status"], "blocked")
+                    self.assertEqual(summary["tests"]["diff_check"]["status"], "success")
+                    self.assertIsNone(summary["tests"]["oracle"]["interpreter"])
+                    self.assertIn("No system Python fallback", (collector.directory / "tests/oracle.log").read_text())
+                    self.assertIsNone(summary["dependency_probe"]["probe_python_command"])
+
+    def test_missing_numpy_blocks_python_tests_and_keeps_smoke_separate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            fake_python = root / "python_without_numpy"
+            fake_python.write_text("#!/bin/sh\n"
+                                   "if [ \"$1\" = --version ]; then echo 'Python 3.11.0'; else "
+                                   "echo '{\"numpy_import\":{\"status\":\"failed\",\"error\":\"ModuleNotFoundError: numpy\"}}'; fi\n")
+            fake_python.chmod(0o755)
+            with patch.dict(os.environ, {"ARENA_PYTHON": str(fake_python)}):
+                collector = self.make_collector(root)
+                summary, _, _ = collector.run()
+            self.assertEqual(summary["smoke"]["status"], "success")
+            self.assertEqual(summary["tests"]["oracle"]["status"], "blocked")
+            self.assertEqual(summary["tests"]["related"]["status"], "blocked")
+            self.assertEqual(summary["tests"]["diff_check"]["status"], "success")
+            self.assertEqual(summary["dependency_probe"]["numpy_import"]["status"], "failed")
+            self.assertIn("ModuleNotFoundError: numpy", (collector.directory / "tests/related.log").read_text())
 
     def test_timeout_terminates_and_packs(self):
         with tempfile.TemporaryDirectory() as temp:

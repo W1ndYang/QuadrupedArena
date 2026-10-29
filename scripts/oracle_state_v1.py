@@ -23,6 +23,8 @@ from trial_rules import covers_at
 
 
 SCHEMA_VERSION = "oracle_state_v1_1"
+# Existing VisualMemory.update assigns this radius to a fresh rgb_foot_pixel sighting.
+RGB_FOOT_PIXEL_BASE_UNCERTAINTY = 0.6
 VIEWS = ("full", "limited")
 SKILLS = ("MOVE_TO", "CAPTURE_POINT", "TAKE_COVER", "AIM_AT_TRACK", "OBSERVE")
 DIRECTIONS = ("scan", "threat", "north", "south", "east", "west")
@@ -182,6 +184,38 @@ class RegionCatalog:
             return "cover_" + nearby[0][1]
         return "open_traversable"
 
+    def locate_uncertain(self, xy: tuple[float, float], radius: float, phase: str) -> str | None:
+        """Certify one label for the entire estimate disk, else return unknown."""
+        xy = _xy(xy, "uncertain region point")
+        radius = _number(radius, "uncertainty radius", 0)
+        if radius == 0:
+            return self.locate(xy, phase)
+        if phase not in ("pre_collapse", "post_collapse"):
+            raise ValueError("Invalid map phase")
+        targets = [region for region in self.regions if region.role == "target_zone"]
+        for region in targets:
+            distance = math.dist(xy, region.center)
+            if distance + radius <= region.radius:
+                return region.region_id
+            if distance - radius <= region.radius + 1e-10:
+                return None
+        planner = self.planners[0 if phase == "pre_collapse" else 1]
+        if abs(xy[0]) + radius > 5.55 or abs(xy[1]) + radius > 3.55:
+            return None
+        # Rectangle clearance is 1-Lipschitz: a radius-r disk can lower any
+        # clearance by at most r. This also covers the reserved collapse sweep.
+        if any(clearance(xy, obstacle) - radius < planner.margin
+               for obstacle in planner.obstacles):
+            return None
+        nearby = sorted((clearance(xy, cover), cover["name"]) for cover in planner.covers)
+        if not nearby or nearby[0][0] - radius > self.cover_band_width:
+            return "open_traversable"
+        nearest_distance, nearest_name = nearby[0]
+        if nearest_distance + radius <= self.cover_band_width and (
+                len(nearby) == 1 or nearby[1][0] - nearest_distance > 2 * radius):
+            return "cover_" + nearest_name
+        return None
+
     def adjacent(self, region_id: str, phase: str) -> tuple[str, ...] | None:
         if phase not in ("pre_collapse", "post_collapse"):
             raise ValueError("Invalid map phase")
@@ -308,6 +342,7 @@ class LimitedObservationInput:
     memory_seen_at: float | None
     memory_source: str | None
     memory_expired: bool
+    memory_uncertainty_radius: float | None
     skill_status: str
     frames: tuple[FrameSighting, ...]
     previous_action_id: str | None = None
@@ -345,12 +380,14 @@ def limited_from_public(packet: dict, sightings: tuple[dict | None, ...], cfg: d
     if expired:
         if set(memory) != {"status", "last_seen_at", "current_position"} or memory["current_position"] != "unknown":
             raise ValueError("Invalid expired visual memory")
-        mxy, mseen, msource = None, _number(memory["last_seen_at"], "last_seen_at", 0), None
+        mxy, mseen, msource, mradius = None, _number(memory["last_seen_at"], "last_seen_at", 0), None, None
     else:
         allowed = {"xy", "seen_at", "source", "base_uncertainty", "age", "uncertainty_radius", "aim_usable", "frame", "feet"}
         if set(memory) - allowed or not {"xy", "seen_at", "source"} <= set(memory):
             raise ValueError("Invalid public visual memory")
         mxy, mseen, msource = _xy(memory["xy"], "memory.xy"), _number(memory["seen_at"], "seen_at", 0), memory["source"]
+        mradius = (_number(memory["uncertainty_radius"], "memory.uncertainty_radius", 0)
+                   if "uncertainty_radius" in memory else None)
     status = skill["skill_status"]
     if not isinstance(status, dict) or not isinstance(status.get("state"), str):
         raise ValueError("Invalid public Skill status")
@@ -360,7 +397,7 @@ def limited_from_public(packet: dict, sightings: tuple[dict | None, ...], cfg: d
         _number(own["speed"], "own.speed", 0), own["hp"], _number(own["cooldown"], "own.cooldown", 0),
         own["skill_status"], _number(public["score"], "score", 0), public["active_target"],
         public["target_generation"], public["target_remaining"], tuple(public["dwell"]), public["finished"],
-        mxy, mseen, msource, expired, status["state"], tuple(result), previous_action_id,
+        mxy, mseen, msource, expired, mradius, status["state"], tuple(result), previous_action_id,
     )
 
 
@@ -683,6 +720,12 @@ def encode_limited(obs: LimitedObservationInput, cfg: dict, catalog: RegionCatal
                               obs.memory_seen_at, obs.memory_source, obs.own_skill_status,
                               signed_speed_known=False)
     phase = fields["map_phase"]
+    if (obs.memory_xy is not None and obs.memory_seen_at is not None
+            and t - obs.memory_seen_at <= 4 and obs.memory_uncertainty_radius is not None):
+        fields["A.visual_track_region"] = (catalog.locate_uncertain(
+            obs.memory_xy, obs.memory_uncertainty_radius, phase) or "unknown")
+    else:
+        fields["A.visual_track_region"] = "unknown"
     mask = "".join("1" if f.feet is not None else "0" for f in obs.frames)
     valid = [f for f in obs.frames if f.feet is not None]
     from semantic_skills import ground_point
@@ -695,7 +738,7 @@ def encode_limited(obs: LimitedObservationInput, cfg: dict, catalog: RegionCatal
             # A syntactically valid foot ray is not guaranteed to hit valid ground.
             regions.append(None)
         else:
-            regions.append(catalog.locate(xy, phase))
+            regions.append(catalog.locate_uncertain(xy, RGB_FOOT_PIXEL_BASE_UNCERTAINTY, phase))
     latest = valid[-1] if valid else None
     latest_region = regions[-1] if regions else None
     latest_age = None if latest is None else t - latest.time

@@ -11,15 +11,19 @@ from oracle_state_v1 import (
 
 def _summary(state):
     fields = dict(state.fields)
-    return {
+    summary = {
         "status": state.status,
         "reason": state.reason,
         "state_id": state.state_id,
         "decision_step": fields.get("decision_step"),
         "map_phase": fields.get("map_phase"),
         "A.region_id": fields.get("A.region_id"),
-        "B.region_id": fields.get("B.region_id"),
     }
+    if state.view == "full":
+        summary["B.region_id"] = fields.get("B.region_id")
+    elif state.view == "limited":
+        summary["A.visual_track_region"] = fields.get("A.visual_track_region")
+    return summary
 
 
 def encode_boundary(match, engine, rig, packet, accepted_sightings, cfg,

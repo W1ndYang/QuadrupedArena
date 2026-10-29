@@ -28,8 +28,8 @@ import uuid
 DEFAULT_SMOKE = ("bash", "run.sh", "--vision-trial", "--semantic-skills",
                  "--synthetic-vision-skill-runtime-smoke", "--oracle-state-diagnostic", "--headless")
 TEST_COMMANDS = (
-    ("oracle", ("python3", "-m", "unittest", "scripts.test_oracle_state_v1", "-v")),
-    ("related", ("python3", "-m", "unittest", "scripts.test_trial_rules",
+    ("oracle", ("-m", "unittest", "scripts.test_oracle_state_v1", "-v")),
+    ("related", ("-m", "unittest", "scripts.test_trial_rules",
                  "scripts.test_semantic_skills", "scripts.test_rotating_targets",
                  "scripts.test_vision_core", "scripts.test_synthetic_vision_mvp",
                  "scripts.test_adaptive_motion", "-v")),
@@ -145,7 +145,7 @@ class Collector:
 
     def _run(self, name: str, command: tuple[str, ...], log_path: Path,
              *, timeout: int, echo: bool = False, env_prefix: str = "",
-             env: dict[str, str] | None = None) -> dict:
+             env: dict[str, str] | None = None, log_context: str = "") -> dict:
         started = timestamp()
         t0 = time.monotonic()
         record = {"name": name, "command": command_string(command, env_prefix),
@@ -154,6 +154,8 @@ class Collector:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("wb") as log:
             log.write(("Command: " + record["command"] + "\nStarted: " + started + "\n").encode())
+            if log_context:
+                log.write((log_context + "\n").encode())
             log.flush()
             try:
                 process = subprocess.Popen(command, cwd=self.repo, env=env,
@@ -267,9 +269,19 @@ class Collector:
                "expected_flags_present_in_source": expected,
                "smoke_command": command_string(self.smoke_command)}
         (env_dir / "cli_check.json").write_text(json.dumps(cli, indent=2) + "\n")
-        runtime_python = os.environ.get("ARENA_PYTHON", "python")
-        runtime_python_available = shutil.which(runtime_python) is not None
-        probe_python = runtime_python if runtime_python_available else sys.executable
+        runtime_python = os.environ.get("ARENA_PYTHON") or "python"
+        found_python = shutil.which(runtime_python)
+        # Preserve a Conda environment's bin/python path even when it is a symlink;
+        # resolving through the symlink could select a different sys.prefix.
+        resolved_python = str(Path(found_python).absolute()) if found_python else None
+        runtime_python_available = resolved_python is not None
+        python_version = None
+        if resolved_python:
+            version_record = self._run("runtime_python_version", (resolved_python, "--version"),
+                                       env_dir / "runtime_python_version.log", timeout=30)
+            if version_record["status"] == "success":
+                python_version = next((line for line in (env_dir / "runtime_python_version.log").read_text().splitlines()
+                                       if line.startswith("Python ")), None)
         probe = ("import importlib.util, importlib.metadata, json, sys; "
                  "names=['isaaclab','isaacsim','omni','numpy','PIL']; out={}; "
                  "\nfor name in names:\n"
@@ -279,14 +291,23 @@ class Collector:
                  "  except importlib.metadata.PackageNotFoundError: version=None\n"
                  "  out[name]={'import_spec_present':present,'distribution_version':version}\n"
                  " except Exception as exc: out[name]={'error':type(exc).__name__+': '+str(exc)}\n"
-                 "print(json.dumps({'executable':sys.executable,'version':sys.version,'modules':out}))")
-        dep_record = self._run("dependency_probe", (probe_python, "-c", probe),
-                               env_dir / "dependency_probe.log", timeout=30)
-        dependencies = {"command_status": dep_record["status"], "python_command": runtime_python,
+                 "try:\n import numpy as np\n numpy_import={'status':'success','version':np.__version__}\n"
+                 "except Exception as exc:\n numpy_import={'status':'failed','error':type(exc).__name__+': '+str(exc)}\n"
+                 "print(json.dumps({'executable':sys.executable,'version':sys.version,'modules':out,'numpy_import':numpy_import}))")
+        dependencies = {"command_status": "blocked", "python_command": runtime_python,
                         "runtime_python_command_available": runtime_python_available,
-                        "probe_python_command": probe_python,
-                        "modules": {}, "parse_error": None}
-        if dep_record["exit_code"] == 0:
+                        "runtime_python_resolved": resolved_python,
+                        "python_version_command": python_version,
+                        "probe_python_command": resolved_python,
+                        "modules": {}, "numpy_import": None, "parse_error": None}
+        if resolved_python:
+            dep_record = self._run("dependency_probe", (resolved_python, "-c", probe),
+                                   env_dir / "dependency_probe.log", timeout=30)
+            dependencies["command_status"] = dep_record["status"]
+        else:
+            (env_dir / "dependency_probe.log").write_text(
+                f"Blocked: runtime Python {runtime_python!r} is missing or not executable; no fallback interpreter used.\n")
+        if resolved_python and dep_record["exit_code"] == 0:
             try:
                 lines = (env_dir / "dependency_probe.log").read_text().splitlines()
                 dependencies.update(json.loads(next(line for line in lines if line.startswith("{"))))
@@ -402,15 +423,39 @@ class Collector:
             for name, _ in self.test_commands:
                 self.tests[name] = {"status": "not_run_interrupted", "exit_code": None}
             return
+        dependencies = self.environment.get("dependencies", {})
+        interpreter = dependencies.get("runtime_python_resolved")
+        numpy_import = dependencies.get("numpy_import")
+        version = dependencies.get("python_version_command")
+        ready = bool(interpreter and version and dependencies.get("command_status") == "success"
+                     and isinstance(numpy_import, dict) and numpy_import.get("status") == "success")
+        context = (f"Runtime Python: {interpreter or 'unresolved'}\n"
+                   f"Runtime Python --version: {version or 'unavailable'}\n"
+                   f"NumPy import/version: {json.dumps(numpy_import, ensure_ascii=False) if numpy_import else 'unavailable'}")
         for name, command in self.test_commands:
             env = os.environ.copy()
             prefix = ""
-            if name in ("oracle", "related"):
+            if name != "diff_check":
+                if not ready:
+                    reason = (f"Blocked: runtime Python {dependencies.get('python_command', 'python')!r} "
+                              "is unavailable, its --version/dependency probe failed, or NumPy cannot be imported. "
+                              "No system Python fallback was used.")
+                    log_path = self.directory / "tests" / f"{name}.log"
+                    log_path.write_text(context + "\n" + reason + "\n")
+                    self.tests[name] = {"status": "blocked", "exit_code": None,
+                                        "log": str(log_path.relative_to(self.directory)),
+                                        "interpreter": interpreter, "interpreter_probe": numpy_import}
+                    continue
                 env["PYTHONPATH"] = "scripts"
                 env["PYTHONDONTWRITEBYTECODE"] = "1"
                 prefix = "PYTHONPATH=scripts "
+                command = (interpreter, *command)
             record = self._run(name, command, self.directory / "tests" / f"{name}.log",
-                               timeout=900, env_prefix=prefix, env=env)
+                               timeout=900, env_prefix=prefix, env=env,
+                               log_context=context if name != "diff_check" else "")
+            if name != "diff_check":
+                record["interpreter"] = interpreter
+                record["interpreter_probe"] = numpy_import
             self.tests[name] = record
             if self.interrupted:
                 break
@@ -430,7 +475,9 @@ class Collector:
                    "smoke": self.smoke, "diagnostic": self.diagnostic,
                    "diagnostic_json_found": self.diagnostic["found"],
                    "tests": {name: {"status": item["status"], "exit_code": item["exit_code"],
-                                     "log": item.get("log")} for name, item in self.tests.items()},
+                                     "log": item.get("log"), "interpreter": item.get("interpreter"),
+                                     "interpreter_probe": item.get("interpreter_probe")}
+                             for name, item in self.tests.items()},
                    "dependency_probe": self.environment.get("dependencies", {}),
                    "uncommitted_changes": self.environment.get("code", {}).get("uncommitted_changes"),
                    "isaac_startup_evidence": startup_evidence,
