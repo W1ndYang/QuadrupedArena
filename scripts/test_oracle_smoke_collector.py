@@ -1,0 +1,151 @@
+"""Mac/CPU integration tests of the one-command collector's failure paths."""
+
+import json
+import os
+from pathlib import Path
+import signal
+import sys
+import tarfile
+import tempfile
+import threading
+import unittest
+from unittest.mock import patch
+
+from collect_oracle_v1_1_runtime_smoke import Collector, safe_remote, sha256_file
+
+
+REPO = Path(__file__).resolve().parents[1]
+BOUNDARY = {
+    "simulation_seconds": 0.0, "frame_count": 1, "render_sync_quality": "blocked",
+    "full": {"status": "valid", "reason": None, "state_id": "f1", "decision_step": 0,
+             "map_phase": "pre_collapse", "A.region_id": "open_traversable",
+             "B.region_id": "open_traversable"},
+    "limited": {"status": "valid", "reason": None, "state_id": "l1", "decision_step": 0,
+                "map_phase": "pre_collapse", "A.region_id": "open_traversable"},
+}
+
+
+class CollectorTests(unittest.TestCase):
+    def make_collector(self, root: Path, *, diagnostic=True, diagnostic_payload=None, sleep=0, smoke_exit=0,
+                       first_test_exit=0, timeout=10):
+        runtime_parent = root / "runtime_parent"
+        runtime = runtime_parent / "new_run"
+        payload = json.dumps(diagnostic_payload if diagnostic_payload is not None else
+                             {"render_sync_quality": "blocked", "same_frame_verified": False,
+                              "boundaries": [BOUNDARY]})
+        code = ("from pathlib import Path; import sys,time; "
+                "p=Path(sys.argv[1]);p.mkdir(parents=True); "
+                "print('Run: '+str(p),flush=True); "
+                "(p/'runtime.log').write_text('mock runtime\\n'); "
+                "(p/'result.json').write_text('{\"status\":\"passed\"}'); "
+                "(p/'frames').mkdir();(p/'frames'/'image.png').write_bytes(b'fake image'); "
+                + (f"(p/'oracle_state_diagnostic.json').write_text({payload!r}); " if diagnostic else "")
+                + f"time.sleep({sleep}); sys.exit({smoke_exit})")
+        tests = (("oracle", (sys.executable, "-c", f"raise SystemExit({first_test_exit})")),
+                 ("related", (sys.executable, "-c", "print('related passed')")),
+                 ("diff_check", (sys.executable, "-c", "print('diff passed')")))
+        return Collector(REPO, root / "output", smoke_command=(sys.executable, "-c", code, str(runtime)),
+                         test_commands=tests, timeout_seconds=timeout,
+                         runtime_parent=runtime_parent)
+
+    def test_success_manifest_and_secret_redaction(self):
+        with tempfile.TemporaryDirectory() as temp, patch.dict(os.environ, {"FAKE_API_SECRET": "SECRET_SENTINEL_123"}):
+            root = Path(temp)
+            stale = root / "runtime_parent" / "old_run"
+            stale.mkdir(parents=True)
+            (stale / "oracle_state_diagnostic.json").write_text("STALE_DIAGNOSTIC")
+            collector = self.make_collector(root)
+            summary, size, digest = collector.run()
+            self.assertEqual(summary["smoke"]["status"], "success")
+            self.assertTrue(summary["diagnostic"]["found"])
+            self.assertEqual(summary["diagnostic"]["boundary_count"], 1)
+            self.assertEqual(summary["diagnostic"]["render_sync_quality"], "blocked")
+            self.assertFalse(summary["diagnostic"]["same_frame_verified"])
+            self.assertEqual(summary["tests"]["related"]["status"], "success")
+            self.assertGreater(size, 0)
+            self.assertEqual(len(digest), 64)
+            manifest = collector.directory / "summary/manifest_files.txt"
+            for line in manifest.read_text().splitlines()[1:]:
+                relative, byte_count, checksum = line.split("\t")
+                self.assertEqual((collector.directory / relative).stat().st_size, int(byte_count))
+                self.assertEqual(sha256_file(collector.directory / relative), checksum)
+            recorded_manifest_hash = (collector.directory / "summary/manifest.sha256").read_text().split()[0]
+            self.assertEqual(sha256_file(manifest), recorded_manifest_hash)
+            with tarfile.open(collector.archive, "r:gz") as archive:
+                members = archive.getnames()
+                self.assertTrue(any(name.endswith("/summary/manifest_files.txt") for name in members))
+                self.assertTrue(any(name.endswith("/diagnostics/oracle_state_diagnostic.json") for name in members))
+                self.assertFalse(any(name.endswith("/frames/image.png") for name in members))
+                self.assertFalse(any("old_run" in name for name in members))
+            bundle_text = "\n".join(p.read_text(errors="replace") for p in collector.directory.rglob("*") if p.is_file())
+            self.assertNotIn("SECRET_SENTINEL_123", bundle_text)
+            self.assertNotIn("STALE_DIAGNOSTIC", bundle_text)
+
+    def test_failed_smoke_missing_diagnostic_and_test_failure_still_pack(self):
+        with tempfile.TemporaryDirectory() as temp:
+            collector = self.make_collector(Path(temp), diagnostic=False, smoke_exit=7, first_test_exit=9)
+            summary, size, _ = collector.run()
+            self.assertEqual(summary["smoke"]["status"], "failed")
+            self.assertEqual(summary["smoke"]["exit_code"], 7)
+            self.assertFalse(summary["diagnostic"]["found"])
+            self.assertIn("diagnostic_json_missing", summary["anomalies"])
+            self.assertEqual(summary["tests"]["oracle"]["status"], "failed")
+            self.assertEqual(summary["tests"]["related"]["status"], "success")
+            self.assertEqual(summary["tests"]["diff_check"]["status"], "success")
+            self.assertTrue(collector.archive.exists())
+            self.assertGreater(size, 0)
+
+    def test_timeout_terminates_and_packs(self):
+        with tempfile.TemporaryDirectory() as temp:
+            collector = self.make_collector(Path(temp), diagnostic=False, sleep=5, timeout=1)
+            summary, size, _ = collector.run()
+            self.assertEqual(summary["smoke"]["status"], "timeout")
+            self.assertEqual(summary["smoke"]["exit_code"], 124)
+            self.assertGreater(size, 0)
+
+    def test_malformed_current_diagnostic_is_preserved(self):
+        with tempfile.TemporaryDirectory() as temp:
+            collector = self.make_collector(Path(temp), diagnostic_payload={"boundaries": "wrong"})
+            summary, size, _ = collector.run()
+            self.assertEqual(summary["smoke"]["status"], "failed")
+            self.assertTrue(summary["diagnostic"]["found"])
+            self.assertIsNotNone(summary["diagnostic"]["parse_error"])
+            self.assertEqual(json.loads((collector.directory / "diagnostics/oracle_state_diagnostic.json").read_text()),
+                             {"boundaries": "wrong"})
+            self.assertGreater(size, 0)
+
+    def test_runtime_symlink_cannot_copy_unrelated_file(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            collector = self.make_collector(root, diagnostic=False)
+            runtime = collector.runtime_parent / "new_run"
+            runtime.mkdir(parents=True)
+            secret = root / "unrelated_secret.txt"
+            secret.write_text("NOT_FOR_UPLOAD")
+            (runtime / "oracle_state_diagnostic.json").symlink_to(secret)
+            collector.collect_runtime(runtime)
+            self.assertFalse(collector.diagnostic["found"])
+            self.assertFalse((collector.directory / "diagnostics/oracle_state_diagnostic.json").exists())
+
+    def test_interruption_requests_termination_and_packs(self):
+        with tempfile.TemporaryDirectory() as temp:
+            collector = self.make_collector(Path(temp), diagnostic=False, sleep=5)
+            timer = threading.Timer(.5, lambda: collector._signal(signal.SIGINT, None))
+            timer.start()
+            try:
+                summary, size, _ = collector.run()
+            finally:
+                timer.cancel()
+                timer.join()
+            self.assertEqual(summary["smoke"]["status"], "interrupted")
+            self.assertEqual(summary["tests"]["oracle"]["status"], "not_run_interrupted")
+            self.assertGreater(size, 0)
+
+    def test_remote_redaction(self):
+        self.assertEqual(safe_remote("https://user:TOP_SECRET@github.com/team/repo.git?token=SECRET"),
+                         {"scheme": "https", "host": "github.com", "repository_basename": "repo.git"})
+        self.assertEqual(safe_remote("git@github.com:team/repo.git")["host"], "github.com")
+
+
+if __name__ == "__main__":
+    unittest.main()

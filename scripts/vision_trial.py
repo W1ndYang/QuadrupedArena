@@ -33,6 +33,8 @@ parser.add_argument('--synthetic-vision-mvp-validation',action='store_true',
                     help='Three finite current-scene sighting cycles: clear, High2 occluded, moved clear')
 parser.add_argument('--synthetic-vision-skill-runtime-smoke',action='store_true',
                     help='Three native Skill actions in the normal match loop with fresh synthetic observations')
+parser.add_argument('--oracle-state-diagnostic',action='store_true',
+                    help='Optional read-only Oracle state IDs at synthetic Skill smoke decision boundaries')
 parser.add_argument('--synthetic-pixel-noise-std',type=float,default=1.0)
 parser.add_argument('--synthetic-miss-probability',type=float,default=0.0)
 parser.add_argument('--synthetic-seed',type=int,default=20261028)
@@ -51,6 +53,8 @@ if (args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.sy
     parser.error('Synthetic vision modes require --vision-trial --semantic-skills and exclude other diagnostic/planner modes')
 if args.synthetic_pixel_noise_std<0 or not math.isfinite(args.synthetic_pixel_noise_std) or not 0<=args.synthetic_miss_probability<=1 or not math.isfinite(args.synthetic_miss_probability):
     parser.error('Invalid synthetic sighting noise or miss probability')
+if args.oracle_state_diagnostic and not args.synthetic_vision_skill_runtime_smoke:
+    parser.error('--oracle-state-diagnostic requires --synthetic-vision-skill-runtime-smoke')
 from formal_geometry_diagnostic import diagnostic_mode_error
 mode_error=diagnostic_mode_error(args)
 if mode_error:parser.error(mode_error)
@@ -310,6 +314,11 @@ def main():
         from synthetic_vision_mvp import (build_window_context, observe_current_scene,
             sample_visibility, smoke_observation, smoke_request, summarize_skill_runtime_smoke)
         smoke_cycles=[];frame_samples=[];smoke_windows=[]
+        if args.oracle_state_diagnostic:
+            from oracle_state_v1 import RegionCatalog, action_template
+            from oracle_state_v1_smoke import encode_boundary
+            oracle_catalog=RegionCatalog.from_config(cfg)
+            oracle_records=[];oracle_previous_action_id=None
         for name in ('observations/frames','synthetic_vision_frames','synthetic_vision_windows'):
             (root/name).mkdir(parents=True,exist_ok=True)
         def stage_actor_state():
@@ -392,6 +401,14 @@ def main():
             smoke_windows.append(context)
             packet['synthetic_vision_window']=context
             dump(root/'observations'/f'{index:03d}.json',packet)
+            if args.oracle_state_diagnostic:
+                accepted=tuple(sample['sighting'] if sample['ingest_status']=='accepted' else None
+                               for sample in window_samples)
+                oracle_records.append(encode_boundary(match,engine,rig,packet,accepted,cfg,
+                    oracle_catalog,oracle_previous_action_id,render_sync_quality='blocked'))
+                dump(root/'oracle_state_diagnostic.json',dict(mode='read_only_state_encoding',
+                    source='existing_synthetic_vision_skill_runtime_smoke',
+                    same_frame_verified=False,render_sync_quality='blocked',boundaries=oracle_records))
             frame=window[-1]
             smoke_record=dict(cycle_index=index,start_status='started',end_status='running',
                 observation_id=packet['observation_id'],simulation_seconds=packet['simulation_seconds'],
@@ -415,6 +432,8 @@ def main():
             # Frame sightings were validated and ingested at their own 0.5 s timestamps.
             # The native Skill decision reads memory; it does not replay a prior sighting.
             request=smoke_request(index,packet,None)
+            if args.oracle_state_diagnostic:
+                oracle_previous_action_id=action_template(request['skill'],request['params'],cfg).template_id
             smoke_record['action_request']=request
             smoke_record['action_status']='requested'
             save_smoke_progress()
