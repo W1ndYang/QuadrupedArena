@@ -24,11 +24,14 @@ import time
 import urllib.parse
 import uuid
 
+from oracle_transition_trace import validate_trace_payload
+
 
 DEFAULT_SMOKE = ("bash", "run.sh", "--vision-trial", "--semantic-skills",
                  "--synthetic-vision-skill-runtime-smoke", "--oracle-state-diagnostic", "--headless")
 TEST_COMMANDS = (
     ("oracle", ("-m", "unittest", "scripts.test_oracle_state_v1", "-v")),
+    ("transition_trace", ("-m", "unittest", "scripts.test_oracle_transition_trace", "-v")),
     ("related", ("-m", "unittest", "scripts.test_trial_rules",
                  "scripts.test_semantic_skills", "scripts.test_rotating_targets",
                  "scripts.test_vision_core", "scripts.test_synthetic_vision_mvp",
@@ -37,12 +40,15 @@ TEST_COMMANDS = (
 )
 KEY_FILES = ("run.sh", "scripts/launch.py", "scripts/vision_trial.py",
              "scripts/oracle_state_v1.py", "scripts/oracle_state_v1_smoke.py",
+             "scripts/oracle_transition_trace.py",
              "scripts/collect_oracle_v1_1_runtime_smoke.sh",
              "scripts/collect_oracle_v1_1_runtime_smoke.py",
+             "scripts/test_oracle_transition_trace.py",
              "configs/trial_rotating.json", "configs/trial_adaptive.json",
              "configs/trial_v3.json")
 RUN_FILES = {
     "oracle_state_diagnostic.json": "diagnostics/oracle_state_diagnostic.json",
+    "oracle_transition_trace.json": "diagnostics/oracle_transition_trace.json",
     "synthetic_vision_skill_runtime_smoke.json": "diagnostics/synthetic_vision_skill_runtime_smoke.json",
     "runtime.log": "logs/isaac_runtime.log",
     "environment.json": "environment/launch_environment.json",
@@ -127,6 +133,10 @@ class Collector:
         self.smoke: dict = {"status": "not_run", "exit_code": None, "runtime_dir": None}
         self.tests: dict[str, dict] = {}
         self.diagnostic: dict = {"found": False, "copied_path": None, "boundaries": [], "parse_error": None}
+        self.transition_trace: dict = {"found": False, "copied_path": None, "parse_error": None,
+                                       "complete_transition_count": 0, "unclosed_action_count": 0,
+                                       "mapped_action_count": 0, "unmapped_action_count": 0,
+                                       "time_alignment_valid": None, "missing_or_quality_reasons": []}
         self.environment: dict = {}
 
     def _signal(self, signum, _frame):
@@ -338,6 +348,8 @@ class Collector:
             self.diagnostic["search_method"] = "anchored Run: line; expected parent and creation-time check"
             self.diagnostic["search_command"] = "No path was trusted; scan only anchored Run: line in logs/smoke_stdout_stderr.log"
             self.anomalies.append("diagnostic_json_missing")
+            self.anomalies.append("oracle_transition_trace_missing")
+            self.transition_trace["missing_or_quality_reasons"] = ["oracle_transition_trace.json:missing"]
             return
         self.smoke["runtime_dir"] = str(runtime)
         def current_file(path: Path) -> bool:
@@ -366,6 +378,21 @@ class Collector:
                                "purpose": "visual evidence; omitted from compact state diagnostic bundle"})
         (self.directory / "diagnostics/image_inventory.json").write_text(json.dumps(images, indent=2) + "\n")
         (self.directory / "diagnostics/copied_files.json").write_text(json.dumps(copied, indent=2) + "\n")
+        trace_source = runtime / "oracle_transition_trace.json"
+        self.transition_trace["searched_path"] = str(trace_source)
+        if current_file(trace_source):
+            self.transition_trace["found"] = True
+            self.transition_trace["copied_path"] = "diagnostics/oracle_transition_trace.json"
+            try:
+                parsed = validate_trace_payload(json.loads(trace_source.read_text()))
+                self.transition_trace.update(parsed)
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                self.transition_trace["parse_error"] = f"{type(exc).__name__}: {exc}"
+                self.transition_trace["missing_or_quality_reasons"] = ["oracle_transition_trace.json:invalid"]
+                self.anomalies.append("oracle_transition_trace_parse_failed")
+        else:
+            self.transition_trace["missing_or_quality_reasons"] = ["oracle_transition_trace.json:missing"]
+            self.anomalies.append("oracle_transition_trace_missing")
         diagnostic_source = runtime / "oracle_state_diagnostic.json"
         self.diagnostic["searched_path"] = str(diagnostic_source)
         self.diagnostic["search_method"] = "exact file under verified current Run: directory"
@@ -463,7 +490,9 @@ class Collector:
     def finish(self) -> dict:
         if self.interrupted:
             self.smoke["status"] = "interrupted"
-        elif self.smoke["status"] == "success" and (not self.diagnostic["found"] or self.diagnostic["parse_error"]):
+        elif self.smoke["status"] == "success" and (not self.diagnostic["found"] or self.diagnostic["parse_error"] or
+                                                    not self.transition_trace["found"] or self.transition_trace["parse_error"] or
+                                                    self.transition_trace["time_alignment_valid"] is False):
             self.smoke["status"] = "failed"
         ended_at = timestamp()
         startup_evidence = self._isaac_startup_evidence()
@@ -473,6 +502,7 @@ class Collector:
                    "ended_at": ended_at, "duration_seconds": round(time.time() - self.started_epoch, 3),
                    "repo_root": str(self.repo), "output_directory": str(self.directory),
                    "smoke": self.smoke, "diagnostic": self.diagnostic,
+                   "transition_trace": self.transition_trace,
                    "diagnostic_json_found": self.diagnostic["found"],
                    "tests": {name: {"status": item["status"], "exit_code": item["exit_code"],
                                      "log": item.get("log"), "interpreter": item.get("interpreter"),
@@ -492,6 +522,12 @@ class Collector:
                  f"Isaac startup evidence: {summary['isaac_startup_evidence']}; actual start: {real_isaac_started}",
                  f"Diagnostic JSON found: {self.diagnostic['found']}",
                  f"Diagnostic boundaries: {len(self.diagnostic['boundaries'])}",
+                 f"Transition trace found: {self.transition_trace['found']}",
+                 f"Complete transitions: {self.transition_trace['complete_transition_count']}",
+                 f"Unclosed actions: {self.transition_trace['unclosed_action_count']}",
+                 f"Mapped/unmapped actions: {self.transition_trace['mapped_action_count']}/{self.transition_trace['unmapped_action_count']}",
+                 f"Transition time alignment valid: {self.transition_trace['time_alignment_valid']}",
+                 f"Transition quality reasons: {self.transition_trace['missing_or_quality_reasons']}",
                  f"Render sync quality: {self.diagnostic.get('render_sync_quality')}",
                  f"Same frame verified: {self.diagnostic.get('same_frame_verified')}",
                  "Tests: " + ", ".join(f"{name}={item['status']}({item['exit_code']})" for name, item in self.tests.items()),
@@ -559,6 +595,12 @@ class Collector:
             signal.signal(signal.SIGTERM, old_term)
         print(f"\nSmoke status: {summary['smoke']['status']} (exit={summary['smoke']['exit_code']})")
         print(f"Diagnostic JSON found: {summary['diagnostic']['found']}")
+        print(f"Transition trace: found={summary['transition_trace']['found']}, "
+              f"complete={summary['transition_trace']['complete_transition_count']}, "
+              f"unclosed={summary['transition_trace']['unclosed_action_count']}, "
+              f"mapped={summary['transition_trace']['mapped_action_count']}, "
+              f"unmapped={summary['transition_trace']['unmapped_action_count']}, "
+              f"time_alignment_valid={summary['transition_trace']['time_alignment_valid']}")
         print("Tests: " + ", ".join(f"{name}={item['status']}" for name, item in summary["tests"].items()))
         print(f"Output directory: {self.directory}")
         print(f"Archive: {self.archive if size is not None else 'not_created'}")

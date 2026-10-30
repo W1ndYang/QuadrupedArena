@@ -315,10 +315,12 @@ def main():
             sample_visibility, smoke_observation, smoke_request, summarize_skill_runtime_smoke)
         smoke_cycles=[];frame_samples=[];smoke_windows=[]
         if args.oracle_state_diagnostic:
-            from oracle_state_v1 import RegionCatalog, action_template
+            from oracle_state_v1 import RegionCatalog
             from oracle_state_v1_smoke import encode_boundary
+            from oracle_transition_trace import TransitionTrace
             oracle_catalog=RegionCatalog.from_config(cfg)
             oracle_records=[];oracle_previous_action_id=None
+            oracle_trace=TransitionTrace(root.name,cfg,args.synthetic_seed)
         for name in ('observations/frames','synthetic_vision_frames','synthetic_vision_windows'):
             (root/name).mkdir(parents=True,exist_ok=True)
         def stage_actor_state():
@@ -409,6 +411,8 @@ def main():
                 dump(root/'oracle_state_diagnostic.json',dict(mode='read_only_state_encoding',
                     source='existing_synthetic_vision_skill_runtime_smoke',
                     same_frame_verified=False,render_sync_quality='blocked',boundaries=oracle_records))
+                oracle_trace.record_boundary(oracle_records[-1],match)
+                dump(root/'oracle_transition_trace.json',oracle_trace.payload())
             frame=window[-1]
             smoke_record=dict(cycle_index=index,start_status='started',end_status='running',
                 observation_id=packet['observation_id'],simulation_seconds=packet['simulation_seconds'],
@@ -433,7 +437,8 @@ def main():
             # The native Skill decision reads memory; it does not replay a prior sighting.
             request=smoke_request(index,packet,None)
             if args.oracle_state_diagnostic:
-                oracle_previous_action_id=action_template(request['skill'],request['params'],cfg).template_id
+                oracle_trace.record_action(dict(request,simulation_seconds=match.t),match)
+                dump(root/'oracle_transition_trace.json',oracle_trace.payload())
             smoke_record['action_request']=request
             smoke_record['action_status']='requested'
             save_smoke_progress()
@@ -462,18 +467,30 @@ def main():
         if args.assessment:validate_model_output(request,packet,{'explain_decisions':True},engine.validate)
         motion=motion_request(request) if api_planner or args.assessment else request
         if engine:
-            engine.validate(motion,packet)
+            try:
+                engine.validate(motion,packet)
+            except Exception as exc:
+                if smoke_mode and args.oracle_state_diagnostic:
+                    oracle_trace.reject_action('skill_validation',f'{type(exc).__name__}: {exc}')
+                    dump(root/'oracle_transition_trace.json',oracle_trace.payload())
+                raise
             if smoke_mode:smoke_record['validator_status']='accepted'
         else:route=validate_request(request,match)
         elapsed=time.monotonic()-ready
         compiled=None;compile_started=time.monotonic()
         if engine:
-            action,route,camera_command,compiled=engine.commit(motion,packet)
-            match.compile(action)  # Schema/reachability check; execute the skill's risk-aware route.
-            previous=np.asarray(packet['self_state']['xy'])
-            for p in route:
-                if not engine.base.segment(previous,p):raise ValueError('Unsafe compiled skill route')
-                previous=p
+            try:
+                action,route,camera_command,compiled=engine.commit(motion,packet)
+                match.compile(action)  # Schema/reachability check; execute the skill's risk-aware route.
+                previous=np.asarray(packet['self_state']['xy'])
+                for p in route:
+                    if not engine.base.segment(previous,p):raise ValueError('Unsafe compiled skill route')
+                    previous=p
+            except Exception as exc:
+                if smoke_mode and args.oracle_state_diagnostic:
+                    oracle_trace.reject_action('skill_commit_or_compile',f'{type(exc).__name__}: {exc}')
+                    dump(root/'oracle_transition_trace.json',oracle_trace.payload())
+                raise
             if smoke_mode:
                 smoke_record['skill_commit_status']='accepted'
                 smoke_record['memory_after_commit']=copy.deepcopy(engine.memory.track)
@@ -485,18 +502,34 @@ def main():
         if api_timing:decision.update(tokens=api_timing['tokens'],api=api_timing)
         if engine:decision.update(compiled_action=action.copy(),compiled_skill=compiled,skill_compile_seconds=time.monotonic()-compile_started)
         match.decisions.append(decision);dump(root/'decisions'/f'{index:03d}.json',decision)
-        match.apply(action,route);window=[] if smoke_mode else [frames[-1]]
+        try:
+            match.apply(action,route)
+        except Exception as exc:
+            if smoke_mode and args.oracle_state_diagnostic:
+                oracle_trace.reject_action('match_apply',f'{type(exc).__name__}: {exc}')
+                dump(root/'oracle_transition_trace.json',oracle_trace.payload())
+            raise
+        window=[] if smoke_mode else [frames[-1]]
+        if smoke_mode and args.oracle_state_diagnostic:
+            oracle_trace.record_committed_action(decision,match)
+            oracle_previous_action_id=oracle_trace.pending['action']['oracle_action_id']
+            dump(root/'oracle_transition_trace.json',oracle_trace.payload())
         if smoke_mode:window_samples=[]
         for step in range(1,101):
             if engine:
                 own_packet=observe([]);interruption=engine.tick(own_packet)
-                if interruption:match.apply(*interruption)
+                if interruption:
+                    match.apply(*interruption)
+                    if smoke_mode and args.oracle_state_diagnostic:
+                        oracle_trace.note_replacement(match.t,'skill_tick_replacement')
                 else:
                     for key in ('attack','facing'):match.active[key]=engine.action[key]
                 camera_command=engine.camera(own_packet)
             match.advance(cfg['dt']);rig.step(camera_command,step*cfg['dt'],cfg['dt'])
             if engine and abs(match.t-cfg['collapse']['time'])<1e-8 and not match.ref.finished:
                 action,route,camera_command,compiled=engine.plan(observe([]));match.apply(action,route)
+                if smoke_mode and args.oracle_state_diagnostic:
+                    oracle_trace.note_replacement(match.t,'known_map_replan')
                 execution.append(dict(time=match.t,event='known_map_replan',compiled=compiled))
             if step%25==0 or match.ref.finished:
                 frame=capture();window.append(frame)
@@ -516,7 +549,21 @@ def main():
                 match_state_changed=match_changed,stage_geometry_changed=stage_changed,
                 actual_state_change=bool(match_changed and stage_changed))
             save_smoke_progress()
+            if args.oracle_state_diagnostic:
+                oracle_trace.record_execution(match,steps_executed=step,
+                                              smoke_action_status=smoke_record['action_status'])
+                if match.ref.finished:
+                    terminal_packet=observe(window)
+                    terminal_accepted=tuple(sample['sighting'] if sample['ingest_status']=='accepted' else None
+                                            for sample in window_samples)
+                    terminal_boundary=encode_boundary(match,engine,rig,terminal_packet,terminal_accepted,cfg,
+                        oracle_catalog,oracle_previous_action_id,render_sync_quality='blocked')
+                    oracle_trace.record_boundary(terminal_boundary,match)
+                dump(root/'oracle_transition_trace.json',oracle_trace.payload())
     if smoke_mode:
+        if args.oracle_state_diagnostic:
+            oracle_trace.finalize()
+            dump(root/'oracle_transition_trace.json',oracle_trace.payload())
         summary=summarize_skill_runtime_smoke(smoke_cycles,smoke_windows,frame_samples)
         dump(root/'synthetic_vision_skill_runtime_smoke.json',summary)
         dump(root/'result.json',dict(status=summary['status'],mode=summary['mode'],
