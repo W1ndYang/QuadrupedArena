@@ -90,6 +90,7 @@ class CollectorTests(unittest.TestCase):
             self.assertEqual(summary["diagnostic"]["render_sync_quality"], "blocked")
             self.assertFalse(summary["diagnostic"]["same_frame_verified"])
             self.assertTrue(summary["transition_trace"]["found"])
+            self.assertEqual(summary["transition_trace"]["action_space_version"], "legacy_33_unversioned")
             self.assertEqual(summary["transition_trace"]["complete_transition_count"], 1)
             self.assertTrue(summary["transition_trace"]["time_alignment_valid"])
             self.assertEqual(summary["tests"]["related"]["status"], "success")
@@ -112,6 +113,38 @@ class CollectorTests(unittest.TestCase):
             bundle_text = "\n".join(p.read_text(errors="replace") for p in collector.directory.rglob("*") if p.is_file())
             self.assertNotIn("SECRET_SENTINEL_123", bundle_text)
             self.assertNotIn("STALE_DIAGNOSTIC", bundle_text)
+
+    def test_candidate_action_space_version_and_counts_enter_archive_summary(self):
+        from test_oracle_transition_trace import boundary, decision, fake_match
+        from adaptive_motion import load_config
+        from oracle_transition_trace import TransitionTrace
+        cfg = load_config("configs/trial_rotating.json")
+        cfg["seed"] = 2026102107
+        match = fake_match()
+        trace = TransitionTrace("collector_candidate_fixture", cfg, 20261028)
+        trace.record_boundary(boundary(0, 0.), match)
+        trace.record_action(decision(skill="CAPTURE_POINT", params={"target": "P2", "risk": "fast"}), match)
+        match.t = 2.
+        trace.record_execution(match)
+        trace.record_boundary(boundary(1, 2.), match)
+        with tempfile.TemporaryDirectory() as temp:
+            collector = self.make_collector(Path(temp), trace_payload=trace.payload())
+            summary, size, _ = collector.run()
+            self.assertGreater(size, 0)
+            parsed = summary["transition_trace"]
+            self.assertEqual(parsed["action_space_version"], "comparison_v1_candidate")
+            self.assertEqual(parsed["action_catalog_total"], 44)
+            self.assertEqual(parsed["action_catalog_counts"],
+                             {"AIM_AT_TRACK": 2, "CAPTURE_POINT": 6, "MOVE_TO": 6,
+                              "OBSERVE": 12, "TAKE_COVER": 18})
+            self.assertEqual(parsed["sighting_annotation_count"], 0)
+            self.assertEqual(parsed["sighting_id_policy"], "excluded_from_action_id")
+            summary_text = (collector.directory / "summary/summary.txt").read_text()
+            self.assertIn("Action catalog total/counts: 44/", summary_text)
+            self.assertIn("Action space version: comparison_v1_candidate", summary_text)
+            with tarfile.open(collector.archive, "r:gz") as archive:
+                self.assertTrue(any(n.endswith("/diagnostics/oracle_transition_trace.json")
+                                    for n in archive.getnames()))
 
     def test_failed_smoke_missing_diagnostic_and_test_failure_still_pack(self):
         with tempfile.TemporaryDirectory() as temp:

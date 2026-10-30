@@ -7,7 +7,9 @@ import unittest
 from adaptive_motion import load_config
 from oracle_state_v1 import action_template
 from oracle_state_v1_smoke import encode_boundary
-from oracle_transition_trace import TransitionTrace, validate_trace_payload
+from oracle_transition_trace import (ACTION_SPACE_VERSION, LEGACY_ACTION_SPACE_VERSION,
+                                     TransitionTrace, validate_trace_payload)
+from semantic_skills import SemanticSkills
 from test_oracle_state_v1 import fixture
 from vision_core import CameraRig, public_packet
 
@@ -58,6 +60,11 @@ class OracleTransitionTraceTests(unittest.TestCase):
         trace.record_boundary(boundary(1, 2.), match)
         payload = trace.payload()
         self.assertEqual(payload["summary"]["complete_transition_count"], 1)
+        self.assertEqual(payload["action_space_version"], ACTION_SPACE_VERSION)
+        self.assertEqual(payload["summary"]["action_catalog_total"], 44)
+        self.assertEqual(payload["summary"]["action_catalog_counts"],
+                         {"AIM_AT_TRACK": 2, "CAPTURE_POINT": 6, "MOVE_TO": 6,
+                          "OBSERVE": 12, "TAKE_COVER": 18})
         self.assertEqual(payload["summary"]["unclosed_action_count"], 0)
         record = payload["transitions"][0]
         self.assertEqual((record["start"]["observation_id"], record["action_observation_id"],
@@ -75,6 +82,7 @@ class OracleTransitionTraceTests(unittest.TestCase):
         self.assertNotIn("B.region_id", record["start"]["limited"])
         self.assertNotIn("B.region_id", record["next"]["limited"])
         self.assertEqual(validate_trace_payload(payload)["complete_transition_count"], 1)
+        self.assertEqual(validate_trace_payload(payload)["action_space_version"], ACTION_SPACE_VERSION)
 
     def test_five_smoke_like_boundaries_close_four_actions_without_offset(self):
         match, trace = fake_match(), self.make_trace()
@@ -95,6 +103,14 @@ class OracleTransitionTraceTests(unittest.TestCase):
                          [(0, 0, 1), (1, 1, 2), (2, 2, 3), (3, 3, 4)])
         self.assertTrue(payload["summary"]["time_alignment_valid"])
         self.assertEqual(validate_trace_payload(payload)["complete_transition_count"], 4)
+        legacy = copy.deepcopy(payload)
+        legacy.pop("action_space_version")
+        legacy.pop("sighting_id_policy")
+        for record in legacy["transitions"]:
+            record.pop("action_space_version")
+        unchanged = copy.deepcopy(legacy)
+        self.assertEqual(validate_trace_payload(legacy)["action_space_version"], LEGACY_ACTION_SPACE_VERSION)
+        self.assertEqual(legacy, unchanged)
 
     def test_action_mapping_keeps_raw_and_compiled_forms_separate(self):
         match, trace = fake_match(), self.make_trace()
@@ -106,13 +122,15 @@ class OracleTransitionTraceTests(unittest.TestCase):
         self.assertEqual(action["oracle_action_id"],
                          action_template("OBSERVE", {"direction": "north"}, self.cfg).template_id)
         self.assertEqual(action["normalized_oracle_action"],
-                         {"skill": "OBSERVE", "params": {"direction": "north"}})
+                         {"skill": "OBSERVE", "params": {"direction": "north", "risk": "safe"}})
         self.assertEqual(action["compiled_action"]["skill"], "MOVE")
         self.assertEqual(action["compiled_skill"]["skill"], "OBSERVE")
+        self.assertEqual(action["normalized_oracle_action"]["params"],
+                         {"direction": "north", "risk": "safe"})
         request["params"]["direction"] = "south"
         self.assertEqual(action["raw_skill_request"]["params"], {"direction": "north"})
 
-    def test_unmapped_action_and_no_successor_are_explicit(self):
+    def test_unvalidated_sighting_and_no_successor_are_explicit(self):
         match, trace = fake_match(), self.make_trace()
         trace.record_boundary(boundary(0, 0.), match)
         trace.record_action(decision(params={"target": "P2", "risk": "fast", "sighting": {"time": 0, "feet": [1, 2]}}), match)
@@ -125,6 +143,120 @@ class OracleTransitionTraceTests(unittest.TestCase):
         self.assertIsNone(payload["unclosed_actions"][0]["next"])
         self.assertIsNone(payload["unclosed_actions"][0]["action"]["oracle_action_id"])
         self.assertIn("sighting", payload["unclosed_actions"][0]["action"]["raw_skill_request"]["params"])
+        self.assertEqual(payload["summary"]["sighting_annotation_count"], 1)
+        self.assertEqual(payload["unclosed_actions"][0]["action"]["sighting_validation_status"],
+                         "pending_formal_validation")
+
+    def test_validated_sighting_maps_each_skill_without_changing_id_or_memory(self):
+        cfg, _, _, _, packet = fixture()
+        match = fake_match()
+        valid_sightings = ({"time": 0., "feet": [384, 400]},
+                           {"time": .5, "feet": [500, 400]})
+        cases = (("MOVE_TO", {"target": "P2", "risk": "fast"}),
+                 ("CAPTURE_POINT", {"target": "P1", "risk": "safe"}),
+                 ("TAKE_COVER", {"cover": "High1", "risk": "fast"}),
+                 ("AIM_AT_TRACK", {"risk": "fast"}),
+                 ("OBSERVE", {"direction": "west", "risk": "fast"}))
+        for skill, params in cases:
+            with self.subTest(skill=skill):
+                expected = action_template(skill, params, cfg).template_id
+                for sighting in valid_sightings:
+                    engine = SemanticSkills(cfg)
+                    input_packet = copy.deepcopy(packet)
+                    if sighting["time"] == .5:
+                        frame = copy.deepcopy(packet["frames"][0])
+                        frame["simulation_seconds"] = .5
+                        frame["file"] = "cpu_no_rgb_0.5.png"
+                        input_packet["frames"].append(frame)
+                        input_packet["simulation_seconds"] = .5
+                    trace = self.make_trace()
+                    trace.record_boundary(boundary(0, 0.), match)
+                    raw = decision(skill=skill, params={**params, "sighting": sighting})
+                    trace.record_action(raw, match)
+                    self.assertEqual(trace.pending["action"]["action_mapping_status"], "unmapped")
+                    self.assertEqual(trace.pending["action"]["sighting_annotation"], sighting)
+                    motion = {"observation_id": 0, "skill": skill, "params": raw["params"]}
+                    engine.commit(motion, input_packet)
+                    before = copy.deepcopy(engine.memory.track)
+                    self.assertEqual(before["feet"], sighting["feet"])
+                    with self.assertRaisesRegex(ValueError, "differs"):
+                        trace.record_committed_action({**raw, "params": params}, match)
+                    trace.record_committed_action(raw, match)
+                    self.assertEqual(engine.memory.track, before)
+                    action = trace.payload()["unclosed_actions"][0]["action"]
+                    self.assertEqual(action["oracle_action_id"], expected)
+                    self.assertEqual(action["raw_skill_request"]["params"], raw["params"])
+                    self.assertEqual(action["sighting_annotation"], sighting)
+                    self.assertEqual(action["sighting_validation_status"], "accepted_by_formal_validator")
+                    self.assertNotIn("sighting", action["normalized_oracle_action"]["params"])
+                    self.assertEqual(validate_trace_payload(trace.payload())["sighting_annotation_count"], 1)
+
+    def test_validator_rejection_clears_provisional_id_and_keeps_invalid_annotation(self):
+        match, trace = fake_match(), self.make_trace()
+        trace.record_boundary(boundary(0, 0.), match)
+        invalid = {"time": 0., "feet": [999, 999]}
+        request = decision(params={"target": "P2", "sighting": invalid})
+        trace.record_action(request, match)
+        cfg, _, engine, _, packet = fixture()
+        with self.assertRaisesRegex(ValueError, "Pixel outside image"):
+            engine.validate({"observation_id": 0, "skill": "MOVE_TO", "params": request["params"]}, packet)
+        trace.reject_action("skill_validation", "ValueError: Pixel outside image")
+        action = trace.payload()["unclosed_actions"][0]["action"]
+        self.assertEqual(action["sighting_annotation"], invalid)
+        self.assertEqual(action["sighting_validation_status"], "rejected_by_formal_validator")
+        self.assertEqual(action["action_mapping_status"], "unmapped")
+        self.assertIsNone(action["oracle_action_id"])
+        self.assertIn("formal_validator_rejected", action["action_mapping_reason"])
+        self.assertEqual(validate_trace_payload(trace.payload())["unmapped_action_count"], 1)
+
+    def test_noncurrent_capture_retains_selected_id_and_execution_result(self):
+        cfg, _, engine, _, packet = fixture()
+        match, trace = fake_match(), self.make_trace()
+        trace.record_boundary(boundary(0, 0.), match)
+        request = {"observation_id": 0, "skill": "CAPTURE_POINT",
+                   "params": {"target": "P2", "risk": "fast"}}
+        trace.record_action({**request, "simulation_seconds": 0.}, match)
+        compiled_action, _, _, compiled_skill = engine.commit(request, packet)
+        self.assertEqual(compiled_skill["state"], "TARGET_INACTIVE")
+        trace.record_committed_action({**request, "simulation_seconds": 0.,
+                                       "compiled_action": compiled_action,
+                                       "compiled_skill": compiled_skill}, match)
+        action = trace.payload()["unclosed_actions"][0]["action"]
+        self.assertEqual(action["oracle_action_id"],
+                         action_template("CAPTURE_POINT", request["params"], cfg).template_id)
+        self.assertEqual(action["compiled_skill"]["state"], "TARGET_INACTIVE")
+        self.assertEqual(action["action_mapping_status"], "mapped")
+
+    def test_legacy_trace_is_read_only_and_old_aim_id_is_not_candidate(self):
+        match, trace = fake_match(), self.make_trace()
+        trace.record_boundary(boundary(0, 0.), match)
+        trace.record_action(decision(skill="AIM_AT_TRACK", params={"risk": "fast"}), match)
+        match.t = 2.
+        trace.record_execution(match)
+        trace.record_boundary(boundary(1, 2.), match)
+        current = trace.payload()
+        bad = copy.deepcopy(current)
+        bad["transitions"][0]["action"]["oracle_action_id"] = "AIM_AT_TRACK:[]"
+        with self.assertRaises(ValueError):
+            validate_trace_payload(bad)
+        bad_raw = copy.deepcopy(current)
+        bad_raw["transitions"][0]["action"]["raw_skill_request"]["params"]["risk"] = "safe"
+        with self.assertRaisesRegex(ValueError, "differs from raw"):
+            validate_trace_payload(bad_raw)
+        bad_counts = copy.deepcopy(current)
+        bad_counts["summary"]["action_catalog_total"] = 33
+        with self.assertRaises(ValueError):
+            validate_trace_payload(bad_counts)
+        old = copy.deepcopy(current)
+        old.pop("action_space_version")
+        old.pop("sighting_id_policy")
+        old["transitions"][0].pop("action_space_version")
+        old["transitions"][0]["action"]["oracle_action_id"] = "AIM_AT_TRACK:[]"
+        before = copy.deepcopy(old)
+        self.assertEqual(validate_trace_payload(old)["action_space_version"], LEGACY_ACTION_SPACE_VERSION)
+        self.assertEqual(old, before)
+        with self.assertRaises(ValueError):
+            validate_trace_payload({**old, "action_space_version": ACTION_SPACE_VERSION})
 
     def test_rejected_request_remains_unclosed_with_failure_stage(self):
         match, trace = fake_match(), self.make_trace()

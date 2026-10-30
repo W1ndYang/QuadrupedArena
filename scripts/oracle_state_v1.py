@@ -27,6 +27,7 @@ SCHEMA_VERSION = "oracle_state_v1_1"
 RGB_FOOT_PIXEL_BASE_UNCERTAINTY = 0.6
 VIEWS = ("full", "limited")
 SKILLS = ("MOVE_TO", "CAPTURE_POINT", "TAKE_COVER", "AIM_AT_TRACK", "OBSERVE")
+ACTION_SPACE_VERSION = "comparison_v1_candidate"
 DIRECTIONS = ("scan", "threat", "north", "south", "east", "west")
 FINISH_REASONS = ("time_limit", "quadruped_eliminated", "all_targets_invalid")
 
@@ -804,8 +805,6 @@ def action_template(skill: str, params: dict, cfg: dict) -> ActionTemplate:
         target = params.get("target", "active")
         if target not in ("active",) + tuple(p["name"] for p in cfg["arena"]["task_points"]):
             raise ValueError("Invalid target")
-        if skill == "CAPTURE_POINT" and target != "active":
-            raise ValueError("CAPTURE_POINT template only targets the active point")
         result["target"] = target
         result["risk"] = risk
     elif skill == "TAKE_COVER":
@@ -819,20 +818,23 @@ def action_template(skill: str, params: dict, cfg: dict) -> ActionTemplate:
         if direction not in DIRECTIONS:
             raise ValueError("Invalid direction")
         result["direction"] = direction
-    # AIM_AT_TRACK has no parameter that changes its compiled action.
+        result["risk"] = risk
+    else:
+        # Preserve the LLM's risk choice even where current execution is equivalent.
+        result["risk"] = risk
     return ActionTemplate(skill, tuple(sorted(result.items())))
 
 
 def action_catalog(cfg: dict) -> tuple[ActionTemplate, ...]:
     candidates = []
     for risk in ("safe", "fast"):
-        candidates.append(action_template("CAPTURE_POINT", {"target": "active", "risk": risk}, cfg))
         for target in ("active",) + tuple(p["name"] for p in cfg["arena"]["task_points"]):
+            candidates.append(action_template("CAPTURE_POINT", {"target": target, "risk": risk}, cfg))
             candidates.append(action_template("MOVE_TO", {"target": target, "risk": risk}, cfg))
         candidates.append(action_template("TAKE_COVER", {"risk": risk}, cfg))
         for cover in cfg["arena"]["covers"]:
             candidates.append(action_template("TAKE_COVER", {"cover": cover["name"], "risk": risk}, cfg))
-    candidates.append(action_template("AIM_AT_TRACK", {}, cfg))
-    for direction in DIRECTIONS:
-        candidates.append(action_template("OBSERVE", {"direction": direction}, cfg))
+        candidates.append(action_template("AIM_AT_TRACK", {"risk": risk}, cfg))
+        for direction in DIRECTIONS:
+            candidates.append(action_template("OBSERVE", {"direction": direction, "risk": risk}, cfg))
     return tuple(candidates)

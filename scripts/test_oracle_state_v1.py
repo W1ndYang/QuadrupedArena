@@ -1,6 +1,7 @@
 """CPU-only contracts for the first Oracle state abstraction slice."""
 
 from dataclasses import fields, replace
+from collections import Counter
 import copy
 import math
 import subprocess
@@ -462,22 +463,54 @@ class OracleStateV1Tests(unittest.TestCase):
     def test_action_catalog(self):
         cfg, match, _, _, packet = fixture()
         actions = action_catalog(cfg)
-        self.assertEqual(len(actions), 33)
-        self.assertEqual({a.skill for a in actions},
-                         {"MOVE_TO", "CAPTURE_POINT", "TAKE_COVER", "AIM_AT_TRACK", "OBSERVE"})
+        self.assertEqual([p["name"] for p in cfg["arena"]["task_points"]], ["P1", "P2"])
+        covers = [c["name"] for c in cfg["arena"]["covers"]]
+        self.assertEqual(covers, ["High1", "High2", "High3", "High4",
+                                  "Low1", "Low2", "Low3", "Low4"])
+        self.assertEqual(len(actions), 44)
+        self.assertEqual(Counter(a.skill for a in actions),
+                         {"MOVE_TO": 6, "CAPTURE_POINT": 6, "TAKE_COVER": 18,
+                          "AIM_AT_TRACK": 2, "OBSERVE": 12})
         self.assertEqual(len({a.template_id for a in actions}), len(actions))
-        self.assertEqual(action_template("AIM_AT_TRACK", {}, cfg), action_template("AIM_AT_TRACK", {"risk": "fast"}, cfg))
-        self.assertIn(action_template("CAPTURE_POINT", {}, cfg), actions)
-        self.assertIn(action_template("MOVE_TO", {"target": "P2"}, cfg), actions)
-        self.assertIn(action_template("TAKE_COVER", {"cover": cfg["arena"]["covers"][0]["name"]}, cfg), actions)
-        self.assertIn(action_template("OBSERVE", {"direction": "west"}, cfg), actions)
+        expected = set()
+        for risk in ("safe", "fast"):
+            for target in ("active", "P1", "P2"):
+                for skill in ("MOVE_TO", "CAPTURE_POINT"):
+                    expected.add(action_template(skill, {"target": target, "risk": risk}, cfg))
+            for cover in (None, *covers):
+                params = {"risk": risk} if cover is None else {"cover": cover, "risk": risk}
+                expected.add(action_template("TAKE_COVER", params, cfg))
+            expected.add(action_template("AIM_AT_TRACK", {"risk": risk}, cfg))
+            for direction in ("scan", "threat", "north", "south", "east", "west"):
+                expected.add(action_template("OBSERVE", {"direction": direction, "risk": risk}, cfg))
+        self.assertEqual(set(actions), expected)
+        for skill in ("MOVE_TO", "CAPTURE_POINT", "TAKE_COVER", "AIM_AT_TRACK", "OBSERVE"):
+            self.assertEqual(action_template(skill, {}, cfg),
+                             action_template(skill, {"risk": "safe"}, cfg))
+            self.assertNotEqual(action_template(skill, {}, cfg),
+                                action_template(skill, {"risk": "fast"}, cfg))
+        for skill in ("MOVE_TO", "CAPTURE_POINT"):
+            self.assertEqual(action_template(skill, {}, cfg),
+                             action_template(skill, {"target": "active"}, cfg))
+        self.assertEqual(action_template("OBSERVE", {}, cfg),
+                         action_template("OBSERVE", {"direction": "scan"}, cfg))
+        for direction in ("scan", "threat", "north", "south", "east", "west"):
+            self.assertNotEqual(action_template("OBSERVE", {"direction": direction}, cfg),
+                                action_template("OBSERVE", {"direction": direction, "risk": "fast"}, cfg))
+        self.assertEqual(action_template("CAPTURE_POINT", {"target": "P1", "risk": "fast"}, cfg).template_id,
+                         'CAPTURE_POINT:[["risk","fast"],["target","P1"]]')
+        self.assertEqual(action_template("AIM_AT_TRACK", {}, cfg).template_id,
+                         'AIM_AT_TRACK:[["risk","safe"]]')
+        self.assertEqual(action_template("OBSERVE", {"risk": "fast", "direction": "west"}, cfg),
+                         action_template("OBSERVE", {"direction": "west", "risk": "fast"}, cfg))
+        self.assertEqual(action_template("TAKE_COVER", {}, cfg).params, (("risk", "safe"),))
         request = actions[0].request(0)
         match_tick = match.tick
         # Actual API validates the generated high-level request without commit.
         SemanticSkills(cfg).validate(request, packet)
         self.assertEqual(match.tick, match_tick)
         for skill, params in (("MOVE", {"goal": [0, 0]}), ("MOVE_TO", {"waypoint": [0, 0]}),
-                              ("CAPTURE_POINT", {"target": "P1"}), ("OBSERVE", {"direction": "up"}),
+                              ("OBSERVE", {"direction": "up"}),
                               ("TAKE_COVER", {"cover": "fictional"}), ("AIM_AT_TRACK", {"sighting": None}),
                               ("MOVE_TO", {"risk": "unsafe"})):
             with self.subTest(skill=skill, params=params), self.assertRaises(ValueError):

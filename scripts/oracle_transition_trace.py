@@ -8,11 +8,15 @@ permissions. It is not a policy input or an empirical transition model.
 from __future__ import annotations
 
 import copy
+import json
 import math
 from collections import Counter
 
 
 TRACE_VERSION = "oracle_transition_trace_v1"
+ACTION_SPACE_VERSION = "comparison_v1_candidate"  # Keep collector validation standard-library-only.
+LEGACY_ACTION_SPACE_VERSION = "legacy_33_unversioned"
+SIGHTING_ID_POLICY = "excluded_from_action_id"
 STATE_KEYS = ("status", "reason", "state_id", "decision_step", "map_phase", "A.region_id")
 REF_EVENT_TYPES = ("hit", "eliminated", "finish", "target_invalidated", "target_retired",
                    "target_activated", "collapse", "scoring_started")
@@ -74,9 +78,9 @@ def _event_summary(match, start: dict) -> dict:
             "match_event_counts": dict(sorted(match_events.items()))}
 
 
-def _action(decision: dict | None, cfg: dict) -> dict:
+def _action(decision: dict | None, cfg: dict, *, formally_validated: bool = False) -> dict:
     raw = None if decision is None else {key: copy.deepcopy(decision[key]) for key in
-                                        ("skill", "params", "reason") if key in decision}
+                                        ("observation_id", "skill", "params", "reason") if key in decision}
     compiled_action = None if decision is None else copy.deepcopy(decision.get("compiled_action"))
     compiled_skill = None if decision is None else copy.deepcopy(decision.get("compiled_skill"))
     summary = None if not isinstance(compiled_action, dict) else {
@@ -84,15 +88,23 @@ def _action(decision: dict | None, cfg: dict) -> dict:
         ("skill", "goal", "facing", "attack", "reverse", "speed_limit", "target_generation")
         if key in compiled_action}
     mapped, action_id, normalized, reason = False, None, None, None
+    annotation = None
+    annotation_status = "not_present"
     if not isinstance(raw, dict) or not isinstance(raw.get("skill"), str) or not isinstance(raw.get("params"), dict):
         reason = "missing_or_invalid_skill_request"
     else:
+        params = copy.deepcopy(raw["params"])
+        if "sighting" in params:
+            annotation = copy.deepcopy(params.pop("sighting"))
+            annotation_status = "accepted_by_formal_validator" if formally_validated else "pending_formal_validation"
         try:
             # Import lazily so the collector can validate an archive without NumPy.
             from oracle_state_v1 import action_catalog, action_template
-            template = action_template(raw["skill"], raw["params"], cfg)
+            template = action_template(raw["skill"], params, cfg)
             if template not in action_catalog(cfg):
                 reason = "not_in_finite_action_catalog"
+            elif annotation_status == "pending_formal_validation":
+                reason = "sighting_pending_formal_validation"
             else:
                 mapped, action_id = True, template.template_id
                 normalized = {"skill": template.skill, "params": dict(template.params)}
@@ -100,6 +112,7 @@ def _action(decision: dict | None, cfg: dict) -> dict:
             reason = f"action_template_rejected:{type(exc).__name__}:{exc}"
     return {"raw_skill_request": raw, "compiled_skill": compiled_skill,
             "compiled_action": compiled_action, "compiled_action_summary": summary,
+            "sighting_annotation": annotation, "sighting_validation_status": annotation_status,
             "oracle_action_id": action_id, "normalized_oracle_action": normalized,
             "action_mapping_status": "mapped" if mapped else "unmapped",
             "action_mapping_reason": reason}
@@ -127,10 +140,15 @@ def _alignment(start: dict, end: dict, terminal: bool) -> dict:
 
 class TransitionTrace:
     def __init__(self, trajectory_id: str, cfg: dict, synthetic_seed: int):
-        from oracle_state_v1 import SCHEMA_VERSION, scene_profile_id
+        from oracle_state_v1 import ACTION_SPACE_VERSION as CATALOG_VERSION, SCHEMA_VERSION, action_catalog, scene_profile_id
+        if CATALOG_VERSION != ACTION_SPACE_VERSION:
+            raise ValueError("Trace and action catalog versions differ")
         self.trajectory_id = trajectory_id
         self.cfg = cfg
         self.state_schema_version = SCHEMA_VERSION
+        self.action_space_version = ACTION_SPACE_VERSION
+        self.action_catalog_counts = dict(sorted(Counter(item.skill for item in action_catalog(cfg)).items()))
+        self.action_catalog_total = sum(self.action_catalog_counts.values())
         self.profile_id = scene_profile_id(cfg)
         self.seed = cfg["seed"]
         self.synthetic_seed = synthetic_seed
@@ -175,7 +193,11 @@ class TransitionTrace:
             raise ValueError("No requested action to commit")
         if decision.get("observation_id") != self.pending["start"]["observation_id"]:
             raise ValueError("Committed action changed observation ID")
-        self.pending["action"] = _action(decision, self.cfg)
+        requested = self.pending["action"]["raw_skill_request"]
+        if (requested is None or decision.get("skill") != requested.get("skill") or
+                decision.get("params") != requested.get("params")):
+            raise ValueError("Committed Skill request differs from the requested action")
+        self.pending["action"] = _action(decision, self.cfg, formally_validated=True)
         self.pending["action_observation_id"] = decision.get("observation_id")
         self.pending["action_simulation_seconds"] = decision.get("simulation_seconds")
         self.pending["execution"]["status"] = "committed_waiting_execution"
@@ -184,6 +206,13 @@ class TransitionTrace:
         if self.pending is not None:
             self.pending["execution"].update(status="not_applied", failure_stage=stage,
                                               rejection_reason=reason)
+            if stage == "skill_validation":
+                action = self.pending["action"]
+                action.update(action_mapping_status="unmapped", oracle_action_id=None,
+                              normalized_oracle_action=None,
+                              action_mapping_reason="formal_validator_rejected: " + reason)
+                if action["sighting_validation_status"] != "not_present":
+                    action["sighting_validation_status"] = "rejected_by_formal_validator"
             self.finalized = True
 
     def note_replacement(self, simulation_seconds: float, kind: str):
@@ -239,6 +268,7 @@ class TransitionTrace:
             execution["replacements"] or events["match_event_counts"].get("skill_cancelled", 0))
         record = {"trajectory_id": self.trajectory_id, "transition_index": len(self.transitions),
                   "trace_version": TRACE_VERSION, "state_schema_version": self.state_schema_version,
+                  "action_space_version": self.action_space_version,
                   "scene_profile_id": self.profile_id, "config_fingerprint": self.profile_id,
                   "run_seed": self.seed, "synthetic_seed": self.synthetic_seed,
                   "collection_policy_id": "smoke_test_driver_fixed_sequence",
@@ -278,15 +308,23 @@ class TransitionTrace:
         quality = sorted({reason for item in self.transitions for reason in item["missing_or_quality_reasons"]})
         if unclosed:
             quality.append("unclosed_action:" + unclosed[0]["reason"])
+        all_actions = [item["action"] for item in self.transitions] + [item["action"] for item in unclosed]
         summary = {"boundary_count": len(self.boundaries), "complete_transition_count": len(self.transitions),
                    "unclosed_action_count": len(unclosed), "mapped_action_count": mapped,
                    "unmapped_action_count": action_count - mapped,
+                   "action_catalog_total": self.action_catalog_total,
+                   "action_catalog_counts": self.action_catalog_counts,
+                   "sighting_annotation_count": sum(isinstance((action.get("raw_skill_request") or {}).get("params"), dict)
+                                                    and "sighting" in action["raw_skill_request"]["params"]
+                                                    for action in all_actions),
                    "time_alignment_valid": all(item["time_alignment"]["valid"] for item in self.transitions),
                    "contract_complete_count": sum(item["state_action_next_complete"] for item in self.transitions),
                    "missing_or_quality_reasons": quality,
                    "data_quality_flags": ["render_sync_quality_blocked", "fixed_smoke_driver",
                                           "contract_validation_only"]}
         return {"trace_version": TRACE_VERSION, "trajectory_id": self.trajectory_id,
+                "action_space_version": self.action_space_version,
+                "sighting_id_policy": SIGHTING_ID_POLICY,
                 "state_schema_version": self.state_schema_version, "scene_profile_id": self.profile_id,
                 "config_fingerprint": self.profile_id, "run_seed": self.seed,
                 "synthetic_seed": self.synthetic_seed,
@@ -298,10 +336,69 @@ class TransitionTrace:
                 "unclosed_actions": unclosed}
 
 
+def _validate_versioned_action(action: dict) -> None:
+    """Check the version-qualified ID without importing the simulator stack."""
+    raw = action.get("raw_skill_request")
+    if isinstance(raw, dict) and isinstance(raw.get("params"), dict) and "sighting" in raw["params"]:
+        if (action.get("sighting_annotation") != raw["params"]["sighting"] or
+                action.get("sighting_validation_status") not in
+                ("pending_formal_validation", "accepted_by_formal_validator", "rejected_by_formal_validator")):
+            raise ValueError("Sighting annotation was lost or changed")
+    elif action.get("sighting_annotation") is not None:
+        raise ValueError("Sighting annotation has no raw source")
+    if action.get("action_mapping_status") != "mapped":
+        if action.get("oracle_action_id") is not None or action.get("normalized_oracle_action") is not None:
+            raise ValueError("Unmapped action has a canonical ID")
+        return
+    normalized = action.get("normalized_oracle_action")
+    if not isinstance(normalized, dict) or set(normalized) != {"skill", "params"}:
+        raise ValueError("Mapped action lacks normalized parameters")
+    skill, params = normalized["skill"], normalized["params"]
+    if not isinstance(params, dict) or params.get("risk") not in ("safe", "fast"):
+        raise ValueError("Comparison action lacks an explicit valid risk")
+    if skill in ("MOVE_TO", "CAPTURE_POINT"):
+        valid = set(params) == {"risk", "target"} and params["target"] in ("active", "P1", "P2")
+    elif skill == "TAKE_COVER":
+        valid = set(params) in ({"risk"}, {"cover", "risk"}) and (
+            "cover" not in params or isinstance(params["cover"], str) and params["cover"] != "auto")
+    elif skill == "AIM_AT_TRACK":
+        valid = set(params) == {"risk"}
+    elif skill == "OBSERVE":
+        valid = set(params) == {"direction", "risk"} and params["direction"] in (
+            "scan", "threat", "north", "south", "east", "west")
+    else:
+        valid = False
+    if not valid:
+        raise ValueError("Invalid comparison action parameters")
+    if not isinstance(raw, dict) or raw.get("skill") != skill or not isinstance(raw.get("params"), dict):
+        raise ValueError("Normalized action has no matching raw Skill request")
+    raw_params = {key: value for key, value in raw["params"].items() if key != "sighting"}
+    if skill in ("MOVE_TO", "CAPTURE_POINT"):
+        raw_params.setdefault("target", "active")
+    elif skill == "OBSERVE":
+        raw_params.setdefault("direction", "scan")
+    raw_params.setdefault("risk", "safe")
+    if raw_params != params:
+        raise ValueError("Normalized action differs from raw Skill parameters")
+    expected_id = skill + ":" + json.dumps(tuple(sorted(params.items())), separators=(",", ":"), ensure_ascii=False)
+    if action.get("oracle_action_id") != expected_id:
+        raise ValueError("Action ID disagrees with comparison action parameters")
+    if action.get("sighting_validation_status") not in ("not_present", "accepted_by_formal_validator"):
+        raise ValueError("Mapped sighting was not formally validated")
+
+
 def validate_trace_payload(payload: dict) -> dict:
     """Standard-library structural check shared with the upload collector."""
     if not isinstance(payload, dict) or payload.get("trace_version") != TRACE_VERSION:
         raise ValueError("Invalid transition trace version")
+    # Legacy traces have no action-space marker. Their IDs remain namespaced as
+    # historical data and are never silently interpreted as candidate IDs.
+    action_space_version = payload.get("action_space_version", LEGACY_ACTION_SPACE_VERSION)
+    if action_space_version not in (ACTION_SPACE_VERSION, LEGACY_ACTION_SPACE_VERSION):
+        raise ValueError("Unknown action-space version")
+    candidate = action_space_version == ACTION_SPACE_VERSION
+    if candidate and payload.get("sighting_id_policy") != SIGHTING_ID_POLICY:
+        raise ValueError("Candidate trace lacks sighting ID policy")
     transitions, unclosed, summary = (payload.get("transitions"), payload.get("unclosed_actions"),
                                       payload.get("summary"))
     if not isinstance(transitions, list) or not isinstance(unclosed, list) or not isinstance(summary, dict):
@@ -311,6 +408,15 @@ def validate_trace_payload(payload: dict) -> dict:
         raise ValueError("Transition trace counts disagree with records")
     if payload.get("render_sync_quality") != "blocked" or payload.get("same_frame_verified") is not False:
         raise ValueError("Transition trace has invalid render synchronization claim")
+    if candidate:
+        counts = summary.get("action_catalog_counts")
+        if (not isinstance(counts, dict) or counts !=
+                {"MOVE_TO": 6, "CAPTURE_POINT": 6, "TAKE_COVER": 18,
+                 "AIM_AT_TRACK": 2, "OBSERVE": 12} or
+                summary.get("action_catalog_total") != 44):
+            raise ValueError("Candidate action catalog summary is invalid")
+    elif "action_space_version" in payload:
+        raise ValueError("Legacy trace must remain unversioned")
     mapped = 0
     alignments = []
     previous_next = None
@@ -332,6 +438,12 @@ def validate_trace_payload(payload: dict) -> dict:
         action = item.get("action")
         if not isinstance(action, dict) or action.get("action_mapping_status") not in ("mapped", "unmapped"):
             raise ValueError("Transition action mapping is missing")
+        if candidate:
+            if item.get("action_space_version") != ACTION_SPACE_VERSION:
+                raise ValueError("Transition action-space version differs from trace")
+            _validate_versioned_action(action)
+        elif "action_space_version" in item:
+            raise ValueError("Legacy transition has a candidate version")
         mapped += action["action_mapping_status"] == "mapped"
         if action["action_mapping_status"] == "mapped" and not action.get("oracle_action_id"):
             raise ValueError("Mapped action lacks Oracle action ID")
@@ -342,9 +454,19 @@ def validate_trace_payload(payload: dict) -> dict:
     for item in unclosed:
         if not isinstance(item, dict) or item.get("next") is not None or not isinstance(item.get("action"), dict):
             raise ValueError("Unclosed action has a fabricated successor or no action record")
+        if candidate:
+            _validate_versioned_action(item["action"])
         mapped += item["action"].get("action_mapping_status") == "mapped"
     if (summary.get("mapped_action_count") != mapped or
             summary.get("unmapped_action_count") != len(transitions) + len(unclosed) - mapped or
             summary.get("time_alignment_valid") != all(alignments)):
         raise ValueError("Transition summary disagrees with action or alignment records")
-    return {"found": True, **summary, "parse_error": None}
+    if candidate:
+        actions = [item["action"] for item in transitions] + [item["action"] for item in unclosed]
+        annotations = sum(isinstance((action.get("raw_skill_request") or {}).get("params"), dict)
+                          and "sighting" in action["raw_skill_request"]["params"] for action in actions)
+        if summary.get("sighting_annotation_count") != annotations:
+            raise ValueError("Sighting annotation count disagrees with actions")
+    return {"found": True, **summary, "action_space_version": action_space_version,
+            "sighting_id_policy": payload.get("sighting_id_policy") if candidate else None,
+            "parse_error": None}

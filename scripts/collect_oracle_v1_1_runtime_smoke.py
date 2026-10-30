@@ -136,6 +136,9 @@ class Collector:
         self.transition_trace: dict = {"found": False, "copied_path": None, "parse_error": None,
                                        "complete_transition_count": 0, "unclosed_action_count": 0,
                                        "mapped_action_count": 0, "unmapped_action_count": 0,
+                                       "action_space_version": None, "action_catalog_total": None,
+                                       "action_catalog_counts": None, "sighting_annotation_count": 0,
+                                       "sighting_id_policy": None,
                                        "time_alignment_valid": None, "missing_or_quality_reasons": []}
         self.environment: dict = {}
 
@@ -523,6 +526,9 @@ class Collector:
                  f"Diagnostic JSON found: {self.diagnostic['found']}",
                  f"Diagnostic boundaries: {len(self.diagnostic['boundaries'])}",
                  f"Transition trace found: {self.transition_trace['found']}",
+                 f"Action space version: {self.transition_trace['action_space_version']}",
+                 f"Action catalog total/counts: {self.transition_trace['action_catalog_total']}/{self.transition_trace['action_catalog_counts']}",
+                 f"Sighting annotations / ID policy: {self.transition_trace['sighting_annotation_count']}/{self.transition_trace['sighting_id_policy']}",
                  f"Complete transitions: {self.transition_trace['complete_transition_count']}",
                  f"Unclosed actions: {self.transition_trace['unclosed_action_count']}",
                  f"Mapped/unmapped actions: {self.transition_trace['mapped_action_count']}/{self.transition_trace['unmapped_action_count']}",
@@ -595,6 +601,11 @@ class Collector:
             signal.signal(signal.SIGTERM, old_term)
         print(f"\nSmoke status: {summary['smoke']['status']} (exit={summary['smoke']['exit_code']})")
         print(f"Diagnostic JSON found: {summary['diagnostic']['found']}")
+        print(f"Action space: version={summary['transition_trace']['action_space_version']}, "
+              f"total={summary['transition_trace']['action_catalog_total']}, "
+              f"counts={summary['transition_trace']['action_catalog_counts']}, "
+              f"sightings={summary['transition_trace']['sighting_annotation_count']}, "
+              f"sighting_id_policy={summary['transition_trace']['sighting_id_policy']}")
         print(f"Transition trace: found={summary['transition_trace']['found']}, "
               f"complete={summary['transition_trace']['complete_transition_count']}, "
               f"unclosed={summary['transition_trace']['unclosed_action_count']}, "
