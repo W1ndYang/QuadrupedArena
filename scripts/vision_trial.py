@@ -35,6 +35,8 @@ parser.add_argument('--synthetic-vision-skill-runtime-smoke',action='store_true'
                     help='Three native Skill actions in the normal match loop with fresh synthetic observations')
 parser.add_argument('--oracle-state-diagnostic',action='store_true',
                     help='Optional read-only Oracle state IDs at synthetic Skill smoke decision boundaries')
+parser.add_argument('--oracle-pilot-task',type=Path,
+                    help='One finite coarse Oracle Pilot task JSON; no API or external decisions')
 parser.add_argument('--synthetic-pixel-noise-std',type=float,default=1.0)
 parser.add_argument('--synthetic-miss-probability',type=float,default=0.0)
 parser.add_argument('--synthetic-seed',type=int,default=20261028)
@@ -55,6 +57,12 @@ if args.synthetic_pixel_noise_std<0 or not math.isfinite(args.synthetic_pixel_no
     parser.error('Invalid synthetic sighting noise or miss probability')
 if args.oracle_state_diagnostic and not args.synthetic_vision_skill_runtime_smoke:
     parser.error('--oracle-state-diagnostic requires --synthetic-vision-skill-runtime-smoke')
+if args.oracle_pilot_task and (not args.vision_trial or not args.semantic_skills or
+        args.vision_smoke or args.deepseek or args.qwen_vision or args.assessment or
+        args.geometry_diagnostic or args.geometry_interface_probe or args.g1b1_visible_spawn or
+        args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or
+        args.synthetic_vision_skill_runtime_smoke or args.oracle_state_diagnostic):
+    parser.error('--oracle-pilot-task requires --vision-trial --semantic-skills and no other planner/diagnostic mode')
 from formal_geometry_diagnostic import diagnostic_mode_error
 mode_error=diagnostic_mode_error(args)
 if mode_error:parser.error(mode_error)
@@ -84,6 +92,11 @@ def main():
     if not (args.geometry_diagnostic or args.geometry_interface_probe):
         for name in ('frames','observations','actions','decisions'):(root/name).mkdir()
     cfg=load_config(PROJECT/'configs/trial_rotating.json');cfg['seed']=2026102107
+    pilot_task=None
+    if args.oracle_pilot_task:
+        import json
+        pilot_task=json.loads(args.oracle_pilot_task.read_text())
+        cfg['seed']=pilot_task['game_seed']
     if args.vision_smoke:cfg['duration']=2.
     if args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation:
         # Explicit sighting modes use the previously checked clear A viewpoint.
@@ -242,6 +255,16 @@ def main():
             camera_pan_degrees=rig.pan,camera_world_yaw_degrees=math.degrees(heading),camera_eye=eye.tolist(),horizontal_fov_degrees=90)
         frames.append(frame);dump(root/'frame_index.json',frames)
         return frame
+    if pilot_task is not None:
+        from oracle_pilot_runtime import run as run_oracle_pilot
+        protocol=__import__('json').loads((root/'protocol.json').read_text())
+        protocol.update(mode='oracle_coarse_pilot',task=pilot_task,
+            sighting_source='simulator_geometry_truth',same_frame_verified=False,
+            render_sync_quality='blocked',sync_integration_status='blocked',
+            engine='Python Match/Referee/Skill; Isaac RGB and synthetic USD/PhysX observations')
+        dump(root/'protocol.json',protocol)
+        run_oracle_pilot(root,pilot_task,cfg,match,engine,rig,stage,camera,capture)
+        return
     if args.synthetic_vision_mvp:
         from synthetic_vision_mvp import observe_current_scene,handoff_to_skill
         frame=capture()
@@ -596,5 +619,6 @@ except Exception:
     dump(args.run_dir/'result.json',dict(status='failed',error=traceback.format_exc()))
     traceback.print_exc()
     if (args.geometry_diagnostic or args.geometry_interface_probe or args.synthetic_vision_mvp or
-            args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke):raise SystemExit(1)
+            args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke or
+            args.oracle_pilot_task):raise SystemExit(1)
 finally:app.close(wait_for_replicator=False,skip_cleanup=True)

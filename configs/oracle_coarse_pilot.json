@@ -1,0 +1,36 @@
+{
+  "scene": "formal_courtyard",
+  "rules_config": "trial_rotating.json",
+  "opponent_policy": "HumanPolicy",
+  "action_catalog_version": "comparison_v1_candidate",
+  "sample_manifest": "samples.json (generated from reproducible discovery runs)",
+  "default_output_dir": ".arena-workspace/experiments/oracle-pilot/default",
+  "run_modes": ["preflight", "smoke", "pilot_actions", "policy_eval"],
+  "game_seed": 2026102107,
+  "training_synthetic_seeds": [20261028, 20261029, 20261030, 20261031],
+  "test_synthetic_seeds": [20261101, 20261102, 20261103, 20261104, 20261105,
+                           20261106, 20261107, 20261108, 20261109, 20261110,
+                           20261111, 20261112, 20261113, 20261114, 20261115,
+                           20261116, 20261117, 20261118, 20261119, 20261120],
+  "continuation_policy": "fixed_capture_active_fast",
+  "continuation_request": {"skill": "CAPTURE_POINT", "params": {"target": "active", "risk": "fast"}},
+  "smoke_requests": [
+    {"skill": "CAPTURE_POINT", "params": {"target": "active", "risk": "fast"}},
+    {"skill": "OBSERVE", "params": {"direction": "north", "risk": "safe"}},
+    {"skill": "TAKE_COVER", "params": {"risk": "safe"}}
+  ],
+  "discovery_requests": [
+    {"skill": "CAPTURE_POINT", "params": {"target": "active", "risk": "fast"}},
+    {"skill": "MOVE_TO", "params": {"target": "P2", "risk": "fast"}},
+    {"skill": "OBSERVE", "params": {"direction": "north", "risk": "safe"}},
+    {"skill": "TAKE_COVER", "params": {"risk": "safe"}}
+  ],
+  "max_discovery_runs": 12,
+  "discovery_steps": 4,
+  "candidate_action_duration": 2,
+  "total_rollout_horizon": 8,
+  "pixel_noise_std": 1.0,
+  "miss_probability": 0.0,
+  "maximum_branch_goal": 528,
+  "baseline_list": ["fixed_capture_active_fast"]
+}
