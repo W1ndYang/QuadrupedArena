@@ -23,6 +23,8 @@ import zipfile
 
 from adaptive_motion import load_config
 from arena_paths import PROJECT, workspace_root
+from oracle_pilot_discovery import (DISCOVERY_SCHEMA, analyze_records, build_prefix_library,
+                                    near_miss_markdown)
 from oracle_state_v1 import ACTION_SPACE_VERSION, action_catalog, action_template
 
 DEFAULT_CONFIG = PROJECT / "configs/oracle_coarse_pilot.json"
@@ -65,12 +67,20 @@ def resolve_config(path):
         return item.template_id
     raw["continuation_action_id"] = exact(raw["continuation_request"])
     raw["smoke_action_ids"] = [exact(x) for x in raw["smoke_requests"]]
-    raw["discovery_action_ids"] = [exact(x) for x in raw["discovery_requests"]]
+    if raw["discovery_schema_version"] != DISCOVERY_SCHEMA or raw["discovery_batch_size"] != 12 or raw["discovery_max_runs"] != 24:
+        raise ValueError("Expected v2 discovery schema and two 12-prefix batches")
+    if raw["discovery_steps"] != 4:
+        raise ValueError("The v2 prefix library has exactly four decision windows")
+    if raw["discovery_synthetic_seed"] != raw["training_synthetic_seeds"][0]:
+        raise ValueError("First discovery batch must use one fixed training synthetic seed")
+    raw["prefix_library"] = build_prefix_library(cfg, catalog)
     raw["action_catalog_version"] = ACTION_SPACE_VERSION
     raw["action_catalog"] = [{"action_id": a.template_id, "skill": a.skill,
                               "params": dict(a.params)} for a in catalog]
-    sources = ["run.sh", "scripts/launch.py", "scripts/vision_trial.py",
+    sources = ["run.sh", "scripts/run_oracle_pilot_ubuntu.sh",
+               "scripts/launch.py", "scripts/vision_trial.py",
                "scripts/oracle_pilot.py", "scripts/oracle_pilot_runtime.py",
+               "scripts/oracle_pilot_discovery.py",
                "scripts/oracle_state_v1.py", "scripts/semantic_skills.py",
                "scripts/synthetic_vision_mvp.py", "scripts/vision_core.py",
                "scripts/llm_trial.py", "scripts/trial_rules.py",
@@ -141,7 +151,7 @@ def run_task(output, task, *, retry_failed=False, force=False):
         source = run_dir / "environment.json"
         if source.is_file():
             shutil.copy2(source, raw / "environment.json")
-        for source in sorted((run_dir / "diagnostics").glob("reference_*.json")):
+        for source in sorted((run_dir / "diagnostics").glob("*.json")):
             dest = raw / "diagnostics" / source.name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, dest)
@@ -262,80 +272,58 @@ def smoke(output, config):
     return estimate
 
 
-def discover(output, config, max_runs):
+def save_discovery_analysis(output, config, library, batch, records):
+    samples, near = analyze_records(records, library, {**config, "discovery_batch": batch})
+    atomic_json(output / "samples.json", samples)
+    atomic_json(output / "near_miss_report.json", near)
+    (output / "near_miss_report.md").write_text(near_miss_markdown(near))
+    return samples
+
+
+def discover(output, config, max_runs, batch=1, retry_failed=False):
+    if batch not in (1, 2) or not 1 <= max_runs <= config["discovery_batch_size"]:
+        raise ValueError("Use discovery batch 1 or 2 and a cumulative batch limit of 1..12")
+    if (not (output / "preflight.json").exists() or
+            read(output / "preflight.json").get("status") != "passed" or
+            read(output / "preflight.json").get("source_sha256") != config["source_sha256"]):
+        raise ValueError("Run and pass current-source preflight before discovery")
+    if (not (output / "smoke.json").exists() or
+            read(output / "smoke.json").get("status") != "passed" or
+            read(output / "smoke.json").get("source_sha256") != config["source_sha256"]):
+        raise ValueError("Runtime changed for v2; run and pass current-source smoke before discovery")
+    existing = read(output / "samples.json") if (output / "samples.json").exists() else None
+    if existing and existing.get("discovery_schema") != DISCOVERY_SCHEMA:
+        raise ValueError("Old discovery samples are present; use the separate action-prefix-v2 output directory")
+    library = config["prefix_library"]
+    if existing and (existing.get("prefix_library_hash") != library["hash"] or
+                     existing.get("source_sha256") != config["source_sha256"]):
+        raise ValueError("Discovery source/library changed; use a new output directory")
+    if batch == 1 and existing and existing["attempted_prefixes"] > 12:
+        raise ValueError("This output already contains batch 2; continue with --discovery-batch 2")
+    if batch == 2:
+        near = read(output / "near_miss_report.json") if (output / "near_miss_report.json").exists() else None
+        if not existing or existing["attempted_prefixes"] < 12 or existing["qualifying_group_count"] or not near or not near["expansion_recommended"]:
+            raise ValueError("Batch 2 requires a completed, collision-free first batch with near-miss evidence")
+    if existing:
+        completed_in_batch = existing["attempted_prefixes"] - (batch - 1) * 12
+        max_runs = max(max_runs, completed_in_batch)
+    atomic_json(output / "prefix_library.json", library)
+    selected = [p for p in library["prefixes"] if p["batch"] < batch or
+                (p["batch"] == batch and int(p["prefix_id"].split("_")[1]) <= (batch - 1) * 12 + max_runs)]
     records = []
-    for synthetic_seed in config["training_synthetic_seeds"]:
-        for action_id in config["discovery_action_ids"]:
-            if len(records) >= max_runs:
-                break
-            task = task_base(config, "discover", synthetic_seed)
-            task.update(max_steps=config["discovery_steps"], continuation_action_id=action_id)
-            records.append(run_task(output, task))
-    groups = defaultdict(list)
-    for record in records:
-        if record["status"] != "passed":
-            continue
-        raw = Path(record["raw_dir"])
-        boundaries = read(raw / "boundaries.json")
-        decisions = read(raw / "decisions.json")
-        for step, boundary in enumerate(boundaries):
-            if boundary["limited"]["status"] != "valid":
-                continue
-            prefix = [d["action_id"] for d in decisions[:step]]
-            reference = read(raw / boundary["full_diagnostic_file"])["snapshot"]
-            physical = {key: value for key, value in reference.items() if key not in
-                        ("visual_track", "visual_seen_at", "visual_source")}
-            sample = {"sample_id": record["task_key"] + f"_{step:02d}",
-                      "state_id": boundary["limited"]["state_id"],
-                      "fields": boundary["limited"]["fields"],
-                      "full_diagnostic_file": str(raw / boundary["full_diagnostic_file"]),
-                      "reference_digest_1e6": boundary["reference_digest_1e6"],
-                      "physical_reference_digest": digest(physical),
-                      "game_seed": record["task"]["game_seed"],
-                      "synthetic_seed": record["task"]["synthetic_seed"],
-                      "target_step": step, "prefix_action_ids": prefix,
-                      "source_run": record["task_key"], "source_frequency": None}
-            groups[sample["state_id"]].append(sample)
-    selected = []
-    total_boundary_visits = sum(len(v) for v in groups.values())
-    def category(fields):
-        if fields.get("A.visual_memory_bin") == "fresh_aim_usable":
-            return "visual_threat"
-        if fields.get("A.active_target_relation") in ("inside_capture", "capture_edge"):
-            return "capture_or_dwell"
-        if fields.get("own_skill_status") in ("unsafe_route", "no_route", "stopped", "emergency_cover"):
-            return "replan_or_blocked"
-        return "move_or_route"
-    for state_id, candidates in groups.items():
-        distinct = {}
-        for item in candidates:
-            distinct.setdefault(item["physical_reference_digest"], item)
-        values = list(distinct.values())
-        if len(values) >= 2:
-            snapshots = [read(item["full_diagnostic_file"])["snapshot"] for item in values[:3]]
-            differences = [key for key in snapshots[0] if
-                           len({canonical(snapshot[key]) for snapshot in snapshots}) > 1]
-            selected.append({"state_id": state_id, "fields": values[0]["fields"],
-                             "category": category(values[0]["fields"]),
-                             "offline_reference_differences": differences,
-                             "observed_boundary_visits": len(candidates),
-                             "observed_visit_fraction": len(candidates) / total_boundary_visits if total_boundary_visits else None,
-                             "samples": values[:3], "available_distinct_full_states": len(values)})
-    selected.sort(key=lambda x: (-len(x["samples"]), x["state_id"]))
-    diverse = []
-    seen_categories = set()
-    for item in selected:
-        if item["category"] not in seen_categories:
-            diverse.append(item)
-            seen_categories.add(item["category"])
-    selected = (diverse + [item for item in selected if item not in diverse])[:4]
-    result = {"status": "ready" if len(selected) == 4 and all(len(x["samples"]) == 3 for x in selected) else "reduced_incomplete",
-              "source_sha256": config["source_sha256"],
-              "requested_states": 4, "requested_samples_per_state": 3,
-              "groups": selected, "discovery_runs": len(records),
-              "note": "Only same canonical state IDs and distinct reference fingerprints are counted. No sample is invented."}
-    atomic_json(output / "samples.json", result)
-    return result
+    for plan in selected:
+        task = task_base(config, "discover", config["discovery_synthetic_seed"])
+        task.update(max_steps=config["discovery_steps"], prefix_id=plan["prefix_id"],
+                    prefix_library_version=library["version"], prefix_library_hash=library["hash"],
+                    prefix_action_ids=plan["prefix_action_ids"], prefix_actions=plan["actions"])
+        records.append(run_task(output, task, retry_failed=retry_failed))
+    samples = save_discovery_analysis(output, config, library, batch, records)
+    return {"status": samples["status"], "planned_prefixes": samples["planned_prefixes"],
+            "attempted_prefixes": samples["attempted_prefixes"],
+            "completed_prefixes": samples["completed_prefixes"],
+            "failed_prefixes": samples["failed_prefixes"],
+            "qualifying_groups": samples["qualifying_group_count"],
+            "boundary_visits": samples["boundary_visits"]}
 
 
 def pilot_actions(output, config, max_branches, retry_failed):
@@ -345,9 +333,15 @@ def pilot_actions(output, config, max_branches, retry_failed):
         raise ValueError("Verified replay preflight is required")
     if not (output / "smoke.json").exists() or read(output / "smoke.json").get("source_sha256") != config["source_sha256"]:
         raise ValueError("Run smoke and inspect throughput first")
-    if not (output / "samples.json").exists() or read(output / "samples.json").get("source_sha256") != config["source_sha256"]:
-        discover(output, config, config["max_discovery_runs"])
+    if not (output / "samples.json").exists():
+        raise ValueError("Run the separate discover mode first; pilot_actions never starts discovery")
     samples = read(output / "samples.json")
+    if (samples.get("discovery_schema") != DISCOVERY_SCHEMA or
+            samples.get("source_sha256") != config["source_sha256"] or
+            samples.get("prefix_library_hash") != config["prefix_library"]["hash"]):
+        raise ValueError("Current v2 discovery evidence is required; old samples cannot be reused")
+    if not samples["groups"]:
+        raise ValueError("No qualified exact-ID sample group; inspect near_miss_report.md before any action matrix")
     count = 0
     for group in samples["groups"]:
         for sample in group["samples"]:
@@ -357,6 +351,7 @@ def pilot_actions(output, config, max_branches, retry_failed):
                             prefix_action_ids=sample["prefix_action_ids"],
                             expected_state_id=sample["state_id"],
                             expected_reference_digest=sample["reference_digest_1e6"],
+                            expected_boundaries=sample["replay_boundaries"],
                             candidate_action_id=action["action_id"],
                             horizon_seconds=config["total_rollout_horizon"])
                 existing = output / "tasks" / f"{digest(task)[:20]}.json"
@@ -520,16 +515,18 @@ def report(output, config):
     pre = read(output / "preflight.json") if (output / "preflight.json").exists() else None
     smoke_data = read(output / "smoke.json") if (output / "smoke.json").exists() else None
     samples = read(output / "samples.json") if (output / "samples.json").exists() else None
-    common = analyze_actions(output, config)
     eval_data = read(output / "analysis" / "eval_summary.json") if (output / "analysis" / "eval_summary.json").exists() else None
     done = [x for x in all_records(output) if x["task"].get("source_sha256") == config["source_sha256"] and
             x["task"]["mode"] == "branch"]
+    formal = [x for x in done if x["task"].get("sample_id") != "preflight_t0"]
+    common = analyze_actions(output, config) if formal else []
     total = sum(x["status"] == "passed" for x in done)
     lines = ["# Oracle 粗粒度策略可行性 Pilot 运行汇总", "",
              f"- 结论：`INCONCLUSIVE`（只有完成完整动作矩阵、有效独立评估和充分统计后才可重新判定）",
              f"- 场景：`{config['scene']}`；规则：`{config['rules_config']}`；固定对手：`HumanPolicy`；动作目录：`{ACTION_SPACE_VERSION}` 44 项。",
              f"- 分支：{total}/{len(done)} 成功；目标上限 528。",
-             f"- 重放预检：{pre['status'] if pre else '未运行'}；Smoke：{smoke_data['status'] if smoke_data else '未运行'}；样本组：{len(samples['groups']) if samples else 0}。",
+             f"- 重放预检：{pre['status'] if pre else '未运行'}；Smoke：{smoke_data['status'] if smoke_data else '未运行'}；合格样本组：{samples['qualifying_group_count'] if samples and samples.get('discovery_schema') == DISCOVERY_SCHEMA else 0}。",
+             f"- v2 发现前缀：{samples['completed_prefixes'] if samples and samples.get('discovery_schema') == DISCOVERY_SCHEMA else 0}/{samples['planned_prefixes'] if samples and samples.get('discovery_schema') == DISCOVERY_SCHEMA else 24} 完成；失败 {samples['failed_prefixes'] if samples and samples.get('discovery_schema') == DISCOVERY_SCHEMA else 0}。",
              f"- 独立评估配对数：{eval_data['paired_episodes'] if eval_data else 0}；平均得分差：{eval_data['mean_delta'] if eval_data else '未计算'}。",
              "", "## 研究边界", "",
              "本汇总仅用官方本方 score 增量为价值；游戏没有对手官方 score、官方分差或胜负字段，均记为不可用。",
@@ -542,7 +539,8 @@ def report(output, config):
              "|---|---:|---:|---|---:|---|"]
     for item in common:
         lines.append(f"| `{item['state_id'][:28]}...` | {item['samples']} | {item['common_legal']} | `{item['common_action']}` | {item['mean_regret']} | {item.get('full_44_coverage',False)} |")
-    lines += ["", "详见 `analysis/action_value_matrix.csv`、`analysis/common_actions.csv`、`analysis/policy.json`、`analysis/paired_eval.csv`，以及每个 task 的原始 JSON 与 `branches.jsonl`。", ""]
+    lines += ["", "发现阶段详见 `samples.json`、`near_miss_report.md`、`prefix_library.json` 及每条 task 的原始 JSON。正式动作矩阵和策略评估须另行启动；发现命令不会运行它们。", ""]
+    (output / "analysis").mkdir(parents=True, exist_ok=True)
     (output / "analysis" / "report.md").write_text("\n".join(lines))
 
 
@@ -554,7 +552,13 @@ def package(output):
         relative = str(path.relative_to(output))
         entries.append({"path": relative, "bytes": path.stat().st_size,
                         "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    samples = read(output / "samples.json") if (output / "samples.json").exists() else None
+    resolved = read(output / "resolved_config.json") if (output / "resolved_config.json").exists() else None
     manifest = {"file_count": len(entries), "files": entries,
+                "discovery_schema": samples.get("discovery_schema") if samples else
+                resolved.get("discovery_schema_version") if resolved else None,
+                "prefix_library_hash": samples.get("prefix_library_hash") if samples else
+                resolved.get("prefix_library", {}).get("hash") if resolved else None,
                 "same_frame_verified": False, "render_sync_quality": "blocked"}
     atomic_json(output / "manifest.json", manifest)
     (output / "SHA256SUMS").write_text("".join(f"{e['sha256']}  {e['path']}\n" for e in entries))
@@ -578,9 +582,13 @@ def package(output):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("inspect", "preflight", "smoke", "pilot_actions", "policy_eval", "retry_task", "report", "package"))
+    parser.add_argument("mode", choices=("inspect", "preflight", "smoke", "discover", "pilot_actions", "policy_eval", "retry_task", "report", "package"))
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
-    parser.add_argument("--output", type=Path, default=workspace_root() / "experiments/oracle-pilot/default")
+    parser.add_argument("--output", type=Path, default=workspace_root() / "experiments/oracle-pilot/action-prefix-v2")
+    parser.add_argument("--max-discovery-runs", type=int, default=12,
+                        help="Cumulative target within the selected 12-prefix batch (1..12)")
+    parser.add_argument("--discovery-batch", type=int, choices=(1, 2), default=1,
+                        help="Batch 2 requires explicit selection after reviewing batch 1")
     parser.add_argument("--max-branches", type=int, default=44)
     parser.add_argument("--max-pairs", type=int, default=20)
     parser.add_argument("--retry-failed", action="store_true")
@@ -588,6 +596,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
     config = resolve_config(args.config)
     output = args.output.expanduser().resolve()
+    if args.mode in ("discover", "pilot_actions") and (output / "samples.json").exists():
+        old = read(output / "samples.json")
+        if old.get("discovery_schema") != DISCOVERY_SCHEMA:
+            raise ValueError("This output has old discovery data; use the action-prefix-v2 output directory")
     output.mkdir(parents=True, exist_ok=True)
     atomic_json(output / "resolved_config.json", config)
     if args.mode == "inspect":
@@ -598,6 +610,8 @@ def main(argv=None):
         result = preflight(output, config)
     elif args.mode == "smoke":
         result = smoke(output, config)
+    elif args.mode == "discover":
+        result = discover(output, config, args.max_discovery_runs, args.discovery_batch, args.retry_failed)
     elif args.mode == "pilot_actions":
         result = {"processed_branch_slots": pilot_actions(output, config, args.max_branches, args.retry_failed)}
     elif args.mode == "policy_eval":
@@ -612,6 +626,17 @@ def main(argv=None):
         if task.get("source_sha256") != config["source_sha256"]:
             raise ValueError("Cannot retry a task from another source version")
         result = run_task(output, task, force=True)
+        if task["mode"] == "discover" and (output / "samples.json").exists():
+            existing = read(output / "samples.json")
+            if (existing.get("discovery_schema") != DISCOVERY_SCHEMA or
+                    existing.get("prefix_library_hash") != config["prefix_library"]["hash"]):
+                raise ValueError("Cannot update discovery analysis from a different source/library")
+            included = set(existing["prefix_results"])
+            records = [x for x in all_records(output) if x["task"]["mode"] == "discover" and
+                       x["task"].get("source_sha256") == config["source_sha256"] and
+                       x["task"].get("prefix_id") in included]
+            save_discovery_analysis(output, config, config["prefix_library"],
+                                    2 if existing["planned_prefixes"] > 12 else 1, records)
     else:
         result = {"mode": args.mode}
     report(output, config)

@@ -44,6 +44,23 @@ def reference_digest(snapshot):
     return hashlib.sha256(data.encode()).hexdigest()
 
 
+def canonical_state(encoded):
+    """The exact JSON payload hashed by oracle_state_v1._result."""
+    return json.dumps([encoded.version, encoded.profile_id, encoded.view, encoded.status,
+                       encoded.fields], separators=(",", ":"), ensure_ascii=False)
+
+
+def normalized_replay_value(value):
+    if isinstance(value, float):
+        result = round(value, 6)
+        return 0.0 if result == 0 else result
+    if isinstance(value, dict):
+        return {k: normalized_replay_value(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [normalized_replay_value(v) for v in value]
+    return value
+
+
 def task_action_id(task, step, state_id):
     """Selection sees only the supplied limited ID and explicit experiment plan."""
     mode = task["mode"]
@@ -90,6 +107,10 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
             raise ValueError("Policy action is not in catalogue")
     if task["mode"] == "branch" and len(task.get("prefix_action_ids", [])) != task["target_step"]:
         raise ValueError("Branch prefix length must equal target_step")
+    if task["mode"] == "discover" and len(task.get("prefix_action_ids", [])) != task["max_steps"]:
+        raise ValueError("Discovery task requires one exact catalog action per decision window")
+    if task["mode"] == "branch" and task.get("expected_boundaries") is not None and len(task["expected_boundaries"]) != task["target_step"] + 1:
+        raise ValueError("Branch replay evidence must cover every prefix boundary")
     if task["mode"] == "branch" and task["horizon_seconds"] % 2:
         raise ValueError("Horizon must be an integer number of 2 s decisions")
 
@@ -99,6 +120,7 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
     boundaries = []
     decisions = []
     prev_action = None
+    replay_mismatch_detail = None
 
     def sample(frame):
         sample_id = len(samples)
@@ -144,16 +166,35 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
                     "frame_files": [f["file"] for f in window],
                     "frame_times": [f["simulation_seconds"] for f in window],
                     "limited": {"status": limited.status, "reason": limited.reason,
-                                "state_id": limited.state_id, "fields": dict(limited.fields)},
+                                "state_id": limited.state_id, "canonical_state": canonical_state(limited),
+                                "fields": dict(limited.fields)},
                     "full_diagnostic_file": f"diagnostics/reference_{step:03d}.json",
                     "reference_digest_1e6": reference_digest(reference),
+                    "replay_reference_digest": reference_digest(reference),
                     "score": match.ref.score, "hp": list(match.ref.hp),
-                    "skill_status": copy.deepcopy(engine.status), "finished": match.ref.finished}
+                    "skill_status": copy.deepcopy(engine.status),
+                    "visual_memory": copy.deepcopy(engine.public(match.t)["visual_memory"]),
+                    "finished": match.ref.finished}
         dump(root / boundary["full_diagnostic_file"],
              {"snapshot": asdict(reference), "full": {"status": full.status,
               "reason": full.reason, "state_id": full.state_id, "fields": dict(full.fields)}})
         boundaries.append(boundary)
         dump(root / "boundaries.json", boundaries)
+        if task["mode"] == "branch" and task.get("expected_boundaries") is not None:
+            expected = task["expected_boundaries"][step] if step <= task["target_step"] else None
+            if expected is not None:
+                actual = {"state_id": boundary["limited"]["state_id"],
+                          "canonical_state": boundary["limited"]["canonical_state"],
+                          "replay_reference_digest": boundary["replay_reference_digest"],
+                          "score": boundary["score"], "skill_status": boundary["skill_status"],
+                          "visual_memory": boundary["visual_memory"], "finished": boundary["finished"]}
+                mismatched = [key for key, value in expected.items()
+                              if normalized_replay_value(actual.get(key)) != normalized_replay_value(value)]
+                if mismatched:
+                    replay_mismatch_detail = {"boundary_step": step, "fields": mismatched,
+                                              "expected": expected, "actual": actual}
+                    stop_reason = "replay_mismatch"
+                    break
         if task["mode"] == "branch" and step == task["target_step"]:
             if limited.state_id != task["expected_state_id"]:
                 stop_reason = "replay_mismatch"
@@ -267,6 +308,8 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
               "sighting_source": "simulator_geometry_truth",
               "state_schema_version": limited.version,
               "action_space_version": "comparison_v1_candidate", "action_catalog_count": len(actions)}
+    if replay_mismatch_detail is not None:
+        result["replay_mismatch_detail"] = replay_mismatch_detail
     dump(root / "pilot_result.json", result)
     dump(root / "result.json", result)
     dump(root / "frame_index.json", frames)

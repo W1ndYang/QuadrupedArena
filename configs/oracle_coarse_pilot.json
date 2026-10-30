@@ -19,13 +19,10 @@
     {"skill": "OBSERVE", "params": {"direction": "north", "risk": "safe"}},
     {"skill": "TAKE_COVER", "params": {"risk": "safe"}}
   ],
-  "discovery_requests": [
-    {"skill": "CAPTURE_POINT", "params": {"target": "active", "risk": "fast"}},
-    {"skill": "MOVE_TO", "params": {"target": "P2", "risk": "fast"}},
-    {"skill": "OBSERVE", "params": {"direction": "north", "risk": "safe"}},
-    {"skill": "TAKE_COVER", "params": {"risk": "safe"}}
-  ],
-  "max_discovery_runs": 12,
+  "discovery_schema_version": "action_prefix_discovery_v2",
+  "discovery_synthetic_seed": 20261028,
+  "discovery_batch_size": 12,
+  "discovery_max_runs": 24,
   "discovery_steps": 4,
   "candidate_action_duration": 2,
   "total_rollout_horizon": 8,
