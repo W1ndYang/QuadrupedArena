@@ -64,7 +64,7 @@ def normalized_replay_value(value):
 def task_action_id(task, step, state_id):
     """Selection sees only the supplied limited ID and explicit experiment plan."""
     mode = task["mode"]
-    if mode in ("preflight", "discover", "branch"):
+    if mode in ("preflight", "discover", "replay_validate", "branch"):
         prefix = task.get("prefix_action_ids", [])
         if step < len(prefix):
             return prefix[step], "prefix"
@@ -107,8 +107,11 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
             raise ValueError("Policy action is not in catalogue")
     if task["mode"] == "branch" and len(task.get("prefix_action_ids", [])) != task["target_step"]:
         raise ValueError("Branch prefix length must equal target_step")
-    if task["mode"] == "discover" and len(task.get("prefix_action_ids", [])) != task["max_steps"]:
-        raise ValueError("Discovery task requires one exact catalog action per decision window")
+    if task["mode"] in ("discover", "replay_validate") and len(task.get("prefix_action_ids", [])) != task["max_steps"]:
+        raise ValueError("Prefix task requires one exact catalog action per decision window")
+    if task["mode"] == "replay_validate" and (len(task.get("expected_boundaries", [])) != task["max_steps"] + 1 or
+                                                 "candidate_action_id" in task):
+        raise ValueError("Replay validation requires every expected boundary and no candidate action")
     if task["mode"] == "branch" and task.get("expected_boundaries") is not None and len(task["expected_boundaries"]) != task["target_step"] + 1:
         raise ValueError("Branch replay evidence must cover every prefix boundary")
     if task["mode"] == "branch" and task["horizon_seconds"] % 2:
@@ -174,20 +177,22 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
                     "score": match.ref.score, "hp": list(match.ref.hp),
                     "skill_status": copy.deepcopy(engine.status),
                     "visual_memory": copy.deepcopy(engine.public(match.t)["visual_memory"]),
-                    "finished": match.ref.finished}
+                    "finished": match.ref.finished, "collapsed": bool(match.collapsed)}
         dump(root / boundary["full_diagnostic_file"],
              {"snapshot": asdict(reference), "full": {"status": full.status,
               "reason": full.reason, "state_id": full.state_id, "fields": dict(full.fields)}})
         boundaries.append(boundary)
         dump(root / "boundaries.json", boundaries)
-        if task["mode"] == "branch" and task.get("expected_boundaries") is not None:
-            expected = task["expected_boundaries"][step] if step <= task["target_step"] else None
+        if task["mode"] in ("branch", "replay_validate") and task.get("expected_boundaries") is not None:
+            limit = task["target_step"] if task["mode"] == "branch" else task["max_steps"]
+            expected = task["expected_boundaries"][step] if step <= limit else None
             if expected is not None:
                 actual = {"state_id": boundary["limited"]["state_id"],
                           "canonical_state": boundary["limited"]["canonical_state"],
                           "replay_reference_digest": boundary["replay_reference_digest"],
                           "score": boundary["score"], "skill_status": boundary["skill_status"],
-                          "visual_memory": boundary["visual_memory"], "finished": boundary["finished"]}
+                          "visual_memory": boundary["visual_memory"], "finished": boundary["finished"],
+                          "collapsed": boundary["collapsed"]}
                 mismatched = [key for key, value in expected.items()
                               if normalized_replay_value(actual.get(key)) != normalized_replay_value(value)]
                 if mismatched:
@@ -208,7 +213,7 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
         if match.ref.finished:
             stop_reason = "terminal"
             break
-        if task["mode"] in ("preflight", "discover") and step >= task["max_steps"]:
+        if task["mode"] in ("preflight", "discover", "replay_validate") and step >= task["max_steps"]:
             stop_reason = "planned_boundary"
             break
         if task["mode"] == "branch" and match.t >= task["target_step"] * 2 + task["horizon_seconds"] - 1e-8:

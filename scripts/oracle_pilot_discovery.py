@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 import hashlib
 import json
+import math
 from pathlib import Path
 
 from oracle_state_v1 import action_template
@@ -22,6 +23,12 @@ def canonical(value):
 
 def digest(value):
     return hashlib.sha256(canonical(value).encode()).hexdigest()
+
+
+def strict_replay_reference_digest(snapshot):
+    """Match oracle_pilot_runtime.reference_digest without angle normalization."""
+    payload = json.dumps(rounded(snapshot), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()
 
 
 def rounded(value):
@@ -114,6 +121,27 @@ FIELD_CLASSES = {
 }
 CLASS_BY_FIELD = {field: name for name, fields in FIELD_CLASSES.items() for field in fields}
 QUALIFYING_CLASSES = ("physical_motion", "game_dynamic", "skill_executor", "hidden_dynamics")
+PERIODIC_ANGLE_PATHS = (("a", "yaw"), ("b", "yaw"))
+
+
+def circular_angle(value):
+    """Normalize a physical yaw, including the +pi/-pi wrap boundary."""
+    if not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise ValueError("Physical yaw must be finite")
+    angle = math.remainder(value, 2 * math.pi)
+    if abs(abs(angle) - math.pi) <= 5e-7:
+        angle = -math.pi
+    result = round(angle, 6)
+    return 0.0 if result == 0 else result
+
+
+def meaningful_reference(snapshot):
+    """Copy R1 for state eligibility; never use this for strict replay digests."""
+    validate_reference_fields(snapshot)
+    result = rounded(snapshot)
+    for actor, field in PERIODIC_ANGLE_PATHS:
+        result[actor][field] = circular_angle(snapshot[actor][field])
+    return result
 
 
 def validate_reference_fields(snapshot):
@@ -123,8 +151,7 @@ def validate_reference_fields(snapshot):
 
 
 def reference_summaries(snapshot):
-    validate_reference_fields(snapshot)
-    normalized = rounded(snapshot)
+    normalized = meaningful_reference(snapshot)
     meaningful = {k: v for k, v in normalized.items() if CLASS_BY_FIELD[k] != "metadata"}
     dynamics = {k: v for k, v in meaningful.items() if CLASS_BY_FIELD[k] in QUALIFYING_CLASSES}
     return {"meaningful_state_digest": digest(meaningful),
@@ -135,9 +162,7 @@ def reference_summaries(snapshot):
 
 
 def reference_diff(left, right):
-    validate_reference_fields(left)
-    validate_reference_fields(right)
-    a, b = rounded(left), rounded(right)
+    a, b = meaningful_reference(left), meaningful_reference(right)
     differences = {name: [] for name in FIELD_CLASSES}
     details = {}
     for key in sorted(set(a) | set(b)):
@@ -150,6 +175,11 @@ def reference_diff(left, right):
                     path = f"{key}.{subkey}"
                     differences[category].append(path)
                     details[path] = {"left": a[key].get(subkey), "right": b[key].get(subkey)}
+                    if (key, subkey) in PERIODIC_ANGLE_PATHS:
+                        details[path]["raw_left"] = left[key][subkey]
+                        details[path]["raw_right"] = right[key][subkey]
+                        details[path]["minimal_circular_delta_rad"] = round(abs(math.remainder(
+                            left[key][subkey] - right[key][subkey], 2 * math.pi)), 6)
         else:
             differences[category].append(key)
             details[key] = {"left": a.get(key), "right": b.get(key)}
@@ -180,6 +210,22 @@ def classify_state(fields):
     if fields.get("own_skill_status") in ("unsafe_route", "no_route", "stopped", "emergency_cover"):
         return "replan_or_blocked"
     return "move_or_route"
+
+
+def select_representatives(values, snapshots, limit=3):
+    """Simple transparent spatial spread: first ID, then farthest-point choices."""
+    remaining = sorted(values, key=lambda x: (x["prefix_id"], x["sample_id"]))
+    selected = [remaining.pop(0)] if remaining else []
+    def distance(a, b):
+        left = snapshots[a["sample_id"]]["a"]["xy"]
+        right = snapshots[b["sample_id"]]["a"]["xy"]
+        return math.dist(left, right)
+    while remaining and len(selected) < limit:
+        choice = max(remaining, key=lambda x: (min(distance(x, prior) for prior in selected),
+                                                -int(x["prefix_id"].split("_")[1])))
+        selected.append(choice)
+        remaining.remove(choice)
+    return selected
 
 
 def analyze_records(records, library, config):
@@ -257,23 +303,40 @@ def analyze_records(records, library, config):
             distinct_dynamics.setdefault(item["dynamics_digest"], item)
         values = list(distinct_dynamics.values())
         if len(values) >= 2:
+            representatives = select_representatives(values, snapshots)
             pair_diffs = []
-            for i, left in enumerate(values[:3]):
-                for right in values[i + 1:3]:
+            for i, left in enumerate(representatives):
+                for right in representatives[i + 1:]:
                     diff = reference_diff(snapshots[left["sample_id"]], snapshots[right["sample_id"]])
                     if not diff["qualifies"]:
                         raise ValueError("Dynamics digest differed without a qualifying field difference")
                     pair_diffs.append({"left": left["sample_id"], "right": right["sample_id"], **diff})
             qualified_groups.append({"state_id": state_id, "canonical_state": canonical_state,
                                      "fields": values[0]["fields"], "category": classify_state(values[0]["fields"]),
-                                     "samples": values[:3], "available_distinct_full_states": len(values),
+                                     "samples": representatives, "candidate_samples": values,
+                                     "selection_method": "first prefix ID, then maximize minimum own-position distance; ties by prefix ID",
+                                     "available_distinct_full_states": len(values),
                                      "observed_boundary_visits": len(candidates),
                                      "pair_differences": pair_diffs})
-        elif len(distinct) > 1:
-            a, b = list(distinct.values())[:2]
-            nonqualifying_exact.append({"state_id": state_id, "left": a["sample_id"],
-                                        "right": b["sample_id"],
-                                        "difference": reference_diff(snapshots[a["sample_id"]], snapshots[b["sample_id"]])})
+        elif len(candidates) > 1:
+            first = candidates[0]
+            different = next((x for x in candidates[1:] if
+                              x["replay_reference_digest"] != first["replay_reference_digest"]), None)
+            if different:
+                a, b = snapshots[first["sample_id"]], snapshots[different["sample_id"]]
+                diff = reference_diff(a, b)
+                angle_aliases = [f"{actor}.{field}" for actor, field in PERIODIC_ANGLE_PATHS
+                                 if rounded(a[actor][field]) != rounded(b[actor][field]) and
+                                 circular_angle(a[actor][field]) == circular_angle(b[actor][field])]
+                reason = ("periodic_angle_alias" if angle_aliases and not diff["qualifies"] and
+                          not diff["observation_memory_only"] else diff["qualification"])
+                nonqualifying_exact.append({"state_id": state_id, "left": first["sample_id"],
+                                            "right": different["sample_id"], "reason": reason,
+                                            "raw_periodic_angle_aliases": angle_aliases,
+                                            "raw_angle_values": {path: {"left": a[path[0]]["yaw"],
+                                                                        "right": b[path[0]]["yaw"]}
+                                                                 for path in angle_aliases},
+                                            "difference": diff})
     qualified_groups.sort(key=lambda x: (-len(x["samples"]), x["state_id"]))
     diverse, seen = [], set()
     for group in qualified_groups:
@@ -321,6 +384,7 @@ def analyze_records(records, library, config):
                "accepted_sightings": sum(s["accepted_sightings"] for s in task_status.values()),
                "boundary_visits": len(visits), "unique_state_ids": len({x["state_id"] for x in visits}),
                "qualifying_group_count": len(qualified_groups), "groups": selected,
+               "all_qualifying_groups": qualified_groups,
                "status": "ready" if qualified_groups else "reduced_incomplete",
                "prefix_results": task_status, "same_frame_verified": False,
                "render_sync_quality": "blocked"}
@@ -338,14 +402,18 @@ def analyze_records(records, library, config):
 def near_miss_markdown(near):
     lines = ["# Oracle Pilot v2 近似碰撞诊断", "",
              f"- 合格精确碰撞组：{near['exact_qualifying_groups']}",
-             f"- 不合格精确匹配（仅观测/元数据差异）：{near['nonqualifying_exact_match_count']}",
+             f"- 不合格精确匹配（周期角、观测或元数据差异）：{near['nonqualifying_exact_match_count']}",
              f"- 不同 ID 的近似候选对：{near['near_pair_count']}",
              f"- 有依据扩展第二批：{'是' if near['expansion_recommended'] else '否'}", "",
              "近似匹配只用于诊断，不是正式样本，也不能进入动作价值矩阵。", "",
              "## 常见阻碍字段", "",
              "| R2-L 字段 | ≤3 字段差异的候选对数 |", "|---|---:|"]
     lines += [f"| `{field}` | {count} |" for field, count in near["top_blocking_fields"]]
-    lines += ["", "`decision_step` 是决策边界标识；`own_previous_action` 是完整的最近一次动作模板；视觉 mask 是实际窗口观测。是否调整这些状态字段需另立研究任务，本轮不改编码。", "", "## 最接近的状态对", "",
+    lines += ["", "`decision_step` 是决策边界标识；`own_previous_action` 是完整的最近一次动作模板；视觉 mask 是实际窗口观测。是否调整这些状态字段需另立研究任务，本轮不改编码。", "", "## 不合格的同 ID 匹配", ""]
+    for item in near["nonqualifying_exact_matches"]:
+        lines.append(f"- `{item['state_id']}`：`{item.get('reason', 'unknown')}`；"
+                     f"周期角原始值 `{item.get('raw_angle_values', {})}`。")
+    lines += ["", "## 最接近的状态对", "",
               "| 边界 | 样本对 | 不同的 R2-L 字段 |", "|---:|---|---|"]
     for pair in near["closest_pairs"][:12]:
         lines.append(f"| {pair['boundary_step']} | `{pair['left']}` / `{pair['right']}` | " +

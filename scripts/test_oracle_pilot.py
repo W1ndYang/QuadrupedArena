@@ -228,13 +228,13 @@ class PilotTests(unittest.TestCase):
                 main(["discover", "--output", str(output)])
             (output / "preflight.json").write_text(json.dumps({"status": "passed", "source_sha256": config["source_sha256"]}))
             (output / "smoke.json").write_text(json.dumps({"status": "passed", "source_sha256": config["source_sha256"]}))
-            with self.assertRaisesRegex(ValueError, "old samples"):
-                pilot_actions(output, config, 1, False)
+            with self.assertRaisesRegex(ValueError, "old discovery data"):
+                main(["pilot_actions", "--output", str(output), "--max-branches", "1"])
             (output / "samples.json").write_text(json.dumps({
                 "discovery_schema": DISCOVERY_SCHEMA,
                 "source_sha256": config["source_sha256"],
                 "prefix_library_hash": config["prefix_library"]["hash"], "groups": []}))
-            with self.assertRaisesRegex(ValueError, "No qualified exact-ID sample group"):
+            with self.assertRaisesRegex(ValueError, "v2.1 action matrix is closed"):
                 pilot_actions(output, config, 44, False)
 
     def test_discover_schedules_distinct_fixed_seed_prefixes_without_branches(self):

@@ -80,7 +80,7 @@ def resolve_config(path):
     sources = ["run.sh", "scripts/run_oracle_pilot_ubuntu.sh",
                "scripts/launch.py", "scripts/vision_trial.py",
                "scripts/oracle_pilot.py", "scripts/oracle_pilot_runtime.py",
-               "scripts/oracle_pilot_discovery.py",
+               "scripts/oracle_pilot_discovery.py", "scripts/oracle_pilot_v21.py",
                "scripts/oracle_state_v1.py", "scripts/semantic_skills.py",
                "scripts/synthetic_vision_mvp.py", "scripts/vision_core.py",
                "scripts/llm_trial.py", "scripts/trial_rules.py",
@@ -159,7 +159,7 @@ def run_task(output, task, *, retry_failed=False, force=False):
         for source in sorted((run_dir / "frames").glob("*.png")):
             frames.append({"file": source.name, "bytes": source.stat().st_size,
                            "sha256": hashlib.sha256(source.read_bytes()).hexdigest()})
-            if task["mode"] in ("preflight", "discover") and len(frames) <= 5:
+            if task["mode"] in ("preflight", "discover", "replay_validate") and len(frames) <= 5:
                 dest = raw / "frames" / source.name
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, dest)
@@ -327,6 +327,7 @@ def discover(output, config, max_runs, batch=1, retry_failed=False):
 
 
 def pilot_actions(output, config, max_branches, retry_failed):
+    raise ValueError("v2.1 action matrix is closed until corrected samples and independent full-prefix replay are reviewed")
     if (not (output / "preflight.json").exists() or
             read(output / "preflight.json")["status"] != "passed" or
             read(output / "preflight.json").get("source_sha256") != config["source_sha256"]):
@@ -461,6 +462,7 @@ def bootstrap_ci(values):
 
 
 def policy_eval(output, config, max_pairs, retry_failed):
+    raise ValueError("v2.1 policy evaluation is closed until corrected samples and replay validation are reviewed")
     policy_file = output / "analysis" / "policy.json"
     if not policy_file.exists():
         analyze_actions(output, config)
