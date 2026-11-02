@@ -84,6 +84,7 @@ def resolve_config(path):
                "scripts/oracle_finite_v1.py", "scripts/oracle_finite_v1_long.py",
                "scripts/oracle_local_state_v1.py", "scripts/oracle_local_p1_v1.py",
                "scripts/oracle_local_p1_full_game.py",
+               "scripts/oracle_p2_second_stage.py",
                "scripts/oracle_state_v1.py", "scripts/semantic_skills.py",
                "scripts/synthetic_vision_mvp.py", "scripts/vision_core.py",
                "scripts/llm_trial.py", "scripts/trial_rules.py",
