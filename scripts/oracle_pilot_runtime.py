@@ -71,6 +71,16 @@ def task_action_id(task, step, state_id):
         if mode == "branch" and step == task["target_step"]:
             return task["candidate_action_id"], "candidate"
         return task["continuation_action_id"], "continuation"
+    if mode in ("oracle_eval_prefix", "oracle_eval_baseline_prefix"):
+        prefix = task["prefix_action_ids"]
+        if step < len(prefix):
+            return prefix[step], "prefix"
+        if mode == "oracle_eval_prefix":
+            action = task.get("policy_table", {}).get(str(step), {}).get(state_id)
+            if action is not None:
+                return action, "oracle_table"
+            return task["continuation_action_id"], "oracle_fallback"
+        return task["continuation_action_id"], "baseline"
     if mode == "eval_policy":
         action = task.get("policy_table", {}).get(state_id)
         return (action, "table") if action is not None else (task["continuation_action_id"], "fallback")
@@ -102,7 +112,10 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
     for item in task.get("prefix_action_ids", []):
         if item not in actions:
             raise ValueError("Task prefix action is not in catalogue")
-    for item in task.get("policy_table", {}).values():
+    policy_values = task.get("policy_table", {}).values()
+    if task["mode"] == "oracle_eval_prefix":
+        policy_values = (action for layer in policy_values for action in layer.values())
+    for item in policy_values:
         if item not in actions:
             raise ValueError("Policy action is not in catalogue")
     if task["mode"] == "branch" and len(task.get("prefix_action_ids", [])) != task["target_step"]:
@@ -112,6 +125,11 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
     if task["mode"] == "replay_validate" and (len(task.get("expected_boundaries", [])) != task["max_steps"] + 1 or
                                                  "candidate_action_id" in task):
         raise ValueError("Replay validation requires every expected boundary and no candidate action")
+    if task["mode"] in ("oracle_eval_prefix", "oracle_eval_baseline_prefix") and (
+            len(task.get("prefix_action_ids", [])) != 4 or
+            len(task.get("expected_boundaries", [])) != 5 or
+            task.get("max_steps") != 6 or "candidate_action_id" in task):
+        raise ValueError("Oracle evaluation requires four replay actions, five boundaries and two policy windows")
     if task["mode"] == "branch" and task.get("expected_boundaries") is not None and len(task["expected_boundaries"]) != task["target_step"] + 1:
         raise ValueError("Branch replay evidence must cover every prefix boundary")
     if task["mode"] == "branch" and task["horizon_seconds"] % 2:
@@ -183,8 +201,9 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
               "reason": full.reason, "state_id": full.state_id, "fields": dict(full.fields)}})
         boundaries.append(boundary)
         dump(root / "boundaries.json", boundaries)
-        if task["mode"] in ("branch", "replay_validate") and task.get("expected_boundaries") is not None:
-            limit = task["target_step"] if task["mode"] == "branch" else task["max_steps"]
+        if task["mode"] in ("branch", "replay_validate", "oracle_eval_prefix", "oracle_eval_baseline_prefix") and task.get("expected_boundaries") is not None:
+            limit = (task["target_step"] if task["mode"] == "branch" else
+                     task["max_steps"] if task["mode"] == "replay_validate" else 4)
             expected = task["expected_boundaries"][step] if step <= limit else None
             if expected is not None:
                 actual = {"state_id": boundary["limited"]["state_id"],
@@ -213,7 +232,7 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
         if match.ref.finished:
             stop_reason = "terminal"
             break
-        if task["mode"] in ("preflight", "discover", "replay_validate") and step >= task["max_steps"]:
+        if task["mode"] in ("preflight", "discover", "replay_validate", "oracle_eval_prefix", "oracle_eval_baseline_prefix") and step >= task["max_steps"]:
             stop_reason = "planned_boundary"
             break
         if task["mode"] == "branch" and match.t >= task["target_step"] * 2 + task["horizon_seconds"] - 1e-8:
@@ -237,10 +256,13 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
                     "validator_status": "not_attempted", "execution_status": "not_started"}
         decisions.append(decision)
         dump(root / "decisions.json", decisions)
+        action_phase = "validate"
         try:
             engine.validate(request, packet)
             decision["validator_status"] = "accepted"
+            action_phase = "commit"
             action, route, camera_command, skill_status = engine.commit(request, packet)
+            action_phase = "compile_and_apply"
             match.compile(action)
             previous = np.asarray(packet["self_state"]["xy"])
             for p in route:
@@ -253,6 +275,9 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
             decision["route_count"] = len(route)
             decision["execution_status"] = "started"
         except Exception as exc:
+            if action_phase == "validate":
+                decision["validator_status"] = "rejected"
+            decision["failure_stage"] = action_phase
             decision["error_class"] = classify_action_error(exc)
             decision["error"] = f"{type(exc).__name__}: {exc}"
             decision["traceback"] = traceback.format_exc()
@@ -313,6 +338,9 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
               "sighting_source": "simulator_geometry_truth",
               "state_schema_version": limited.version,
               "action_space_version": "comparison_v1_candidate", "action_catalog_count": len(actions)}
+    if task["mode"] in ("oracle_eval_prefix", "oracle_eval_baseline_prefix"):
+        result["evaluation_delta_score"] = round(match.ref.score -
+            (boundaries[4]["score"] if len(boundaries) > 4 else boundaries[0]["score"]), 6)
     if replay_mismatch_detail is not None:
         result["replay_mismatch_detail"] = replay_mismatch_detail
     dump(root / "pilot_result.json", result)

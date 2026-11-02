@@ -4,6 +4,10 @@ PILOT_PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 PILOT_PYTHON="${ARENA_PYTHON:-python3}"
 export ARENA_WORKSPACE="${ARENA_WORKSPACE:-$PILOT_PROJECT_DIR/.arena-workspace}"
 case "${1:-}" in
+  finite_oracle_run)
+    shift
+    exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_finite_v1.py" "$@"
+    ;;
   analyze_bundle|replay_validate)
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_pilot_v21.py" "$@"
     ;;
