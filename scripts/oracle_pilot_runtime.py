@@ -19,6 +19,7 @@ from PIL import Image
 
 from oracle_state_v1 import (RegionCatalog, action_catalog, capture_reference,
                              encode_full, encode_limited, limited_from_public)
+from oracle_local_state_v1 import p1_exit_state, p1_west_boundary
 from semantic_skills import SemanticSkills
 from synthetic_vision_mvp import observe_current_scene, smoke_observation
 from vision_core import public_packet
@@ -61,7 +62,7 @@ def normalized_replay_value(value):
     return value
 
 
-def task_action_id(task, step, state_id):
+def task_action_id(task, step, state_id, own_xy=None, cfg=None):
     """Selection sees only the supplied limited ID and explicit experiment plan."""
     mode = task["mode"]
     if mode in ("preflight", "discover", "replay_validate", "branch"):
@@ -81,6 +82,17 @@ def task_action_id(task, step, state_id):
                 return action, "oracle_table"
             return task["continuation_action_id"], "oracle_fallback"
         return task["continuation_action_id"], "baseline"
+    if mode in ("oracle_local_eval_prefix", "oracle_local_baseline_prefix"):
+        prefix = task["prefix_action_ids"]
+        if step < len(prefix):
+            return prefix[step], "prefix"
+        if mode == "oracle_local_eval_prefix" and step == 4:
+            local = p1_exit_state(state_id, step, own_xy, cfg, task["target_state_id"])
+            if local is not None:
+                action = task["local_policy_table"].get(local["bin"])
+                if action is not None:
+                    return action, "local_table:" + local["bin"]
+        return task["continuation_action_id"], "local_fallback" if mode == "oracle_local_eval_prefix" else "baseline"
     if mode == "eval_policy":
         action = task.get("policy_table", {}).get(state_id)
         return (action, "table") if action is not None else (task["continuation_action_id"], "fallback")
@@ -98,6 +110,21 @@ def classify_action_error(exc):
             return "not_applicable_in_state"
         return "catalog_or_interface_error"
     return "rollout_runtime_error"
+
+
+def strategy_action_executable(decision):
+    """Reject blocked plans; OBSERVE may validly hold the base while scanning."""
+    if decision.get("validator_status") != "accepted" or decision.get("execution_status") in (
+            "not_started", "accepted_but_blocked"):
+        return False
+    state = (decision.get("compiled_skill") or {}).get("state")
+    if state in ("TARGET_STALE", "TARGET_INACTIVE", "NO_ROUTE", "UNSAFE_ROUTE", "NO_SAFE_COVER"):
+        return False
+    if ((decision.get("compiled_action") or {}).get("skill") == "HOLD" and
+            decision.get("skill") in ("CAPTURE_POINT", "MOVE_TO", "AIM_AT_TRACK") and
+            state not in ("HOLDING_POINT", "AT_DESTINATION")):
+        return False
+    return True
 
 
 def run(root, task, cfg, match, engine, rig, stage, camera, capture):
@@ -118,6 +145,9 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
     for item in policy_values:
         if item not in actions:
             raise ValueError("Policy action is not in catalogue")
+    for item in task.get("local_policy_table", {}).values():
+        if item not in actions:
+            raise ValueError("Local policy action is not in catalogue")
     if task["mode"] == "branch" and len(task.get("prefix_action_ids", [])) != task["target_step"]:
         raise ValueError("Branch prefix length must equal target_step")
     if task["mode"] in ("discover", "replay_validate") and len(task.get("prefix_action_ids", [])) != task["max_steps"]:
@@ -130,6 +160,13 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
             len(task.get("expected_boundaries", [])) != 5 or
             not 6 <= task.get("max_steps", 0) <= 20 or "candidate_action_id" in task):
         raise ValueError("Oracle evaluation requires four replay actions, five boundaries and 2..16 policy windows")
+    if task["mode"] in ("oracle_local_eval_prefix", "oracle_local_baseline_prefix") and (
+            len(task.get("prefix_action_ids", [])) != 4 or
+            len(task.get("expected_boundaries", [])) != 5 or
+            not 6 <= task.get("max_steps", 0) <= 20 or "candidate_action_id" in task or
+            task.get("feature_threshold_x") != p1_west_boundary(cfg) or
+            not task.get("target_state_id")):
+        raise ValueError("Local Oracle evaluation requires verified 8 s prefix and map-derived feature")
     if task["mode"] == "branch" and task.get("expected_boundaries") is not None and len(task["expected_boundaries"]) != task["target_step"] + 1:
         raise ValueError("Branch replay evidence must cover every prefix boundary")
     if task["mode"] == "branch" and task["horizon_seconds"] % 2:
@@ -196,12 +233,16 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
                     "skill_status": copy.deepcopy(engine.status),
                     "visual_memory": copy.deepcopy(engine.public(match.t)["visual_memory"]),
                     "finished": match.ref.finished, "collapsed": bool(match.collapsed)}
+        if task["mode"] in ("oracle_local_eval_prefix", "oracle_local_baseline_prefix"):
+            boundary["local_policy_state"] = p1_exit_state(
+                limited.state_id, step, packet["self_state"]["xy"], cfg, task["target_state_id"])
         dump(root / boundary["full_diagnostic_file"],
              {"snapshot": asdict(reference), "full": {"status": full.status,
               "reason": full.reason, "state_id": full.state_id, "fields": dict(full.fields)}})
         boundaries.append(boundary)
         dump(root / "boundaries.json", boundaries)
-        if task["mode"] in ("branch", "replay_validate", "oracle_eval_prefix", "oracle_eval_baseline_prefix") and task.get("expected_boundaries") is not None:
+        if task["mode"] in ("branch", "replay_validate", "oracle_eval_prefix", "oracle_eval_baseline_prefix",
+                            "oracle_local_eval_prefix", "oracle_local_baseline_prefix") and task.get("expected_boundaries") is not None:
             limit = (task["target_step"] if task["mode"] == "branch" else
                      task["max_steps"] if task["mode"] == "replay_validate" else 4)
             expected = task["expected_boundaries"][step] if step <= limit else None
@@ -232,7 +273,8 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
         if match.ref.finished:
             stop_reason = "terminal"
             break
-        if task["mode"] in ("preflight", "discover", "replay_validate", "oracle_eval_prefix", "oracle_eval_baseline_prefix") and step >= task["max_steps"]:
+        if task["mode"] in ("preflight", "discover", "replay_validate", "oracle_eval_prefix", "oracle_eval_baseline_prefix",
+                             "oracle_local_eval_prefix", "oracle_local_baseline_prefix") and step >= task["max_steps"]:
             stop_reason = "planned_boundary"
             break
         if task["mode"] == "branch" and match.t >= task["target_step"] * 2 + task["horizon_seconds"] - 1e-8:
@@ -245,7 +287,8 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
             stop_reason = "limited_state_unavailable"
             break
 
-        action_id, source = task_action_id(task, step, limited.state_id)
+        action_id, source = task_action_id(task, step, limited.state_id,
+                                           packet["self_state"]["xy"], cfg)
         template = actions[action_id]
         request = template.request(step)
         decision = {"observation_id": step, "simulation_seconds": match.t,
@@ -254,6 +297,8 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
                     "source": source, "score_before": match.ref.score,
                     "wall_started_seconds": time.monotonic() - started,
                     "validator_status": "not_attempted", "execution_status": "not_started"}
+        if task["mode"] in ("oracle_local_eval_prefix", "oracle_local_baseline_prefix"):
+            decision["local_policy_state"] = boundary["local_policy_state"]
         decisions.append(decision)
         dump(root / "decisions.json", decisions)
         action_phase = "validate"
@@ -321,6 +366,8 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
                                         "completed" if engine.status.get("state") in ("HOLDING_POINT", "AT_DESTINATION") else
                                         "accepted_but_blocked" if engine.status.get("state") in
                                         ("UNSAFE_ROUTE", "NO_ROUTE", "NO_SAFE_COVER", "TARGET_STALE") else "started")
+        if not strategy_action_executable(decision):
+            decision["execution_status"] = "accepted_but_blocked"
         decision["wall_elapsed_seconds"] = time.monotonic() - started - decision["wall_started_seconds"]
         dump(root / "decisions.json", decisions)
 
@@ -338,7 +385,8 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
               "sighting_source": "simulator_geometry_truth",
               "state_schema_version": limited.version,
               "action_space_version": "comparison_v1_candidate", "action_catalog_count": len(actions)}
-    if task["mode"] in ("oracle_eval_prefix", "oracle_eval_baseline_prefix"):
+    if task["mode"] in ("oracle_eval_prefix", "oracle_eval_baseline_prefix",
+                         "oracle_local_eval_prefix", "oracle_local_baseline_prefix"):
         result["evaluation_delta_score"] = round(match.ref.score -
             (boundaries[4]["score"] if len(boundaries) > 4 else boundaries[0]["score"]), 6)
     if replay_mismatch_detail is not None:

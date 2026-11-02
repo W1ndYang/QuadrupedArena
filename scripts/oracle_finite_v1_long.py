@@ -21,6 +21,7 @@ import zipfile
 from arena_paths import PROJECT, workspace_root
 from oracle_finite_v1 import DEFAULT_ANALYSIS, DEFAULT_REPLAY_BUNDLE, load_inputs
 from oracle_pilot import DEFAULT_CONFIG, atomic_json, digest, read, resolve_config, run_task, task_base
+from oracle_pilot_runtime import strategy_action_executable
 from oracle_pilot_v21 import package_artifacts, sha256_file
 
 VERSION = "oracle_finite_v1_delayed_score_followup"
@@ -121,8 +122,7 @@ def outcome_from_record(record, action_id):
     error = first.get("error_class")
     if record["status"] != "passed" and error != "not_applicable_in_state":
         raise RuntimeError(f"Unclassified long-rollout failure: {record['task_key']}: {error}")
-    executable = (record["status"] == "passed" and first["validator_status"] == "accepted" and
-                  first["execution_status"] != "accepted_but_blocked")
+    executable = record["status"] == "passed" and strategy_action_executable(first)
     transitions = []
     for step in range(4, min(len(decisions), len(boundaries) - 1)):
         decision = decisions[step]
@@ -174,7 +174,7 @@ def solve_rollouts(outcomes, actions, samples, baseline_action):
     eligible = [x for x in rows if x["common_executable"]]
     if not eligible:
         raise ValueError("No shortlisted formal action is executable in all three root samples")
-    best = sorted(eligible, key=lambda x: (-x["mean_score_delta"], -x["mean_survival_seconds"],
+    best = sorted(eligible, key=lambda x: (-x["mean_score_delta"],
                                            x["action_id"] != baseline_action, x["action_id"]))[0]
     baseline = next(x for x in rows if x["action_id"] == baseline_action)
     return {"version": VERSION, "selected_action_id": best["action_id"],
@@ -186,7 +186,7 @@ def solve_rollouts(outcomes, actions, samples, baseline_action):
             "shortlist_size": len(actions), "training_samples": len(samples),
             "horizon_start_seconds": 8, "horizon_end_seconds": 20,
             "continuation_action_id": baseline_action,
-            "selection_rule": "mean official score gain; tie by mean survival, then fixed baseline, then action ID",
+            "selection_rule": "mean official score gain; exact score ties retain the fixed baseline, then action ID; survival is diagnostic only",
             "action_values": rows}
 
 

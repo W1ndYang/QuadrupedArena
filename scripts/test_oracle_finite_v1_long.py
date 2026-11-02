@@ -27,6 +27,17 @@ class LongOracleTests(unittest.TestCase):
         self.assertEqual(policy["training_mean_advantage"], 1.0)
         self.assertFalse(policy["action_values"][2]["common_executable"])
 
+    def test_equal_score_keeps_baseline_despite_small_survival_difference(self):
+        samples = [{"sample_id": x} for x in ("s1", "s2", "s3")]
+        outcomes = [{"sample_id": sample["sample_id"], "initial_action_id": action,
+                     "executable": True, "official_score_delta": 1.0,
+                     "survival_seconds": 20.0 if action == "COVER" else 19.9,
+                     "terminal_reason": None}
+                    for sample in samples for action in ("BASE", "COVER")]
+        policy = solve_rollouts(outcomes, ["BASE", "COVER"], samples, "BASE")
+        self.assertEqual(policy["selected_action_id"], "BASE")
+        self.assertEqual(policy["training_mean_advantage"], 0.0)
+
     def test_candidate_task_uses_only_root_r2l_id_then_fixed_continuation(self):
         config = resolve_config(DEFAULT_CONFIG)
         plan = config["prefix_library"]["prefixes"][0]

@@ -22,6 +22,7 @@ from arena_paths import PROJECT, workspace_root
 from oracle_pilot import (DEFAULT_CONFIG, atomic_json, digest, read,
                           resolve_config, run_task, task_base)
 from oracle_pilot_discovery import boundary_evidence
+from oracle_pilot_runtime import strategy_action_executable
 from oracle_pilot_v21 import package_artifacts, sha256_file
 
 VERSION = "oracle_finite_v1_two_decision"
@@ -143,13 +144,15 @@ def read_branch_outcome(record):
         raise RuntimeError(f"Unclassified branch failure in task {record['task_key']}: {error_class}")
     available = (record["status"] == "passed" and decision["validator_status"] == "accepted" and
                  len(boundaries) > step)
-    selectable = available and decision["execution_status"] != "accepted_but_blocked"
+    selectable = available and strategy_action_executable(decision)
     successor = boundaries[-1] if available else None
     return {"sample_id": task["sample_id"], "state_id": task["expected_state_id"],
             "decision_step": step, "action_id": task["candidate_action_id"],
             "available": bool(available), "selectable": bool(selectable),
             "validator_status": decision["validator_status"],
             "execution_status": decision["execution_status"],
+            "compiled_action_skill": (decision.get("compiled_action") or {}).get("skill"),
+            "compiled_skill_state": (decision.get("compiled_skill") or {}).get("state"),
             "error_class": error_class, "error": decision.get("error"),
             "reward_delta_score": decision.get("delta_score") if available else None,
             "next_state_id": successor["limited"]["state_id"] if successor else None,

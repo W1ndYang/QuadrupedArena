@@ -12,6 +12,10 @@ case "${1:-}" in
     shift
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_finite_v1_long.py" "$@"
     ;;
+  oracle_local_p1)
+    shift
+    exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_local_p1_v1.py" "$@"
+    ;;
   analyze_bundle|replay_validate)
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_pilot_v21.py" "$@"
     ;;

@@ -82,6 +82,7 @@ def resolve_config(path):
                "scripts/oracle_pilot.py", "scripts/oracle_pilot_runtime.py",
                "scripts/oracle_pilot_discovery.py", "scripts/oracle_pilot_v21.py",
                "scripts/oracle_finite_v1.py", "scripts/oracle_finite_v1_long.py",
+               "scripts/oracle_local_state_v1.py", "scripts/oracle_local_p1_v1.py",
                "scripts/oracle_state_v1.py", "scripts/semantic_skills.py",
                "scripts/synthetic_vision_mvp.py", "scripts/vision_core.py",
                "scripts/llm_trial.py", "scripts/trial_rules.py",
