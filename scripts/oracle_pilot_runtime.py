@@ -128,8 +128,8 @@ def run(root, task, cfg, match, engine, rig, stage, camera, capture):
     if task["mode"] in ("oracle_eval_prefix", "oracle_eval_baseline_prefix") and (
             len(task.get("prefix_action_ids", [])) != 4 or
             len(task.get("expected_boundaries", [])) != 5 or
-            task.get("max_steps") != 6 or "candidate_action_id" in task):
-        raise ValueError("Oracle evaluation requires four replay actions, five boundaries and two policy windows")
+            not 6 <= task.get("max_steps", 0) <= 20 or "candidate_action_id" in task):
+        raise ValueError("Oracle evaluation requires four replay actions, five boundaries and 2..16 policy windows")
     if task["mode"] == "branch" and task.get("expected_boundaries") is not None and len(task["expected_boundaries"]) != task["target_step"] + 1:
         raise ValueError("Branch replay evidence must cover every prefix boundary")
     if task["mode"] == "branch" and task["horizon_seconds"] % 2:

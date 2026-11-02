@@ -143,10 +143,12 @@ def read_branch_outcome(record):
         raise RuntimeError(f"Unclassified branch failure in task {record['task_key']}: {error_class}")
     available = (record["status"] == "passed" and decision["validator_status"] == "accepted" and
                  len(boundaries) > step)
+    selectable = available and decision["execution_status"] != "accepted_but_blocked"
     successor = boundaries[-1] if available else None
     return {"sample_id": task["sample_id"], "state_id": task["expected_state_id"],
             "decision_step": step, "action_id": task["candidate_action_id"],
-            "available": bool(available), "validator_status": decision["validator_status"],
+            "available": bool(available), "selectable": bool(selectable),
+            "validator_status": decision["validator_status"],
             "execution_status": decision["execution_status"],
             "error_class": error_class, "error": decision.get("error"),
             "reward_delta_score": decision.get("delta_score") if available else None,
@@ -158,7 +160,7 @@ def read_branch_outcome(record):
             "stop_reason": result.get("stop_reason"), "task_key": record["task_key"]}
 
 
-def select_expansion(root_outcomes, samples, catalog):
+def select_expansion(root_outcomes, samples, catalog, baseline_action_id=None):
     """Expand the anchor sample's successor under the best common immediate action."""
     by_action = defaultdict(dict)
     for outcome in root_outcomes:
@@ -167,7 +169,9 @@ def select_expansion(root_outcomes, samples, catalog):
     ranked = []
     for action in catalog:
         values = by_action[action["action_id"]]
-        if len(values) != len(samples) or not all(x["available"] for x in values.values()):
+        if len(values) != len(samples) or not all(
+                x["available"] and x.get("selectable", x.get("execution_status") != "accepted_but_blocked")
+                for x in values.values()):
             continue
         first = values[anchor]
         if first["terminal"] or first["next_state_status"] != "valid" or not first["next_state_id"]:
@@ -176,11 +180,12 @@ def select_expansion(root_outcomes, samples, catalog):
         ranked.append((mean_reward, action["action_id"], first))
     if not ranked:
         return None
-    _, chosen_action, chosen = sorted(ranked, key=lambda item: (-item[0], item[1]))[0]
+    _, chosen_action, chosen = sorted(ranked, key=lambda item: (
+        -item[0], item[1] != baseline_action_id, item[1]))[0]
     return {"source_sample_id": anchor, "source_action_id": chosen_action,
             "successor_state_id": chosen["next_state_id"],
             "source_task_key": chosen["task_key"],
-            "selection": "highest mean immediate official reward among common available actions; anchor sample"}
+            "selection": "highest mean immediate official reward among common executable actions; baseline wins ties; anchor sample"}
 
 
 def solve_model(model, *, baseline_action_id):
@@ -201,12 +206,15 @@ def solve_model(model, *, baseline_action_id):
                 outcomes = actions.get(action_id, [])
                 common = (len(outcomes) == expected_count and
                           len({x["sample_id"] for x in outcomes}) == expected_count and
-                          all(x["available"] for x in outcomes))
+                          all(x["available"] and x.get("selectable", x.get("execution_status") != "accepted_but_blocked")
+                              for x in outcomes))
                 if not common:
                     diagnostics.append({"decision_step": step, "state_id": state_id,
                                         "action_id": action_id, "common_available": False,
                                         "observed_samples": len(outcomes),
-                                        "failure_count": sum(not x["available"] for x in outcomes)})
+                                        "failure_count": sum(not x["available"] for x in outcomes),
+                                        "blocked_execution_count": sum(x.get("execution_status") == "accepted_but_blocked"
+                                                                       for x in outcomes)})
                     continue
                 scores = [x["reward_delta_score"] +
                           (0.0 if x["terminal"] else value.get((step + 1, x["next_state_id"]), 0.0))
@@ -225,7 +233,8 @@ def solve_model(model, *, baseline_action_id):
                 if step == model["root_decision_step"]:
                     raise ValueError(f"No common available formal action in {step}:{state_id}")
                 continue
-            best_value, best_action = sorted(candidates, key=lambda item: (-item[0], item[1]))[0]
+            best_value, best_action = sorted(candidates, key=lambda item: (
+                -item[0], item[1] != baseline_action_id, item[1]))[0]
             value[(step, state_id)] = best_value
             table[str(step)][state_id] = best_action
     root_step = model["root_decision_step"]
@@ -244,7 +253,7 @@ def solve_model(model, *, baseline_action_id):
             "state_time_coverage": sum(len(layer) for layer in table.values()),
             "horizon_decisions": 2 if sum(len(layer) for layer in table.values()) > 1 else 1,
             "unknown_successor_value": 0.0,
-            "selection_rule": "max empirical mean official score delta over commonly available actions; tie by action ID",
+            "selection_rule": "max empirical mean official score delta over commonly executable actions; baseline wins ties, then action ID",
             "action_diagnostics": diagnostics}
 
 
@@ -292,6 +301,7 @@ def model_from_outcomes(config, inputs, root, expansion, child):
             "root_actions_with_multiple_successors": sum(x["different_successors"] for x in heterogeneity.values()),
             "root_actions_with_different_rewards": sum(x["different_rewards"] for x in heterogeneity.values()),
             "unavailable_transition_count": sum(not x["available"] for x in transitions),
+            "blocked_execution_count": sum(x["execution_status"] == "accepted_but_blocked" for x in transitions),
             "nonterminal_successor_states": len({x["next_state_id"] for x in transitions
                                                   if x["available"] and not x["terminal"]}),
             "approximation": ("Three equally weighted hidden root samples; one expanded successor sample; "
@@ -373,7 +383,7 @@ def run_batch(inputs, output, config, max_new_tasks=182, retry_failed=False):
             root.append(read_branch_outcome(record))
             progress(output, "root", len(root), budget, records)
     atomic_json(output / "root_transitions.json", root)
-    expansion = select_expansion(root, samples, catalog)
+    expansion = select_expansion(root, samples, catalog, config["continuation_action_id"])
     child = []
     if expansion is not None:
         source_record = next(x for x in records if x["task_key"] == expansion["source_task_key"])

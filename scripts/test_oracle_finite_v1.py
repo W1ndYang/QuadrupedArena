@@ -81,6 +81,22 @@ class FiniteOracleTests(unittest.TestCase):
         self.assertEqual(task_action_id(task, 5, "child"), ("B", "oracle_table"))
         self.assertEqual(task_action_id(task, 5, "unknown"), ("fallback", "oracle_fallback"))
 
+    def test_zero_reward_tie_excludes_blocked_action_and_prefers_baseline(self):
+        transitions = []
+        for sample in ("s1", "s2", "s3"):
+            for action, status in (("A", "accepted_but_blocked"), ("B", "started"), ("C", "started")):
+                transitions.append({"decision_step": 4, "state_id": "root", "action_id": action,
+                                    "sample_id": sample, "available": True,
+                                    "execution_status": status, "reward_delta_score": 0.0,
+                                    "next_state_id": action, "terminal": False})
+        model = {"action_catalog": [{"action_id": x} for x in ("A", "B", "C")],
+                 "transitions": transitions, "sample_counts": {"4:root": 3},
+                 "root_decision_step": 4, "root_state_id": "root"}
+        policy = solve_model(model, baseline_action_id="B")
+        self.assertEqual(policy["root_action_id"], "B")
+        self.assertEqual(policy["horizon_decisions"], 1)
+        self.assertEqual(policy["model_value_advantage"], 0.0)
+
     def test_policy_executes_after_strict_four_window_prefix(self):
         config = resolve_config(DEFAULT_CONFIG)
         cfg = load_config("configs/trial_rotating.json")
