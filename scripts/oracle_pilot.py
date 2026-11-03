@@ -91,6 +91,7 @@ def resolve_config(path):
                "scripts/oracle_state_refinement_support.py",
                "scripts/oracle_state_refinement_solver.py",
                "scripts/oracle_state_prospective_validation.py",
+               "scripts/oracle_state_seed_sweep.py",
                "scripts/oracle_state_v1.py", "scripts/semantic_skills.py",
                "scripts/synthetic_vision_mvp.py", "scripts/vision_core.py",
                "scripts/llm_trial.py", "scripts/trial_rules.py",

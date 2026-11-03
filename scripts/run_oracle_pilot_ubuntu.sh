@@ -47,6 +47,10 @@ case "${1:-}" in
       --reuse-discovery-bundle "$ARENA_WORKSPACE/experiments/oracle-state-new-game-validation/oracle_state_new_game_validation_bundle.zip" \
       --output "$ARENA_WORKSPACE/experiments/oracle-state-new-game-validation-v2" "$@"
     ;;
+  oracle_state_seed_sweep)
+    shift
+    exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_state_seed_sweep.py" "$@"
+    ;;
   analyze_bundle|replay_validate)
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_pilot_v21.py" "$@"
     ;;
