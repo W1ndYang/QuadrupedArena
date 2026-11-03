@@ -40,7 +40,7 @@ class PortabilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.dict(os.environ, {'ARENA_WORKSPACE': tmp, 'UNITREE_ROS_DIR': tmp + '/models'}):
                 self.assertEqual(workspace_root(), Path(tmp).resolve())
-                self.assertEqual(dependency_path('unitree_ros'), Path(tmp) / 'models')
+                self.assertEqual(dependency_path('unitree_ros'), (Path(tmp) / 'models').resolve())
 
     def test_credentials_follow_xdg_not_checkout(self):
         with tempfile.TemporaryDirectory() as tmp:
