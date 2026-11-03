@@ -92,7 +92,8 @@ def checked_bundle(path):
                             at_eight != [pair["public_own_xy"]] or len(decisions) < 5 or
                             decisions[4]["action_id"] != outcome["action_id"] or
                             decisions[4]["validator_status"] != "accepted" or
-                            decisions[4]["execution_status"] != "started" or
+                            decisions[4]["execution_status"] not in
+                            ("started", "completed", "interrupted") or
                             (decisions[4].get("compiled_action") or {}).get("skill") !=
                             outcome["compiled_action_skill"] or
                             outcome["compiled_action_skill"] not in ("MOVE", "SCAN") or
