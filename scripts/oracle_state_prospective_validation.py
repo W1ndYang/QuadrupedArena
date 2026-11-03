@@ -25,6 +25,7 @@ from oracle_state_refinement_solver import (checked_actions, checked_support, mo
                                             solve)
 
 VERSION = "oracle_state_prospective_validation_v1"
+NEW_GAME_VERSION = "oracle_state_new_game_validation_v1"
 DEFAULT_FULL = workspace_root() / "experiments/oracle-local-p1-full-game/oracle_local_p1_full_game_bundle.zip"
 DEFAULT_P2 = workspace_root() / "experiments/oracle-p2-second-stage/oracle_p2_second_stage_bundle.zip"
 DEFAULT_DISCOVERY = (workspace_root() / "experiments/oracle-state-refinement-discovery/"
@@ -48,7 +49,7 @@ def frozen_experiment(config, full_path, p2_path, discovery_path, actions_path, 
             fit["predicate"]["id"] != "P1:y:+0.5r" or
             config["test_synthetic_seeds"][0] in config["training_synthetic_seeds"]):
         raise ValueError("Cross-validated policy or held-out seed is not the frozen candidate")
-    return {"fit": fit, "cross_validation": cv, "prior_fit": prior["state_fit"],
+    return {"version": VERSION, "fit": fit, "cross_validation": cv, "prior_fit": prior["state_fit"],
             "root_state_id": fit["base_state_id"], "scan_action_id": discovery["scan_action_id"],
             "baseline_action_id": config["continuation_action_id"],
             "synthetic_seed": config["test_synthetic_seeds"][0],
@@ -57,7 +58,7 @@ def frozen_experiment(config, full_path, p2_path, discovery_path, actions_path, 
 
 def discovery_task(config, frozen, plan):
     task = task_base(config, "discover", frozen["synthetic_seed"])
-    task.update(experiment_version=VERSION, prefix_id=plan["prefix_id"],
+    task.update(experiment_version=frozen["version"], prefix_id=plan["prefix_id"],
                 prefix_action_ids=plan["prefix_action_ids"], max_steps=4,
                 frozen_fit_sha256=digest(frozen["fit"]))
     return task
@@ -96,7 +97,7 @@ def paired_task(config, frozen, state, prefix_action_ids, action):
     baseline = frozen["baseline_action_id"]
     mode = "oracle_local_baseline_prefix" if action == baseline else "oracle_local_eval_prefix"
     task = task_base(config, mode, frozen["synthetic_seed"])
-    task.update(experiment_version=VERSION, prefix_id=state["prefix_id"],
+    task.update(experiment_version=frozen["version"], prefix_id=state["prefix_id"],
                 sample_id=state["discovery_task_key"] + "_04",
                 prefix_action_ids=prefix_action_ids,
                 expected_boundaries=state["expected_boundaries"], max_steps=20,
@@ -134,7 +135,7 @@ def compare_prospective(frozen, discovered, outcomes):
                                                    baseline["official_return"], 6)
                                              if selectable else None)})
     valid = [pair for pair in pairs if pair["both_actions_selectable"]]
-    return {"version": VERSION, "frozen_before_new_seed_outcomes": True,
+    return {"version": frozen["version"], "frozen_before_new_seed_outcomes": True,
             "synthetic_seed": frozen["synthetic_seed"],
             "discovered_prefixes": len(discovered), "eligible_exact_root": len(pairs),
             "selectable_pairs": len(valid), "pairs": pairs,
@@ -142,13 +143,15 @@ def compare_prospective(frozen, discovered, outcomes):
                                               if valid else None),
             "mean_all_scan_advantage": (sum(p["all_scan_advantage"] for p in valid) / len(valid)
                                         if valid else None),
-            "evaluation_limit": "One unseen synthetic seed on previously selected action prefixes; not a new game seed or random scene sample"}
+            "evaluation_limit": ("One new game seed and synthetic seed on previously selected action prefixes; not random prefix sampling"
+                                 if frozen["version"] == NEW_GAME_VERSION else
+                                 "One unseen synthetic seed on previously selected action prefixes; not a new game seed or random scene sample")}
 
 
 def run_validation(config, frozen, output, max_new_tasks=12):
     output = Path(output).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
-    provenance = {"version": VERSION, "source_sha256": config["source_sha256"],
+    provenance = {"version": frozen["version"], "source_sha256": config["source_sha256"],
                   "input_bundle_sha256": frozen["input_bundle_sha256"],
                   "cross_validated_fit_sha256": digest(frozen["fit"]),
                   "game_seed": config["game_seed"], "prospective_synthetic_seed": frozen["synthetic_seed"],
@@ -172,7 +175,7 @@ def run_validation(config, frozen, output, max_new_tasks=12):
                 atomic_json(output / "capture_progress.json", {"stage": "incomplete",
                             "completed_discovery": len(discovered), "completed_paired_tasks": len(outcomes),
                             "new_tasks_this_run": budget})
-                return {"version": VERSION, "status": "incomplete",
+                return {"version": frozen["version"], "status": "incomplete",
                         "completed_discovery": len(discovered), "completed_paired_tasks": len(outcomes)}
             budget += 1
         record = run_task(output, task, retry_failed=True)
@@ -193,7 +196,7 @@ def run_validation(config, frozen, output, max_new_tasks=12):
                         atomic_json(output / "capture_progress.json", {"stage": "incomplete",
                                     "completed_discovery": len(discovered),
                                     "completed_paired_tasks": len(outcomes), "new_tasks_this_run": budget})
-                        return {"version": VERSION, "status": "incomplete",
+                        return {"version": frozen["version"], "status": "incomplete",
                                 "completed_discovery": len(discovered),
                                 "completed_paired_tasks": len(outcomes)}
                     budget += 1
@@ -210,7 +213,7 @@ def run_validation(config, frozen, output, max_new_tasks=12):
     atomic_json(output / "discovered_states.json", discovered)
     atomic_json(output / "paired_outcomes.json", outcomes)
     atomic_json(output / "prospective_validation.json", comparison)
-    summary = {"version": VERSION, "status": "passed", "discovered_prefixes": len(discovered),
+    summary = {"version": frozen["version"], "status": "passed", "discovered_prefixes": len(discovered),
                "eligible_exact_root": comparison["eligible_exact_root"],
                "selectable_pairs": comparison["selectable_pairs"],
                "mean_frozen_policy_advantage": comparison["mean_frozen_policy_advantage"],
@@ -230,19 +233,37 @@ def main(argv=None):
     parser.add_argument("--actions-bundle", type=Path, default=DEFAULT_ACTIONS)
     parser.add_argument("--support-bundle", type=Path, default=DEFAULT_SUPPORT)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--validation-game-seed", type=int)
+    parser.add_argument("--validation-synthetic-seed", type=int)
     parser.add_argument("--max-new-tasks", type=int, default=12)
     args = parser.parse_args(argv)
     if args.max_new_tasks < 0:
         parser.error("--max-new-tasks must be nonnegative")
-    config = resolve_config(DEFAULT_CONFIG)
-    frozen = frozen_experiment(config, args.full_game_bundle, args.p2_bundle,
+    training_config = resolve_config(DEFAULT_CONFIG)
+    frozen = frozen_experiment(training_config, args.full_game_bundle, args.p2_bundle,
                                args.discovery_bundle, args.actions_bundle, args.support_bundle)
+    if args.validation_game_seed is not None:
+        if args.validation_game_seed == training_config["game_seed"]:
+            parser.error("--validation-game-seed must differ from training game seed")
+        synthetic_seed = (args.validation_synthetic_seed if args.validation_synthetic_seed is not None
+                          else training_config["test_synthetic_seeds"][1])
+        if synthetic_seed in training_config["training_synthetic_seeds"]:
+            parser.error("Validation synthetic seed must be outside training seeds")
+        frozen["version"] = NEW_GAME_VERSION
+        frozen["synthetic_seed"] = synthetic_seed
+        config = {**training_config, "game_seed": args.validation_game_seed}
+    else:
+        if args.validation_synthetic_seed is not None:
+            parser.error("Use --validation-game-seed when overriding the validation synthetic seed")
+        config = training_config
     output = args.output.expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
     invocation_path = output / "invocations.json"
     invocations = read(invocation_path) if invocation_path.exists() else []
     invocations.append({"utc_started": datetime.now(timezone.utc).isoformat(),
-                        "command": ["bash", "scripts/run_oracle_pilot_ubuntu.sh", "oracle_state_prospective",
+                        "command": ["bash", "scripts/run_oracle_pilot_ubuntu.sh",
+                                    "oracle_state_new_game" if frozen["version"] == NEW_GAME_VERSION else
+                                    "oracle_state_prospective",
                                     *(argv if argv is not None else sys.argv[1:])]})
     atomic_json(invocation_path, invocations)
     started = time.monotonic()
@@ -251,12 +272,14 @@ def main(argv=None):
     except Exception as exc:
         atomic_json(output / "run_failure.json", {"type": type(exc).__name__, "message": str(exc),
                                                   "elapsed_wall_seconds": round(time.monotonic() - started, 3)})
-        result = {"version": VERSION, "status": "failed", "error": f"{type(exc).__name__}: {exc}"}
+        result = {"version": frozen["version"], "status": "failed", "error": f"{type(exc).__name__}: {exc}"}
     if result["status"] == "passed":
         (output / "run_failure.json").unlink(missing_ok=True)
     result["invocation_wall_seconds"] = round(time.monotonic() - started, 3)
-    archive = package_artifacts(output, "oracle_state_prospective_validation_bundle.zip",
-                                {"version": VERSION, "source_sha256": config["source_sha256"],
+    filename = ("oracle_state_new_game_validation_bundle.zip" if frozen["version"] == NEW_GAME_VERSION
+                else "oracle_state_prospective_validation_bundle.zip")
+    archive = package_artifacts(output, filename,
+                                {"version": frozen["version"], "source_sha256": config["source_sha256"],
                                  "cross_validated_fit_sha256": digest(frozen["fit"])})
     result["bundle"] = str(archive)
     result["bundle_sha256"] = sha256_file(archive)

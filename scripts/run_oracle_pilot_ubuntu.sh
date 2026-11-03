@@ -40,6 +40,12 @@ case "${1:-}" in
     shift
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_state_prospective_validation.py" "$@"
     ;;
+  oracle_state_new_game)
+    shift
+    exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_state_prospective_validation.py" \
+      --validation-game-seed 2026102108 --validation-synthetic-seed 20261102 \
+      --output "$ARENA_WORKSPACE/experiments/oracle-state-new-game-validation" "$@"
+    ;;
   analyze_bundle|replay_validate)
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_pilot_v21.py" "$@"
     ;;
