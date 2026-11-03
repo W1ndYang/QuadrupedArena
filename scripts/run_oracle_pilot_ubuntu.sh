@@ -36,6 +36,10 @@ case "${1:-}" in
     shift
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_state_refinement_support.py" "$@"
     ;;
+  oracle_state_prospective)
+    shift
+    exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_state_prospective_validation.py" "$@"
+    ;;
   analyze_bundle|replay_validate)
     exec "$PILOT_PYTHON" "$PILOT_PROJECT_DIR/scripts/oracle_pilot_v21.py" "$@"
     ;;
