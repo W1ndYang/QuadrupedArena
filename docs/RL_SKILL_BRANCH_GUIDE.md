@@ -1,6 +1,6 @@
 # 高频 Skill 强化学习分支：代码导览
 
-本分支 `exp/rl-skill-10hz` 从 `51a3063`（合成视觉模块、Skill 接入和 0.5 秒观测完成）建立。此前的有限状态 Oracle 研究保存在 `archive/oracle-finite-state`；它的采集脚本、44 项对比动作目录、R2-L 抽象和优化器没有并入本分支。`main` 和旧远端实验分支均未改动。
+本分支 `exp/rl-skill-10hz` 从 `51a3063`（合成视觉模块、Skill 接入和 0.5 秒观测完成）建立。此前的有限状态 Oracle 研究保存在 `archive/oracle-finite-state`；它的采集脚本、44 项对比动作目录、R2-L 抽象和优化器没有并入本分支。`main` 未改动；两个新分支已发布到远端，原远端实验分支名已退役。
 
 **本分支尚未实现强化学习环境或 10 Hz Skill 决策。** 当前比赛仍是 Python 运动学和裁判推进，Isaac Sim 负责在线相机 RGB 与场景渲染；`SemanticSkills` 把高层意图编译为底层动作。
 
@@ -45,4 +45,4 @@
 - `main`：现有稳定入口。本次没有合并或改写它。
 - `docs/codex_context/`、`docs/codex_report/` 及 `.arena-workspace/` 保持原忽略规则；研究报告继续写到 `docs/codex_report/`，运行包不要提交源码 Git。
 
-旧远端 `origin/exp/isaacsim-minimal-geometry` 目前仍指向 Oracle 研究 HEAD。建议在确认新的远端分支均已推送且引用无误后，再决定是否删除旧远端名称；本地改名并不会自动重命名远端分支。
+远端 `origin/archive/oracle-finite-state` 保留 Oracle 研究 HEAD，`origin/exp/rl-skill-10hz` 跟踪当前开发分支。确认两个新远端引用后，已按用户授权删除旧名称 `origin/exp/isaacsim-minimal-geometry`；删除时使用了精确提交租约，避免覆盖并发更新。
