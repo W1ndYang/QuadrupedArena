@@ -11,11 +11,16 @@ from oracle_state_seed_sweep import VERSION, aggregate_completed, seed_plan
 
 class SeedSweepTests(unittest.TestCase):
     def test_seed_plan_uses_distinct_unseen_game_and_vision_streams(self):
-        plan = seed_plan({"game_seed": 100, "training_synthetic_seeds": [1, 2],
-                          "test_synthetic_seeds": [8, 9, 10, 11, 12]})
+        config = {"game_seed": 100, "training_synthetic_seeds": [1, 2],
+                  "test_synthetic_seeds": [8, 9, 10, 11, 12]}
+        plan = seed_plan(config)
         self.assertEqual(plan, [{"game_seed": 102, "synthetic_seed": 8},
                                 {"game_seed": 103, "synthetic_seed": 8},
                                 {"game_seed": 104, "synthetic_seed": 8}])
+        self.assertEqual(seed_plan(config, [105, 106, 107]),
+                         [{"game_seed": seed, "synthetic_seed": 8} for seed in (105, 106, 107)])
+        with self.assertRaises(ValueError):
+            seed_plan(config, [103, 105, 106])
 
     def test_aggregation_keeps_seed_and_prefix_groups(self):
         plan = [{"game_seed": 102, "synthetic_seed": 10},

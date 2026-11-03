@@ -25,11 +25,15 @@ from oracle_state_prospective_validation import (DEFAULT_ACTIONS, DEFAULT_DISCOV
 
 VERSION = "oracle_state_seed_sweep_v1"
 DEFAULT_OUTPUT = workspace_root() / "experiments/oracle-state-seed-sweep"
+DEFAULT_HOLDOUT_OUTPUT = workspace_root() / "experiments/oracle-state-seed-holdout"
 
 
-def seed_plan(config):
+def seed_plan(config, game_seeds=None):
     # Hold the vision seed fixed so game-seed variation is the experimental axis.
-    game_seeds = [config["game_seed"] + offset for offset in (2, 3, 4)]
+    if game_seeds is None:
+        game_seeds = [config["game_seed"] + offset for offset in (2, 3, 4)]
+    elif len(game_seeds) != 3 or any(seed <= config["game_seed"] + 4 for seed in game_seeds):
+        raise ValueError("Custom game seeds must be three new seeds after the completed sweep")
     synthetic_seed = config["test_synthetic_seeds"][0]
     if (len(set(game_seeds)) != 3 or synthetic_seed in config["training_synthetic_seeds"]):
         raise ValueError("Seed sweep requires three new game seeds and one held-out vision seed")
@@ -136,7 +140,9 @@ def main(argv=None):
     parser.add_argument("--discovery-bundle", type=Path, default=DEFAULT_DISCOVERY)
     parser.add_argument("--actions-bundle", type=Path, default=DEFAULT_ACTIONS)
     parser.add_argument("--support-bundle", type=Path, default=DEFAULT_SUPPORT)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--game-seeds", type=int, nargs=3,
+                        help="Three fresh game seeds for an isolated forward validation")
     parser.add_argument("--max-new-tasks", type=int, default=12)
     args = parser.parse_args(argv)
     if args.max_new_tasks < 0:
@@ -144,8 +150,8 @@ def main(argv=None):
     config = resolve_config(DEFAULT_CONFIG)
     frozen = frozen_experiment(config, args.full_game_bundle, args.p2_bundle,
                                args.discovery_bundle, args.actions_bundle, args.support_bundle)
-    plan = seed_plan(config)
-    output = args.output.expanduser().resolve()
+    plan = seed_plan(config, args.game_seeds)
+    output = (args.output or (DEFAULT_HOLDOUT_OUTPUT if args.game_seeds else DEFAULT_OUTPUT)).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
     invocation_path = output / "invocations.json"
     invocations = read(invocation_path) if invocation_path.exists() else []
