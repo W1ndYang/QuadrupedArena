@@ -68,6 +68,13 @@ class PortabilityTests(unittest.TestCase):
         self.assertIn('UPLOAD_THIS=',wrapper)
         self.assertIn('validation_exit',wrapper)
 
+    def test_long_training_wrapper_always_packages(self):
+        wrapper=(PROJECT/'scripts/run_rl_skill_v1.sh').read_text()
+        self.assertIn('job_result.json',wrapper)
+        self.assertIn('rl_skill_package.py',wrapper)
+        self.assertIn('UPLOAD_THIS=',wrapper)
+        self.assertIn('RL_SKILL_TOTAL_STEPS',wrapper)
+
     def test_explicit_eula_required(self):
         env = dict(os.environ, ARENA_PYTHON=sys.executable)
         env.pop('OMNI_KIT_ACCEPT_EULA', None)
