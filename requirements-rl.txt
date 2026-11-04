@@ -1,0 +1,2 @@
+# Skill-level PPO is intentionally dependency-light and runs without Gym or PyTorch.
+-r requirements-cpu.txt

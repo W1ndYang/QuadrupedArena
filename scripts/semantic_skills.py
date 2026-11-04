@@ -41,11 +41,28 @@ class VisualMemory:
         if annotation['time']<self.track['seen_at']:raise ValueError('Do not overwrite newer visual memory')
         self.track=dict(xy=ground_point(frame,annotation['feet']),seen_at=frame['simulation_seconds'],source='rgb_foot_pixel',
             base_uncertainty=.6,frame=frame['file'],feet=list(annotation['feet']))
+    def update_simulator_sensor(self,sighting):
+        """Update from the declared simulator-native geometric sensor.
+
+        This is deliberately a separate interface from RGB foot annotations: it
+        must never be described as an image detection.  The caller owns sensor
+        visibility, noise and cadence and may pass only its emitted estimate.
+        """
+        if not isinstance(sighting,dict) or set(sighting)!={'time','xy','uncertainty'}:
+            raise ValueError('simulator sighting requires time, xy and uncertainty')
+        t=sighting['time'];xy=sighting['xy'];uncertainty=sighting['uncertainty']
+        if type(t) not in (int,float) or not math.isfinite(t):raise ValueError('Invalid simulator sighting time')
+        if not isinstance(xy,(list,tuple)) or len(xy)!=2 or any(type(v) not in (int,float) or not math.isfinite(v) for v in xy):
+            raise ValueError('Invalid simulator sighting position')
+        if type(uncertainty) not in (int,float) or not math.isfinite(uncertainty) or uncertainty<0:
+            raise ValueError('Invalid simulator sighting uncertainty')
+        if t<self.track['seen_at']:raise ValueError('Do not overwrite newer visual memory')
+        self.track=dict(xy=list(xy),seen_at=float(t),source='simulator_native_geometry',base_uncertainty=float(uncertainty))
     def belief(self,t):
         age=max(0.,t-self.track['seen_at'])
         if age>4.:return None
         return dict(**self.track,age=age,uncertainty_radius=self.track['base_uncertainty']+.65*age,
-            aim_usable=self.track['source']=='rgb_foot_pixel' and age<=2.)
+            aim_usable=self.track['source'] in ('rgb_foot_pixel','simulator_native_geometry') and age<=2.)
     def public(self,t):
         value=self.belief(t)
         return value if value is not None else dict(status='expired',last_seen_at=self.track['seen_at'],current_position='unknown')
@@ -83,6 +100,7 @@ class SemanticSkills:
         self.cfg['policy']={k:cfg['policy'][k] for k in ('dynamic_avoid_radius','reverse_speed_limit','safety_stop_distance')}
         self.memory=VisualMemory(cfg['start_b']);self.status=dict(state='IDLE');self.action=None;self.intent=None
         self.generation=None;self.hp=None;self.goal=None;self.sequence=0
+        self.base=None;self.base_after_collapse=None
 
     def validate(self,request,packet):
         if not isinstance(request,dict) or set(request) not in ({'observation_id','skill','params'},{'observation_id','skill','params','reason'}):raise ValueError('Expected observation_id, skill, params and optional reason')
@@ -108,6 +126,12 @@ class SemanticSkills:
     def observe_sighting(self,sighting,packet):
         """Ingest one validated frame sighting without a Skill action decision."""
         self.memory=self._validated_memory(sighting,packet)
+        return copy.deepcopy(self.memory.track)
+
+    def observe_simulator_sensor(self,sighting):
+        """Ingest one simulator-native estimate without selecting a Skill."""
+        candidate=copy.deepcopy(self.memory);candidate.update_simulator_sensor(sighting)
+        self.memory=candidate
         return copy.deepcopy(self.memory.track)
 
     def public(self,t):return dict(skill_status=copy.deepcopy(self.status),visual_memory=self.memory.public(t))
@@ -153,12 +177,15 @@ class SemanticSkills:
         if skill=='CAPTURE_POINT' and self.generation!=packet['public_state']['target_generation']:
             self.status=dict(skill=skill,state='TARGET_EXPIRED');self.action=dict(skill='STOP',facing='keep',attack=False)
             return self.action,[],self.camera(packet),copy.deepcopy(self.status)
-        self.base=Planner(self.cfg,covers_at(self.cfg,t));belief=self.memory.belief(t)
-        p=BeliefPlanner(self.base,belief,own['hp'],params.get('risk','safe'));start=np.asarray(own['xy'])
+        belief=self.memory.belief(t);start=np.asarray(own['xy'])
         facing=own['yaw'] if belief is None else math.atan2(belief['xy'][1]-start[1],belief['xy'][0]-start[0])
         action=dict(skill='HOLD',facing=facing,attack=bool(belief and belief['aim_usable']))
         route=[];goal=None;state='RUNNING';eta=0.;cover_name=None;exposure=0.;rejected=0
         if skill in ('MOVE_TO','CAPTURE_POINT','TAKE_COVER'):
+            after_collapse=t>=self.cfg['collapse']['time']
+            if self.base is None or self.base_after_collapse!=after_collapse:
+                self.base=Planner(self.cfg,covers_at(self.cfg,t));self.base_after_collapse=after_collapse
+            p=BeliefPlanner(self.base,belief,own['hp'],params.get('risk','safe'))
             p.solve(start);candidates=[]
             if skill in ('MOVE_TO','CAPTURE_POINT'):
                 name=params.get('target','active');idx=packet['public_state']['active_target'] if name=='active' else next(i for i,x in enumerate(self.cfg['arena']['task_points']) if x['name']==name)

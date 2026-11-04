@@ -189,6 +189,26 @@ def sample_visibility(synthetic):
     return "unknown"
 
 
+def summarize_ten_hz_sensor_samples(samples):
+    """Validate a finite 10 Hz Isaac capture/geometry/Skill-memory chain."""
+    times=[sample.get("simulation_seconds") for sample in samples]
+    cadence=(len(samples)==11 and all(isinstance(t,(int,float)) and math.isfinite(t) for t in times) and
+             all(math.isclose(times[i],.1*i,abs_tol=1e-8) for i in range(len(times))))
+    unique_files=(len({sample.get("frame_file") for sample in samples})==len(samples) and
+                  all(sample.get("frame_file") for sample in samples))
+    packet_sync=all(sample.get("packet_time_matches_frame") is True for sample in samples)
+    processing=all(not str(sample.get("reason","")).startswith("adapter_failed:") for sample in samples)
+    memory=all(sample.get("memory_check_passed") is True for sample in samples)
+    emitted=sum(sample.get("ingest_status")=="accepted" for sample in samples)
+    status="passed" if cadence and unique_files and packet_sync and processing and memory else "partial"
+    return dict(status=status,mode="rl_skill_10hz_sensor_smoke",source="simulator_geometry_truth",
+        sensor_interval_seconds=.1,same_frame_verified=False,
+        sync_integration_status="cadence_and_current_stage_verified" if status=="passed" else "blocked",
+        checks=dict(eleven_samples=cadence,ten_hz_cadence=cadence,unique_rgb_frames=unique_files,
+            packet_frame_time_match=packet_sync,adapter_processing_ok=processing,
+            visual_memory_consistent=memory,sighting_ingests=emitted),samples=samples)
+
+
 def build_window_context(window_id, samples):
     """Package one bootstrap frame or four fresh half-second observations."""
     bootstrap = window_id == 0

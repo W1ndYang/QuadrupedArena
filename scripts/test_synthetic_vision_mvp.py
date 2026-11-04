@@ -12,7 +12,7 @@ from vision_core import VisionMatch, public_packet
 from synthetic_vision_mvp import (
     build_noisy_sighting, build_window_context, handoff_to_skill, run_validation_cases,
     sample_visibility, smoke_observation, smoke_request, summarize_skill_runtime_smoke,
-    validation_pose, visibility_from_ray,
+    summarize_ten_hz_sensor_samples, validation_pose, visibility_from_ray,
 )
 
 
@@ -413,6 +413,19 @@ class SyntheticVisionMvpTests(unittest.TestCase):
         bad_windows[3]["frames"][2]["frame_file"] = "frames/stale.png"
         self.assertFalse(summarize_skill_runtime_smoke(records,bad_windows,samples)
                          ["checks"]["window_refs_match_samples"])
+
+    def test_ten_hz_sensor_summary(self):
+        samples=[dict(simulation_seconds=.1*i,frame_file=f'frames/{i:03d}.png',
+                      packet_time_matches_frame=True,reason=None,
+                      ingest_status='accepted' if i<3 else 'not_attempted_no_sighting',
+                      memory_check_passed=True) for i in range(11)]
+        result=summarize_ten_hz_sensor_samples(samples)
+        self.assertEqual(result['status'],'passed')
+        self.assertEqual(result['checks']['sighting_ingests'],3)
+        bad=copy.deepcopy(samples);bad[5]['simulation_seconds']=.51
+        self.assertEqual(summarize_ten_hz_sensor_samples(bad)['status'],'partial')
+        bad=copy.deepcopy(samples);bad[2]['reason']='adapter_failed: unavailable'
+        self.assertEqual(summarize_ten_hz_sensor_samples(bad)['status'],'partial')
 
 
 if __name__ == "__main__":

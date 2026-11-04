@@ -33,6 +33,8 @@ parser.add_argument('--synthetic-vision-mvp-validation',action='store_true',
                     help='Three finite current-scene sighting cycles: clear, High2 occluded, moved clear')
 parser.add_argument('--synthetic-vision-skill-runtime-smoke',action='store_true',
                     help='Three native Skill actions in the normal match loop with fresh synthetic observations')
+parser.add_argument('--rl-skill-10hz-sensor-smoke',action='store_true',
+                    help='Eleven current-scene synthetic observations at 0.1 s cadence for the RL sensor contract')
 parser.add_argument('--synthetic-pixel-noise-std',type=float,default=1.0)
 parser.add_argument('--synthetic-miss-probability',type=float,default=0.0)
 parser.add_argument('--synthetic-seed',type=int,default=20261028)
@@ -41,13 +43,13 @@ parser.add_argument('--diagnostic-output-dir',type=Path,
 parser.add_argument('--run-dir',type=Path,required=True)
 AppLauncher.add_app_launcher_args(parser)
 args=parser.parse_args();args.enable_cameras=True
-if (args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke) and (
+if (args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke or args.rl_skill_10hz_sensor_smoke) and (
         not args.vision_trial or not args.semantic_skills or
         args.geometry_diagnostic or args.geometry_interface_probe or args.vision_smoke or
         args.deepseek or args.qwen_vision or args.assessment or args.g1b1_visible_spawn or
         args.diagnostic_output_dir or
         sum((args.synthetic_vision_mvp, args.synthetic_vision_mvp_validation,
-             args.synthetic_vision_skill_runtime_smoke)) != 1):
+             args.synthetic_vision_skill_runtime_smoke,args.rl_skill_10hz_sensor_smoke)) != 1):
     parser.error('Synthetic vision modes require --vision-trial --semantic-skills and exclude other diagnostic/planner modes')
 if args.synthetic_pixel_noise_std<0 or not math.isfinite(args.synthetic_pixel_noise_std) or not 0<=args.synthetic_miss_probability<=1 or not math.isfinite(args.synthetic_miss_probability):
     parser.error('Invalid synthetic sighting noise or miss probability')
@@ -81,10 +83,10 @@ def main():
         for name in ('frames','observations','actions','decisions'):(root/name).mkdir()
     cfg=load_config(PROJECT/'configs/trial_rotating.json');cfg['seed']=2026102107
     if args.vision_smoke:cfg['duration']=2.
-    if args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation:
+    if args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.rl_skill_10hz_sensor_smoke:
         # Explicit sighting modes use the previously checked clear A viewpoint.
         cfg['start_a']=[4.8,-1.0]
-    match=VisionMatch(cfg,initial_a_yaw=math.pi/2 if (args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation) else 0.);rig=CameraRig()
+    match=VisionMatch(cfg,initial_a_yaw=math.pi/2 if (args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.rl_skill_10hz_sensor_smoke) else 0.);rig=CameraRig()
     engine=None;execution=[];api_planner=None
     if args.semantic_skills:
         from semantic_skills import SemanticSkills
@@ -110,8 +112,9 @@ def main():
             execution='Known-map risk-weighted routes; local goal selection and turn/acceleration ETA. Never access current opponent truth.',
             differences_from_previous='Semantic skills + short output + visual-estimate-only attack gating + programmatic camera. Same match rules, seed, map, 2s decision / 0.5s RGB cadence. Not a pure model-speed A/B.',
             online_reason_limit_characters=100,api_model_change=False)
-        if args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke:
-            protocol.update(mode='synthetic_vision_skill_runtime_smoke' if args.synthetic_vision_skill_runtime_smoke else
+        if args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke or args.rl_skill_10hz_sensor_smoke:
+            protocol.update(mode='rl_skill_10hz_sensor_smoke' if args.rl_skill_10hz_sensor_smoke else
+                                 'synthetic_vision_skill_runtime_smoke' if args.synthetic_vision_skill_runtime_smoke else
                                  'synthetic_vision_mvp_validation' if args.synthetic_vision_mvp_validation else 'simulator_derived_synthetic_vision_mvp',
                 perception='Current USD camera/G1 mesh and PhysX cover visibility produce a noisy foot pixel; not RGB-only recognition.',
                 sighting_source='simulator_geometry_truth',same_frame_verified=False,
@@ -125,6 +128,10 @@ def main():
                 protocol.update(engine='Normal Python match and Skill execution; Isaac RGB plus current USD/PhysX geometry query',
                                 driver='smoke_test_driver',native_skill_actions=4,
                                 diagnostic_pose_override=False)
+            if args.rl_skill_10hz_sensor_smoke:
+                protocol.update(engine='Python match at 50 Hz; Isaac RGB plus current USD/PhysX geometry query',
+                                driver='finite_10hz_sensor_smoke',sensor_interval_seconds=.1,
+                                sample_count=11,diagnostic_pose_override=True)
         dump(root/'protocol.json',protocol)
     if args.deepseek or args.qwen_vision:
         from deepseek_trial import motion_request
@@ -238,6 +245,45 @@ def main():
             camera_pan_degrees=rig.pan,camera_world_yaw_degrees=math.degrees(heading),camera_eye=eye.tolist(),horizontal_fov_degrees=90)
         frames.append(frame);dump(root/'frame_index.json',frames)
         return frame
+    if args.rl_skill_10hz_sensor_smoke:
+        from synthetic_vision_mvp import (observe_current_scene,sample_visibility,
+            smoke_observation,summarize_ten_hz_sensor_samples)
+        samples=[];match.apply(dict(skill='HOLD',facing='keep',attack=False),[])
+        camera_command=dict(mode='sweep',center_degrees=0,amplitude_degrees=60)
+        for sample_id in range(11):
+            if sample_id:
+                for microstep in range(5):
+                    match.advance(cfg['dt']);rig.step(camera_command,(sample_id-1)*.1+(microstep+1)*cfg['dt'],cfg['dt'])
+            frame=capture();packet=public_packet(sample_id,match.states[-1],[frame],cfg['start_b'])
+            packet['skills']=engine.public(match.t)
+            packet['perception']='Current simulator-derived foot pixel at the RL 10 Hz sensor cadence; RGB is review evidence.'
+            dump(root/'observations'/f'{sample_id:03d}.json',packet)
+            with Image.open(root/frame['file']) as image:image_size=image.size
+            synthetic=smoke_observation(packet,frame,
+                lambda current_packet,current_frame: observe_current_scene(
+                    stage,camera,current_packet,current_frame,cfg,image_size,
+                    seed=args.synthetic_seed+sample_id,pixel_noise_std=args.synthetic_pixel_noise_std,
+                    miss_probability=args.synthetic_miss_probability))
+            before=copy.deepcopy(engine.memory.track);sighting=synthetic.get('sighting')
+            ingest_status='not_attempted_no_sighting';ingest_error=None
+            if sighting is not None:
+                try:engine.observe_sighting(sighting,packet);ingest_status='accepted'
+                except Exception as exc:ingest_status='rejected';ingest_error=f'{type(exc).__name__}: {exc}'
+            after=copy.deepcopy(engine.memory.track)
+            memory_ok=(after.get('seen_at')==sighting['time'] and after.get('feet')==sighting['feet']) if ingest_status=='accepted' else after==before
+            sample=dict(observation_id=sample_id,simulation_seconds=match.t,frame_file=frame['file'],
+                packet_time_matches_frame=packet['simulation_seconds']==frame['simulation_seconds']==match.t,
+                status=sample_visibility(synthetic),reason=synthetic.get('reason'),sighting=sighting,
+                ingest_status=ingest_status,ingest_error=ingest_error,memory_check_passed=memory_ok,
+                memory_before=before,memory_after=after,synthetic=synthetic)
+            samples.append(sample);dump(root/(f'sensor_sample_{sample_id:03d}.json'),sample)
+        summary=summarize_ten_hz_sensor_samples(samples)
+        dump(root/'rl_skill_10hz_sensor_smoke.json',summary)
+        dump(root/'result.json',dict(status=summary['status'],mode=summary['mode'],checks=summary['checks'],
+            diagnostic_file='rl_skill_10hz_sensor_smoke.json',same_frame_verified=False,
+            sync_integration_status=summary['sync_integration_status']))
+        print(f'RL Skill 10 Hz sensor smoke: {summary["status"]}; checks={summary["checks"]}',flush=True)
+        return
     if args.synthetic_vision_mvp:
         from synthetic_vision_mvp import observe_current_scene,handoff_to_skill
         frame=capture()
@@ -530,5 +576,6 @@ except Exception:
     dump(args.run_dir/'result.json',dict(status='failed',error=traceback.format_exc()))
     traceback.print_exc()
     if (args.geometry_diagnostic or args.geometry_interface_probe or args.synthetic_vision_mvp or
-            args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke):raise SystemExit(1)
+            args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke or
+            args.rl_skill_10hz_sensor_smoke):raise SystemExit(1)
 finally:app.close(wait_for_replicator=False,skip_cleanup=True)

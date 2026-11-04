@@ -59,6 +59,14 @@ class PortabilityTests(unittest.TestCase):
                                 env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('--vision-trial', result.stdout)
+        self.assertIn('--rl-skill-10hz-sensor-smoke', result.stdout)
+
+    def test_ubuntu_validation_wrapper_packages_both_success_and_failure(self):
+        wrapper=(PROJECT/'scripts/run_rl_skill_ubuntu_validation.sh').read_text()
+        self.assertIn('ARENA_RUN_DIR=',wrapper)
+        self.assertIn('rl_skill_package.py',wrapper)
+        self.assertIn('UPLOAD_THIS=',wrapper)
+        self.assertIn('validation_exit',wrapper)
 
     def test_explicit_eula_required(self):
         env = dict(os.environ, ARENA_PYTHON=sys.executable)
