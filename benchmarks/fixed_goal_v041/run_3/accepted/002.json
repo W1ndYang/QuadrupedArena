@@ -1,0 +1,32 @@
+{
+  "action": {
+    "observation_id": 2,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 5,
+      "steps": [
+        {
+          "skill": "SMOKE_AND_MOVE",
+          "params": {
+            "location": [
+              -1.5,
+              -4.6
+            ],
+            "target": "GOAL",
+            "posture": "upright"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "7.56秒最后合法记忆显示人形约在[1.93,-4.60]，距目标中心很近；7.66秒当前无检测，自身位于[-4.60,-6.00]已知掩体后。",
+      "state_evidence": "剩余52.34秒，烟1枚，当前停稳且冷却为0；到GOAL公开路径约6.92米，系统给出的烟落点[-1.5,-4.6]位于投掷范围内。",
+      "decision_summary": "直接使用烟幕遮断目标附近视线，并沿烟后路线快速进入GOAL；接触时继续推进以争取在对方完成1秒瞄准前入圈。",
+      "uncertainty": "人形可能已离开最后位置或移动到烟边缘之外；烟投掷合法性依赖仿真判定，若被墙遮挡则不施放并继续推进，届时最后接近段暴露风险上升。"
+    }
+  },
+  "request_sha256": "bf6b738740e6b19a1dbf2c18d6ff1cefd5f80f5a31ad9cae3c2240bf63e826b5",
+  "simulation_seconds": 7.66,
+  "normalization": null
+}

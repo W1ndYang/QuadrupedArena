@@ -1,0 +1,49 @@
+[
+  {
+    "time": 0.0,
+    "type": "plan_accepted",
+    "decision": 0,
+    "nodes": 2,
+    "horizon": 8
+  },
+  {
+    "time": 4.88,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "FOLLOW_ROUTE",
+    "reason": "target_reached"
+  },
+  {
+    "time": 4.9,
+    "type": "peek_selected",
+    "candidate": "PK005",
+    "home": [
+      -4.55,
+      2.53
+    ],
+    "out": [
+      -4.85,
+      2.53
+    ]
+  },
+  {
+    "time": 6.56,
+    "type": "peek_rejected",
+    "reason": "home_exposed_to_latest_legal_track",
+    "candidate": "PK005"
+  },
+  {
+    "time": 6.56,
+    "type": "node_completed",
+    "node": 1,
+    "skill": "PEEK_BURST",
+    "reason": "unsafe_home"
+  },
+  {
+    "time": 6.58,
+    "type": "plan_accepted",
+    "decision": 1,
+    "nodes": 1,
+    "horizon": 8
+  }
+]

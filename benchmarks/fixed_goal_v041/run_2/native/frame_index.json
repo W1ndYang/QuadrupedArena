@@ -1,0 +1,425 @@
+{
+  "fps": 12,
+  "frames": [
+    {
+      "time": 0.0,
+      "source_state_time": 0.0,
+      "index": 0
+    },
+    {
+      "time": 0.08333333333333333,
+      "source_state_time": 0.08,
+      "index": 1
+    },
+    {
+      "time": 0.16666666666666666,
+      "source_state_time": 0.16,
+      "index": 2
+    },
+    {
+      "time": 0.25,
+      "source_state_time": 0.24,
+      "index": 3
+    },
+    {
+      "time": 0.3333333333333333,
+      "source_state_time": 0.34,
+      "index": 4
+    },
+    {
+      "time": 0.4166666666666667,
+      "source_state_time": 0.42,
+      "index": 5
+    },
+    {
+      "time": 0.5,
+      "source_state_time": 0.5,
+      "index": 6
+    },
+    {
+      "time": 0.5833333333333334,
+      "source_state_time": 0.58,
+      "index": 7
+    },
+    {
+      "time": 0.6666666666666666,
+      "source_state_time": 0.66,
+      "index": 8
+    },
+    {
+      "time": 0.75,
+      "source_state_time": 0.76,
+      "index": 9
+    },
+    {
+      "time": 0.8333333333333334,
+      "source_state_time": 0.84,
+      "index": 10
+    },
+    {
+      "time": 0.9166666666666666,
+      "source_state_time": 0.92,
+      "index": 11
+    },
+    {
+      "time": 1.0,
+      "source_state_time": 1.0,
+      "index": 12
+    },
+    {
+      "time": 1.0833333333333333,
+      "source_state_time": 1.08,
+      "index": 13
+    },
+    {
+      "time": 1.1666666666666667,
+      "source_state_time": 1.16,
+      "index": 14
+    },
+    {
+      "time": 1.25,
+      "source_state_time": 1.24,
+      "index": 15
+    },
+    {
+      "time": 1.3333333333333333,
+      "source_state_time": 1.34,
+      "index": 16
+    },
+    {
+      "time": 1.4166666666666667,
+      "source_state_time": 1.42,
+      "index": 17
+    },
+    {
+      "time": 1.5,
+      "source_state_time": 1.5,
+      "index": 18
+    },
+    {
+      "time": 1.5833333333333333,
+      "source_state_time": 1.58,
+      "index": 19
+    },
+    {
+      "time": 1.6666666666666667,
+      "source_state_time": 1.66,
+      "index": 20
+    },
+    {
+      "time": 1.75,
+      "source_state_time": 1.76,
+      "index": 21
+    },
+    {
+      "time": 1.8333333333333333,
+      "source_state_time": 1.84,
+      "index": 22
+    },
+    {
+      "time": 1.9166666666666667,
+      "source_state_time": 1.92,
+      "index": 23
+    },
+    {
+      "time": 2.0,
+      "source_state_time": 2.0,
+      "index": 24
+    },
+    {
+      "time": 2.0833333333333335,
+      "source_state_time": 2.08,
+      "index": 25
+    },
+    {
+      "time": 2.1666666666666665,
+      "source_state_time": 2.16,
+      "index": 26
+    },
+    {
+      "time": 2.25,
+      "source_state_time": 2.24,
+      "index": 27
+    },
+    {
+      "time": 2.3333333333333335,
+      "source_state_time": 2.34,
+      "index": 28
+    },
+    {
+      "time": 2.4166666666666665,
+      "source_state_time": 2.42,
+      "index": 29
+    },
+    {
+      "time": 2.5,
+      "source_state_time": 2.5,
+      "index": 30
+    },
+    {
+      "time": 2.5833333333333335,
+      "source_state_time": 2.58,
+      "index": 31
+    },
+    {
+      "time": 2.6666666666666665,
+      "source_state_time": 2.66,
+      "index": 32
+    },
+    {
+      "time": 2.75,
+      "source_state_time": 2.76,
+      "index": 33
+    },
+    {
+      "time": 2.8333333333333335,
+      "source_state_time": 2.84,
+      "index": 34
+    },
+    {
+      "time": 2.9166666666666665,
+      "source_state_time": 2.92,
+      "index": 35
+    },
+    {
+      "time": 3.0,
+      "source_state_time": 3.0,
+      "index": 36
+    },
+    {
+      "time": 3.0833333333333335,
+      "source_state_time": 3.08,
+      "index": 37
+    },
+    {
+      "time": 3.1666666666666665,
+      "source_state_time": 3.16,
+      "index": 38
+    },
+    {
+      "time": 3.25,
+      "source_state_time": 3.24,
+      "index": 39
+    },
+    {
+      "time": 3.3333333333333335,
+      "source_state_time": 3.34,
+      "index": 40
+    },
+    {
+      "time": 3.4166666666666665,
+      "source_state_time": 3.42,
+      "index": 41
+    },
+    {
+      "time": 3.5,
+      "source_state_time": 3.5,
+      "index": 42
+    },
+    {
+      "time": 3.5833333333333335,
+      "source_state_time": 3.58,
+      "index": 43
+    },
+    {
+      "time": 3.6666666666666665,
+      "source_state_time": 3.66,
+      "index": 44
+    },
+    {
+      "time": 3.75,
+      "source_state_time": 3.76,
+      "index": 45
+    },
+    {
+      "time": 3.8333333333333335,
+      "source_state_time": 3.84,
+      "index": 46
+    },
+    {
+      "time": 3.9166666666666665,
+      "source_state_time": 3.92,
+      "index": 47
+    },
+    {
+      "time": 4.0,
+      "source_state_time": 4.0,
+      "index": 48
+    },
+    {
+      "time": 4.083333333333333,
+      "source_state_time": 4.08,
+      "index": 49
+    },
+    {
+      "time": 4.166666666666667,
+      "source_state_time": 4.16,
+      "index": 50
+    },
+    {
+      "time": 4.25,
+      "source_state_time": 4.24,
+      "index": 51
+    },
+    {
+      "time": 4.333333333333333,
+      "source_state_time": 4.34,
+      "index": 52
+    },
+    {
+      "time": 4.416666666666667,
+      "source_state_time": 4.42,
+      "index": 53
+    },
+    {
+      "time": 4.5,
+      "source_state_time": 4.5,
+      "index": 54
+    },
+    {
+      "time": 4.583333333333333,
+      "source_state_time": 4.58,
+      "index": 55
+    },
+    {
+      "time": 4.666666666666667,
+      "source_state_time": 4.66,
+      "index": 56
+    },
+    {
+      "time": 4.75,
+      "source_state_time": 4.76,
+      "index": 57
+    },
+    {
+      "time": 4.833333333333333,
+      "source_state_time": 4.84,
+      "index": 58
+    },
+    {
+      "time": 4.916666666666667,
+      "source_state_time": 4.92,
+      "index": 59
+    },
+    {
+      "time": 5.0,
+      "source_state_time": 5.0,
+      "index": 60
+    },
+    {
+      "time": 5.083333333333333,
+      "source_state_time": 5.08,
+      "index": 61
+    },
+    {
+      "time": 5.166666666666667,
+      "source_state_time": 5.16,
+      "index": 62
+    },
+    {
+      "time": 5.25,
+      "source_state_time": 5.24,
+      "index": 63
+    },
+    {
+      "time": 5.333333333333333,
+      "source_state_time": 5.34,
+      "index": 64
+    },
+    {
+      "time": 5.416666666666667,
+      "source_state_time": 5.42,
+      "index": 65
+    },
+    {
+      "time": 5.5,
+      "source_state_time": 5.5,
+      "index": 66
+    },
+    {
+      "time": 5.583333333333333,
+      "source_state_time": 5.58,
+      "index": 67
+    },
+    {
+      "time": 5.666666666666667,
+      "source_state_time": 5.66,
+      "index": 68
+    },
+    {
+      "time": 5.75,
+      "source_state_time": 5.76,
+      "index": 69
+    },
+    {
+      "time": 5.833333333333333,
+      "source_state_time": 5.84,
+      "index": 70
+    },
+    {
+      "time": 5.916666666666667,
+      "source_state_time": 5.92,
+      "index": 71
+    },
+    {
+      "time": 6.0,
+      "source_state_time": 6.0,
+      "index": 72
+    },
+    {
+      "time": 6.083333333333333,
+      "source_state_time": 6.08,
+      "index": 73
+    },
+    {
+      "time": 6.166666666666667,
+      "source_state_time": 6.16,
+      "index": 74
+    },
+    {
+      "time": 6.25,
+      "source_state_time": 6.24,
+      "index": 75
+    },
+    {
+      "time": 6.333333333333333,
+      "source_state_time": 6.34,
+      "index": 76
+    },
+    {
+      "time": 6.416666666666667,
+      "source_state_time": 6.42,
+      "index": 77
+    },
+    {
+      "time": 6.5,
+      "source_state_time": 6.5,
+      "index": 78
+    },
+    {
+      "time": 6.583333333333333,
+      "source_state_time": 6.58,
+      "index": 79
+    },
+    {
+      "time": 6.666666666666667,
+      "source_state_time": 6.66,
+      "index": 80
+    },
+    {
+      "time": 6.75,
+      "source_state_time": 6.76,
+      "index": 81
+    },
+    {
+      "time": 6.833333333333333,
+      "source_state_time": 6.84,
+      "index": 82
+    },
+    {
+      "time": 6.86,
+      "source_state_time": 6.86,
+      "index": 83
+    }
+  ]
+}

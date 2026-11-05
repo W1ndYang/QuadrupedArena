@@ -1,16 +1,35 @@
 # QuadrupedArena
 
-面向机器人高层规划研究的占点竞技仿真：**LLM 选择意图 → 代码 SKILL 规划和执行 → 裁判更新比赛 → Isaac Sim 生成真实三维场景中的相机图像**。
+面向机器人高层规划研究的对抗任务仿真：**LLM 选择意图 → 代码 SKILL 规划和执行 → 裁判更新比赛 → Isaac Sim 生成真实三维场景中的相机图像**。
 
-本仓库整理了截至 2026-10-22 的场景源代码、规则配置、基线策略、非全知视觉决策接口、回放和报告工具。用于让其他研究者在自己的机器上重新生成场景、运行规则、接入规划模型并继续开发，而不只是观看一份视频。
+本仓库包含最新的 **2026-11-05 固定目标攻防 v0.4.1 发布包**，以及 2026-10-22 的累计占点赛制源码、非全知视觉决策接口、回放和报告工具。用于让其他研究者在自己的机器上重新生成场景、运行规则、接入规划模型并继续开发，而不只是观看一份视频。
 
-> 当前正式比赛是 Python 裁判 + 有速度/加速度/转向限制的运动学执行，Isaac 负责在线 RGB 和回放渲染。**不是接触动力学中的自主行走，也不是可直接部署到真机的控制系统。** 本仓库不包含训练好的步态策略或真实机器人接口。
+> 本仓库两套比赛均采用 Python 裁判 + 有速度/加速度/转向限制的运动学执行，Isaac 负责在线 RGB 和回放渲染。**不是接触动力学中的自主行走，也不是可直接部署到真机的控制系统。** 本仓库不包含训练好的步态策略或真实机器人接口。
 
 ![DOCK 07：Isaac Sim 原生渲染的扩展地图](docs/images/dockyard-overview.png)
 
 上图为 32×24 m 的 DOCK 07 v1 地图审阅结果，不是已接入比赛的大地图。比赛和该地图的成熟度见下表。
 
-## 先选择要复现的内容
+## 最新发布：固定目标攻防 v0.4.1（2026-11-05）
+
+当前研究场景已收敛为 **24×16 m 已知地图、一个固定目标、60 秒内到点即赢、人形标记四足即失败**。加入短探 `PEEK_BURST`、4～8 秒技能序列、烟雾；使用合法几何观测，模型调用时仿真暂停。三种新布局都提供遮挡出生和两条出路。
+
+**从这里开始：[完整说明与复现命令](benchmarks/fixed_goal_v041/README.md)** · [规则](benchmarks/fixed_goal_v041/RULES.md) · [模型与技能协议](benchmarks/fixed_goal_v041/MODEL_PROTOCOL.md) · [三场报告 HTML](benchmarks/fixed_goal_v041/index.html)
+
+```bash
+python -m pip install -r requirements-cpu.txt
+# 无 API、无 GPU，逐步校验并重新执行三局已保存模型决策：
+python benchmarks/fixed_goal_v041/benchmark.py replay \
+  --output .arena-workspace/fixed-goal-replay
+```
+
+[SE 第三视角 GIF](benchmarks/fixed_goal_v041/run_1/demo.gif) · [EW GIF](benchmarks/fixed_goal_v041/run_2/demo.gif) · [WC GIF](benchmarks/fixed_goal_v041/run_3/demo.gif)。下载仓库后打开 `benchmarks/fixed_goal_v041/index.html`，可切换布局、完整回放及九步截图/JSON 决策。
+
+这三局是 DS LOW 探索样例，包含一胜两负以及明确记录的技能/运动缺陷，不是稳定胜率基准。代码、实际配置、提示词、合法观测、时间/token 记录和三局必要演示均已随包提供；不需要重新支付 API 费用才能审阅或验证。原始 API 密钥、第三方原始模型/贴图、可生成的 USD 缓存不在仓库。
+
+**下文保留的是 2026-10-22 的历史累计占点赛制入口。两套规则不可混用；新固定目标场景以以上文档为准。**
+
+## 历史赛制：先选择要复现的内容
 
 | 内容 | 入口 | 是否需要 GPU / API | 状态 |
 | --- | --- | --- | --- |
@@ -73,9 +92,9 @@ bash run.sh --vision-trial --semantic-skills --vision-smoke --headless
 
 启动后会打印 `Run:`、`Log:`。生成的 USD、贴图和机器人转换缓存放在 `.arena-workspace/simulators/`；逐次日志、JSON、图片和影片放在 `.arena-workspace/experiments/runs/quadruped-arena/<时间戳>/`。不需要把这些大文件提交到源码仓库。
 
-## 当前规则概览
+## 历史累计占点规则概览（2026-10-22）
 
-| 项目 | 当前 v0.4 比赛设置 |
+| 项目 | 历史 v0.4 累计占点设置 |
 | --- | --- |
 | 任务 | 人形 B 施压，评价轮足四足 A 的累计占点分；命中本身不加分 |
 | 生命和终局 | 双方初始 3 HP，不复活；A 清零或 40 秒结束；B 清零不结束 |
@@ -90,7 +109,7 @@ bash run.sh --vision-trial --semantic-skills --vision-smoke --headless
 
 完整公式、事件结算顺序、旧 v0.3 与 v0.4 的区别及配置继承见 [比赛规则](docs/RULES.md)。实现和 JSON 是最终依据，旧文档不是当前规则的替代品。
 
-## 接入大模型
+## 历史视觉赛制：接入大模型
 
 使用五个意图技能：`MOVE_TO`、`TAKE_COVER`、`AIM_AT_TRACK`、`CAPTURE_POINT`、`OBSERVE`。LLM 不提交 Python 代码或逐点路径。底层处理几何寻路、避障、朝向和局部执行。
 

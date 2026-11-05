@@ -16,3 +16,12 @@ jobs:
       - run: python -m unittest discover -s scripts -p 'test_*.py' -v
       - run: python scripts/cpu_demo.py
       - run: bash run.sh --help
+
+      - name: Fixed-goal v0.4.1 referee tests (no API / Isaac)
+        run: python -m unittest discover -s benchmarks/fixed_goal_v041/source_snapshot/scripts -p 'test_fixed_goal_probe.py' -v
+      - name: Goal-only stun and terminal rules
+        run: python -m unittest discover -s benchmarks/fixed_goal_v041 -p 'test_v041_rules.py' -v
+      - name: Audit published fixed-goal observations and decisions
+        run: python benchmarks/fixed_goal_v041/benchmark.py audit
+      - name: Replay all three fixed-goal games without API calls
+        run: python benchmarks/fixed_goal_v041/benchmark.py replay --output .arena-workspace/ci-fixed-goal

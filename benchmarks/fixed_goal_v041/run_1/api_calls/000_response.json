@@ -1,0 +1,27 @@
+{
+  "content": "{\"observation_id\":0,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":6,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK000\",\"max_cycles\":2},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"当前无合法检测；仅有初始人形位置[6.2,-2.7]、PK000等探身候选及预测暴露0.44秒/次。\",\"state_evidence\":\"自身位于SPAWN[-5.8,-1.0]，直立停稳；烟1枚，标记冷却0，剩余60秒。\",\"decision_summary\":\"先利用西侧LoadingHall候选PK000做最多2次短探获取东侧信息；若8米内发现人形立即撤回，不继续路线。\",\"uncertainty\":\"人形当前真实位置与巡逻路径未知；探身暴露预测基于静止初始敌位，不是安全保证。\"}}",
+  "tool_calls": [],
+  "usage": {
+    "prompt_tokens": 4665,
+    "completion_tokens": 1950,
+    "total_tokens": 6615,
+    "prompt_tokens_details": {
+      "cached_tokens": 1920
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1747
+    },
+    "prompt_cache_hit_tokens": 1920,
+    "prompt_cache_miss_tokens": 2745
+  },
+  "response_model": "deepseek-flash",
+  "response_id": "c9bbb359-3701-4448-a2a2-a60c1f6b83d3",
+  "finish_reason": "stop",
+  "api_wall_seconds": 13.828607487957925,
+  "time_to_first_output_seconds": 1.0373098909622058,
+  "time_to_first_visible_content_seconds": 12.759006745996885,
+  "reasoning_characters_received": 3072,
+  "reasoning_text_saved": false,
+  "api_started_utc": "2026-11-04T09:43:44.234785+00:00",
+  "api_finished_utc": "2026-11-04T09:43:58.063393+00:00"
+}

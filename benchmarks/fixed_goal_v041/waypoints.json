@@ -1,0 +1,50 @@
+{
+  "SOUTH_ENTRY": [
+    5.6,
+    -4.4
+  ],
+  "EAST_LOW_SOUTH": [
+    7.0,
+    -2.6
+  ],
+  "EAST_COURT_WEST": [
+    6.1,
+    0.1
+  ],
+  "NORTH_WINDOW": [
+    5.9,
+    3.1
+  ],
+  "CENTRAL_NORTH": [
+    -1.2,
+    2.2
+  ],
+  "CENTRAL_SOUTH": [
+    -1.5,
+    -4.6
+  ],
+  "WEST_HIDE": [
+    -5.8,
+    -3.3
+  ],
+  "SPAWN": [
+    -6.5,
+    -6.9
+  ],
+  "WEST_LANE": [
+    -10.2,
+    -2.3
+  ],
+  "WEST_LOW_NORTH": [
+    -7.5,
+    1.1
+  ],
+  "CENTRAL_WEST": [
+    -1.3,
+    1.3
+  ],
+  "CENTRAL_EAST": [
+    1.8,
+    1.7
+  ]
+}

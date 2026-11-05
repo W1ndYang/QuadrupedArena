@@ -1,0 +1,58 @@
+{
+  "status": "passed_with_documented_behavior_limitations",
+  "utc": "2026-11-04T09:52:17.587216+00:00",
+  "games": [
+    {
+      "run": 1,
+      "layout": "SE",
+      "winner": "attacker",
+      "reason": "goal",
+      "seconds": 11.6,
+      "decisions": 3,
+      "native_gif": "run_1/demo.gif",
+      "known_tokens": 26988,
+      "api_wall_seconds": 73.98406729707494
+    },
+    {
+      "run": 2,
+      "layout": "EW",
+      "winner": "defender",
+      "reason": "tag",
+      "seconds": 6.86,
+      "decisions": 2,
+      "native_gif": "run_2/demo.gif",
+      "known_tokens": 24077,
+      "api_wall_seconds": 86.24249264597893
+    },
+    {
+      "run": 3,
+      "layout": "WC",
+      "winner": "defender",
+      "reason": "tag",
+      "seconds": 14.66,
+      "decisions": 4,
+      "native_gif": "run_3/demo.gif",
+      "known_tokens": 38820,
+      "api_wall_seconds": 114.22874803305604
+    }
+  ],
+  "complete_api_calls": 9,
+  "incomplete_api_attempts": 0,
+  "total_known_tokens": 89885,
+  "total_api_seconds": 274.4553079761099,
+  "model": "deepseek-flash",
+  "reasoning_effort": "low",
+  "source_version": "v0.4.1-peek-braking",
+  "previous_batch_unchanged": 181,
+  "frozen_source_files": 32,
+  "html": "index.html",
+  "native_isaac_gifs": 3,
+  "decision_screenshots": 9,
+  "browser_check": "passed",
+  "limitations": [
+    "SE humanoid movement stalled at a wall-clearance corner.",
+    "EW PEEK_BURST approach bypassed requested contact retreat.",
+    "WC hidden opponent proximity stop had no automatic recovery; model repeated goal despite collision feedback.",
+    "One trial per layout; results are not a stable win-rate estimate."
+  ]
+}

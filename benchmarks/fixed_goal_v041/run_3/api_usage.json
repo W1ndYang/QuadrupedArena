@@ -1,0 +1,8 @@
+{
+  "prompt_tokens": 22129,
+  "completion_tokens": 16691,
+  "total_tokens": 38820,
+  "reasoning_tokens": 15600,
+  "calls": 4,
+  "usage_complete": true
+}

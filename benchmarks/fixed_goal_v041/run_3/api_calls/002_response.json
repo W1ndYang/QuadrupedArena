@@ -1,0 +1,27 @@
+{
+  "content": "{\"observation_id\":2,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":5,\"steps\":[{\"skill\":\"SMOKE_AND_MOVE\",\"params\":{\"location\":[-1.5,-4.6],\"target\":\"GOAL\",\"posture\":\"upright\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"7.56秒最后合法记忆显示人形约在[1.93,-4.60]，距目标中心很近；7.66秒当前无检测，自身位于[-4.60,-6.00]已知掩体后。\",\"state_evidence\":\"剩余52.34秒，烟1枚，当前停稳且冷却为0；到GOAL公开路径约6.92米，系统给出的烟落点[-1.5,-4.6]位于投掷范围内。\",\"decision_summary\":\"直接使用烟幕遮断目标附近视线，并沿烟后路线快速进入GOAL；接触时继续推进以争取在对方完成1秒瞄准前入圈。\",\"uncertainty\":\"人形可能已离开最后位置或移动到烟边缘之外；烟投掷合法性依赖仿真判定，若被墙遮挡则不施放并继续推进，届时最后接近段暴露风险上升。\"}}",
+  "tool_calls": [],
+  "usage": {
+    "prompt_tokens": 5970,
+    "completion_tokens": 2870,
+    "total_tokens": 8840,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2605
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 3538
+  },
+  "response_model": "deepseek-flash",
+  "response_id": "7f0d7da6-3d68-43c0-968f-588d6cccc793",
+  "finish_reason": "stop",
+  "api_wall_seconds": 20.297732356004417,
+  "time_to_first_output_seconds": 0.7378835419658571,
+  "time_to_first_visible_content_seconds": 18.864232474938035,
+  "reasoning_characters_received": 4049,
+  "reasoning_text_saved": false,
+  "api_started_utc": "2026-11-04T09:47:51.117772+00:00",
+  "api_finished_utc": "2026-11-04T09:48:11.415469+00:00"
+}

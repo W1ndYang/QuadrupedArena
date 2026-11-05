@@ -1,0 +1,31 @@
+{
+  "action": {
+    "observation_id": 1,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 4.5,
+      "steps": [
+        {
+          "skill": "FOLLOW_ROUTE",
+          "params": {
+            "waypoints": [
+              "SOUTH_ENTRY"
+            ],
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "retreat"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "PK000两轮探身均0样本；当前current_detection=null且last_legal_memory=null；peek_candidates为空。",
+      "state_evidence": "自身位于[-4.47,-4.65]，剩余55.3s；目标中心[10.1,-0.8]；SOUTH_ENTRY约10.07m、巡航约3.15s。",
+      "decision_summary": "先沿南侧公开路点推进到SOUTH_ENTRY，保持不开火；若8m内出现合法接触立即中止并撤回，完成后再重新决策。",
+      "uncertainty": "人形当前位置未知；路线末端接近其初始位置[6.2,-2.7]附近，可能暴露且无绝对安全保证。"
+    }
+  },
+  "request_sha256": "786d7b5c2da0d1f635b1f7369b9879653d04a6358b1650e6e414c39a5ac9981c",
+  "simulation_seconds": 4.7,
+  "normalization": null
+}

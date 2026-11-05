@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "renderer": "PathTracing",
+  "native_isaac": true,
+  "policy_rerun": false,
+  "full_match": true,
+  "fps": 12,
+  "frame_count": 141,
+  "gif_frames": 141,
+  "gif_duration_seconds": 11.75,
+  "match_seconds": 11.6,
+  "source_sha256": {
+    "timeline.json": "a70db99584209c5b920dab51047f7ce079f193edb2cfe988e9854766e93d69b3",
+    "events.json": "4165a8d9e4a8b37da3e42750d58485da539953b8062d4150935f51e343cfece2",
+    "result.json": "4b3151e2fa71802eef2b207796ddb08a1a9d33d635a24fddf541f69ee62fb659",
+    "decisions.json": "1eae8f63bd4e1eacc9bedeb06807257d812ea87813429b08469688ac1f42976c",
+    "trial_config.json": "edab37566cebaa9aa3e36ad8ba63a5c545e9dcaca47e1665452e1da0fee2deab"
+  },
+  "decision_screenshots": 3,
+  "wall_seconds": 114.40655785799026,
+  "smoke_visual": "Native transparent cloud geometry and exact radius outline; spectator indication, not fluid simulation or model input."
+}

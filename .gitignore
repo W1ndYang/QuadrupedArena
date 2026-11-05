@@ -32,3 +32,10 @@ experiments/
 simulators/
 third_party/
 site-packages/
+
+# Curated v0.4.1 demonstrations, explicitly included in this publication.
+!benchmarks/fixed_goal_v041/run_1/demo.gif
+!benchmarks/fixed_goal_v041/run_2/demo.gif
+!benchmarks/fixed_goal_v041/run_3/demo.gif
+benchmarks/fixed_goal_v041/native_scene/
+benchmarks/fixed_goal_v041/viewer_checks/

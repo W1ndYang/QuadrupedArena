@@ -1,0 +1,200 @@
+[
+  {
+    "layout": "SE",
+    "label": "西库遮挡出生 → 东侧目标",
+    "start_a": [
+      -5.8,
+      -1.0
+    ],
+    "start_b": [
+      6.2,
+      -2.7
+    ],
+    "goal": [
+      10.1,
+      -0.8
+    ],
+    "initial_separation_m": 12.119818480488888,
+    "initial_goal_distance_m": 15.901257811883937,
+    "goal_route_length_m": 18.34353623131576,
+    "initial_los": false,
+    "blocking_walls": [
+      "WestStore",
+      "EastStore",
+      "SouthHighWall"
+    ],
+    "spawn_wall_clearance_m": 0.7810249675906653,
+    "spawn_occluded_against_sampled_patrol": true,
+    "patrol_sample_count": 67,
+    "departures": [
+      {
+        "target": [
+          -5.8,
+          -2.8
+        ],
+        "path": [
+          [
+            -5.8,
+            -2.8
+          ]
+        ],
+        "length_m": 1.7999999999999998,
+        "initially_occluded_prefix_m": 1.7999999999999998,
+        "first_two_seconds_human_tag": false,
+        "first_two_seconds_max_human_lock": 0.0,
+        "first_two_seconds_distance_m": 1.7999999926725383
+      },
+      {
+        "target": [
+          -5.8,
+          1.8
+        ],
+        "path": [
+          [
+            -5.8,
+            1.8
+          ]
+        ],
+        "length_m": 2.8,
+        "initially_occluded_prefix_m": 2.799999999999999,
+        "first_two_seconds_human_tag": false,
+        "first_two_seconds_max_human_lock": 0.0,
+        "first_two_seconds_distance_m": 2.799936875743995
+      }
+    ],
+    "limitation": "两条预设起步路径各执行2秒，另检查静态巡逻路径采样；不保证任意模型路线安全，也不是整局胜负预筛选。"
+  },
+  {
+    "layout": "EW",
+    "label": "东库遮挡出生 → 西侧目标",
+    "start_a": [
+      5.8,
+      -0.1
+    ],
+    "start_b": [
+      -6.3,
+      -2.8
+    ],
+    "goal": [
+      -10.1,
+      1.1
+    ],
+    "initial_separation_m": 12.397580409095962,
+    "initial_goal_distance_m": 15.945218719101973,
+    "goal_route_length_m": 17.380997218439866,
+    "initial_los": false,
+    "blocking_walls": [
+      "WestStore",
+      "EastStore"
+    ],
+    "spawn_wall_clearance_m": 0.6999999999999997,
+    "spawn_occluded_against_sampled_patrol": true,
+    "patrol_sample_count": 96,
+    "departures": [
+      {
+        "target": [
+          5.8,
+          -2.9
+        ],
+        "path": [
+          [
+            5.6000000000000005,
+            -1.8
+          ],
+          [
+            5.8,
+            -2.9
+          ]
+        ],
+        "length_m": 2.8297582656122637,
+        "initially_occluded_prefix_m": 2.829758265612262,
+        "first_two_seconds_human_tag": false,
+        "first_two_seconds_max_human_lock": 0.0,
+        "first_two_seconds_distance_m": 2.8186425852668
+      },
+      {
+        "target": [
+          5.8,
+          1.7
+        ],
+        "path": [
+          [
+            5.8,
+            1.7
+          ]
+        ],
+        "length_m": 1.8,
+        "initially_occluded_prefix_m": 1.8,
+        "first_two_seconds_human_tag": false,
+        "first_two_seconds_max_human_lock": 0.0,
+        "first_two_seconds_distance_m": 1.7999999926725392
+      }
+    ],
+    "limitation": "两条预设起步路径各执行2秒，另检查静态巡逻路径采样；不保证任意模型路线安全，也不是整局胜负预筛选。"
+  },
+  {
+    "layout": "WC",
+    "label": "西北侧翼出生 → 南中部目标",
+    "start_a": [
+      -9.8,
+      1.5
+    ],
+    "start_b": [
+      5.8,
+      -3.2
+    ],
+    "goal": [
+      1.8,
+      -4.7
+    ],
+    "initial_separation_m": 16.292636373527767,
+    "initial_goal_distance_m": 13.152946437965907,
+    "goal_route_length_m": 14.197308065860186,
+    "initial_los": false,
+    "blocking_walls": [
+      "WestStore",
+      "EastStore",
+      "SouthHighWall"
+    ],
+    "spawn_wall_clearance_m": 1.5,
+    "spawn_occluded_against_sampled_patrol": true,
+    "patrol_sample_count": 83,
+    "departures": [
+      {
+        "target": [
+          -10.2,
+          -1.4
+        ],
+        "path": [
+          [
+            -10.2,
+            -1.4
+          ]
+        ],
+        "length_m": 2.927456233660889,
+        "initially_occluded_prefix_m": 2.9274562336608905,
+        "first_two_seconds_human_tag": false,
+        "first_two_seconds_max_human_lock": 0.0,
+        "first_two_seconds_distance_m": 2.916616979386553
+      },
+      {
+        "target": [
+          -6.0,
+          1.8
+        ],
+        "path": [
+          [
+            -6.0,
+            1.8
+          ]
+        ],
+        "length_m": 3.8118237105091843,
+        "initially_occluded_prefix_m": 3.8118237105091795,
+        "first_two_seconds_human_tag": false,
+        "first_two_seconds_max_human_lock": 0.0,
+        "first_two_seconds_distance_m": 3.81182371049779
+      }
+    ],
+    "limitation": "两条预设起步路径各执行2秒，另检查静态巡逻路径采样；不保证任意模型路线安全，也不是整局胜负预筛选。"
+  }
+]

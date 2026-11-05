@@ -1,0 +1,28 @@
+{
+  "provider": "deepseek_official",
+  "base_url": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "documented_version": "DeepSeek-V4.1-Flash-1017",
+  "documentation_checked": "2026-11-04",
+  "thinking": {
+    "type": "enabled"
+  },
+  "reasoning_effort": "low",
+  "max_tokens": 65536,
+  "token_policy": "Same per-response maximum as the Qwen comparison. No additional cumulative token budget.",
+  "response_format_policy": "omitted; same prompt-only JSON requirement as Qwen",
+  "timeout_seconds": 600,
+  "wall_timeout_seconds": null,
+  "automatic_retries": 0,
+  "automatic_strategy_fallback": false,
+  "history_decisions": 4,
+  "decision_period_seconds": null,
+  "decision_policy": "event_driven_plan_or_peek_completion",
+  "observation_mode": "legal_geometric",
+  "model_image_inputs": 0,
+  "docs": [
+    "https://api-docs.deepseek.com/guides/thinking_mode",
+    "https://api-docs.deepseek.com/quick_start/pricing/"
+  ],
+  "temperature_policy": "Not sent; official thinking mode ignores temperature."
+}

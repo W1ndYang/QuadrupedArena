@@ -1,0 +1,75 @@
+{
+  "experiment": "20261104_fixed_goal_v041_ds_low_sheltered_layouts",
+  "publication": "2026-11-05",
+  "changed_files": [
+    {
+      "path": "run_study.py",
+      "original_sha256": "23de517a1b6596f235e897f1b3a6a86e8c526ad76ad10e59f982926cd56014b9",
+      "published_sha256": "f0c1000dee696d06467441b6013e6da2d023e67280d1294e1cbe82ba68914859"
+    },
+    {
+      "path": "index.html",
+      "original_sha256": "36386aaf95cb6dd3be7f97ec34993eae3fff0c6a4679ebed3c5242bfbf2805f7",
+      "published_sha256": "338dd2c18c9dc66c7ee26543d83acc219d045accfa11b279fc9ec7e7d2461eeb"
+    },
+    {
+      "path": "audit_results.py",
+      "original_sha256": "63bc0767b63969e3239516418dbd0a83ba7d68a6b7999fb9199c7d5db310febb",
+      "published_sha256": "b3ea52d62afe7f79b9ccd0cb67758b043f59696cd361915e48b6376127de0695"
+    },
+    {
+      "path": "build_report.py",
+      "original_sha256": "194ae0ba3d76024e1c20571618490ed301a7629afd6402f9c9a7b766dcbfaf62",
+      "published_sha256": "3ee6d77bd8b3d79a7c7aaa2aff9cf7cb28d47a335d1a490122cbf37d23b20d4e"
+    },
+    {
+      "path": "audit.json",
+      "original_sha256": "b77eda751000555eda39c17d5cc9a704cded8b877c481e407d81dcf5d621c659",
+      "published_sha256": "148e0281caed1017b198c56573a9b88e7c2267c755afee4307521fae9c7f62d3"
+    },
+    {
+      "path": "render_native.py",
+      "original_sha256": "def7bfebddd9de630735bc9f5529036fabde904af3d2556b429753f60366b508",
+      "published_sha256": "e306bf360c19b2a3f23eaf48684bd40552060c3e370a0a341634d5a370207d49"
+    },
+    {
+      "path": "source_snapshot/scripts/test_fixed_goal_probe.py",
+      "original_sha256": "fcfce0c21af642db55999ef3f455363d1015bbf89db0dd400d36eeec78fe7ea8",
+      "published_sha256": "555a3a336529d8e2b44ececb6715ff529208f1c4510936a95be1181e84d558da"
+    },
+    {
+      "path": "figures/layouts_trajectories.svg",
+      "original_sha256": "90bed99dc984a82457b1eee2b82931819fd52962a9ed478971b8a01ae5c508bf",
+      "published_sha256": "6fe0419b28029e73717a3146f09679cf4e9f459bb6cdbabc417528b35231e51c"
+    },
+    {
+      "path": "figures/progress.svg",
+      "original_sha256": "91c226ac5a5fb59fb4085badcd4a6f42d0f82d7a53e9403e5ff82e742f25ae94",
+      "published_sha256": "2e4ce1d127ab26f4b55160c1a2df42dd9e91e7c108ce47271fd0c7039519e338"
+    }
+  ],
+  "reason": "Portable rendering and entry points; publish-time audit paths; README link; stale angular-velocity test corrected to existing tracking-error rule. Generated SVG trailing whitespace normalized; vector geometry unchanged.",
+  "policy_changed": false,
+  "model_called_during_publication": false,
+  "unchanged_simulation_core": [
+    "ds_fixed_goal.py",
+    "qwen_fixed_goal.py",
+    "sequence_skills.py",
+    "peek_geometry.py",
+    "peek_braking_fix.py",
+    "run_goal_only.py",
+    "source_snapshot/scripts/fixed_goal_probe.py",
+    "source_snapshot/scripts/trial_motion.py",
+    "source_snapshot/scripts/continuous_motion.py",
+    "source_snapshot/scripts/humanoid_motion.py",
+    "source_snapshot/scripts/tactical_logic.py",
+    "source_snapshot/scripts/trial_rules.py"
+  ],
+  "original_experiment_files_verified": 193,
+  "excluded_generated_material": [
+    "native_scene USD conversion cache",
+    "browser screenshots",
+    "local logs",
+    "absolute-path previous-batch manifest"
+  ]
+}

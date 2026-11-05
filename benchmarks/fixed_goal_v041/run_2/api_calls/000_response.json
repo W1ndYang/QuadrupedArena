@@ -1,0 +1,27 @@
+{
+  "content": "{\"observation_id\":0,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":8,\"steps\":[{\"skill\":\"FOLLOW_ROUTE\",\"params\":{\"waypoints\":[\"NORTH_WINDOW\",\"CENTRAL_NORTH\"],\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"retreat\"},{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK005\",\"max_cycles\":2},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"初始无检测；仅已知自身SPAWN与人形初始位置(-6.3,-2.8)，无当前敌情。\",\"state_evidence\":\"自机(5.8,-0.1)满烟满冷却；目标(-10.1,1.1)西侧；剩余60s；北侧路线经NORTH_WINDOW、CENTRAL_NORTH。\",\"decision_summary\":\"避开人形初始南侧区域，沿北侧快速抵达中央北，再从-WestWarehouse南侧PK005探身确认目标附近威胁。\",\"uncertainty\":\"人形可能已移动或北侧巡逻；接近与探身仍可能暴露，烟未使用，需依赖on_contact撤退。\"}}",
+  "tool_calls": [],
+  "usage": {
+    "prompt_tokens": 4676,
+    "completion_tokens": 6853,
+    "total_tokens": 11529,
+    "prompt_tokens_details": {
+      "cached_tokens": 1792
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6590
+    },
+    "prompt_cache_hit_tokens": 1792,
+    "prompt_cache_miss_tokens": 2884
+  },
+  "response_model": "deepseek-flash",
+  "response_id": "f048dece-a7a4-4258-b3a0-17d133d3b582",
+  "finish_reason": "stop",
+  "api_wall_seconds": 41.11323454196099,
+  "time_to_first_output_seconds": 0.9992038609925658,
+  "time_to_first_visible_content_seconds": 39.91965654399246,
+  "reasoning_characters_received": 11668,
+  "reasoning_text_saved": false,
+  "api_started_utc": "2026-11-04T09:45:03.352990+00:00",
+  "api_finished_utc": "2026-11-04T09:45:44.466166+00:00"
+}

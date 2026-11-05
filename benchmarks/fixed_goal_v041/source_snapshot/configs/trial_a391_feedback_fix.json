@@ -1,0 +1,816 @@
+{
+  "version": "rules-v0.7-a39.1-current-aim-feedback",
+  "status": "exploratory_candidate",
+  "duration": 60.0,
+  "dt": 0.02,
+  "seed": 2026103008,
+  "initial_hp": 3,
+  "hold_seconds": 1.0,
+  "score_rate": 1.0,
+  "cooldown_seconds": 4,
+  "aim_half_angle_degrees": 30.0,
+  "range_m": 8.0,
+  "lambda_max": 1.5,
+  "tau": [
+    1.0,
+    0.5
+  ],
+  "representative_heights": [
+    0.4,
+    1.05
+  ],
+  "start_a": [
+    -6.5,
+    -6.9
+  ],
+  "start_b": [
+    0,
+    1.5
+  ],
+  "max_speed": [
+    3.2,
+    0.975
+  ],
+  "acceleration": [
+    6.0,
+    1.8
+  ],
+  "yaw_rate": [
+    2.5,
+    4.5
+  ],
+  "wheel_radius": 0.089,
+  "wheel_track": 0.4,
+  "planner_grid": 0.2,
+  "planner_clearance": 0.42,
+  "collapse": {
+    "time": 20.0,
+    "wall": "EastStore",
+    "axis": "z",
+    "pivot": [
+      3.85,
+      -0.8,
+      0
+    ],
+    "angle_degrees": 0,
+    "display_seconds": 2.0,
+    "clock_policy": "instant_switch_with_visual_replay",
+    "debris": {
+      "name": "EastStore",
+      "center": [
+        3.85,
+        -0.8
+      ],
+      "size": [
+        2.5,
+        3.6,
+        0.35
+      ]
+    },
+    "damage": false,
+    "overlap_policy": "planner_reserves_sweep_then_reject_if_unsafe",
+    "planner_reserved_sweep": {
+      "name": "FutureCollapseSweep",
+      "center": [
+        3.85,
+        -0.8
+      ],
+      "size": [
+        2.5,
+        3.6,
+        2.4
+      ]
+    },
+    "release_sweep_after_collapse": true,
+    "mode": "rubble",
+    "debris_pieces": [
+      {
+        "name": "EastStoreNorthRemnant",
+        "center": [
+          3.85,
+          0.575
+        ],
+        "size": [
+          2.5,
+          0.85,
+          1.1
+        ]
+      },
+      {
+        "name": "EastStoreSouthRubble",
+        "center": [
+          3.85,
+          -2.025
+        ],
+        "size": [
+          2.5,
+          1.15,
+          0.35
+        ]
+      }
+    ]
+  },
+  "arena": {
+    "floor_size": [
+      24,
+      16,
+      0.2
+    ],
+    "covers": [
+      {
+        "name": "WestWarehouse",
+        "center": [
+          -8.5,
+          5.5
+        ],
+        "size": [
+          7,
+          5,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "WEST / 01",
+          "material": "yard_warm"
+        }
+      },
+      {
+        "name": "NorthWestLink",
+        "center": [
+          -1.0,
+          6.5
+        ],
+        "size": [
+          8,
+          3,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "",
+          "material": "yard_warm"
+        }
+      },
+      {
+        "name": "NorthService",
+        "center": [
+          0.0,
+          4.4
+        ],
+        "size": [
+          6,
+          1.2,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "SERVICE / 07",
+          "material": "yard_pale"
+        }
+      },
+      {
+        "name": "NorthEastLink",
+        "center": [
+          5.0,
+          6.5
+        ],
+        "size": [
+          4,
+          3,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "",
+          "material": "yard_cool"
+        }
+      },
+      {
+        "name": "EastFactoryMain",
+        "center": [
+          10.4,
+          4.5
+        ],
+        "size": [
+          3.2,
+          7,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "material": "yard_cool",
+          "label": ""
+        }
+      },
+      {
+        "name": "EastFactoryUpper",
+        "center": [
+          7.9,
+          6
+        ],
+        "size": [
+          1.8,
+          4,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "material": "yard_cool",
+          "label": ""
+        }
+      },
+      {
+        "name": "ViewDivider",
+        "center": [
+          0.0,
+          3.15
+        ],
+        "size": [
+          0.4,
+          1.3,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "",
+          "material": "yard_pale"
+        }
+      },
+      {
+        "name": "EntryRoom",
+        "center": [
+          -10.0,
+          -6.0
+        ],
+        "size": [
+          4,
+          4,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "ACCESS / 01",
+          "material": "yard_warm"
+        }
+      },
+      {
+        "name": "LoadingHall",
+        "center": [
+          2,
+          -6.9
+        ],
+        "size": [
+          12,
+          2.2,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "material": "yard_pale",
+          "label": ""
+        }
+      },
+      {
+        "name": "EastEquipment",
+        "center": [
+          10.0,
+          -5.75
+        ],
+        "size": [
+          4,
+          4.5,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "UTILITIES",
+          "material": "yard_cool"
+        }
+      },
+      {
+        "name": "WestStore",
+        "center": [
+          -3.5,
+          -0.3
+        ],
+        "size": [
+          3,
+          3.8,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "STORE / W",
+          "material": "yard_warm"
+        }
+      },
+      {
+        "name": "EastStore",
+        "center": [
+          3.85,
+          -0.8
+        ],
+        "size": [
+          2.5,
+          3.6,
+          2.4
+        ],
+        "architecture": {
+          "kind": "building",
+          "label": "STORE / E",
+          "material": "yard_cool",
+          "subtitle": "COLLAPSE / 20 s"
+        }
+      },
+      {
+        "name": "Low1",
+        "center": [
+          -7.6,
+          -0.3
+        ],
+        "size": [
+          2.4,
+          0.4,
+          0.7
+        ],
+        "architecture": {
+          "kind": "low",
+          "material": "weathered"
+        }
+      },
+      {
+        "name": "Low2",
+        "center": [
+          7.45,
+          -1.4
+        ],
+        "size": [
+          2.7,
+          0.4,
+          0.7
+        ],
+        "architecture": {
+          "kind": "low",
+          "material": "weathered"
+        }
+      },
+      {
+        "name": "SouthHighWall",
+        "center": [
+          0.35,
+          -2.7
+        ],
+        "size": [
+          0.4,
+          2.3,
+          2.2
+        ],
+        "architecture": {
+          "kind": "wall",
+          "material": "yard_pale"
+        }
+      },
+      {
+        "name": "CentralWall",
+        "center": [
+          0.3,
+          0.2
+        ],
+        "size": [
+          2.1,
+          0.35,
+          2.2
+        ],
+        "architecture": {
+          "kind": "wall",
+          "material": "yard_pale"
+        }
+      },
+      {
+        "name": "EastReturnScreen",
+        "center": [
+          7.2,
+          1.6
+        ],
+        "size": [
+          0.3,
+          2.0,
+          1.3
+        ],
+        "architecture": {
+          "kind": "wall",
+          "material": "yard_cool",
+          "label": ""
+        }
+      }
+    ],
+    "task_points": [
+      {
+        "name": "W1",
+        "center": [
+          -7.8,
+          1.05
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "W2",
+        "center": [
+          -7.55,
+          -2.0
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "W3",
+        "center": [
+          -10.4,
+          1.2
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "W4",
+        "center": [
+          -6.3,
+          -2.9
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "W5",
+        "center": [
+          -5.95,
+          1.95
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "W6",
+        "center": [
+          -10.5,
+          -2.55
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "W7",
+        "center": [
+          -1.3,
+          -3.05
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "E1",
+        "center": [
+          7.15,
+          -2.8
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "E2",
+        "center": [
+          9.9,
+          -0.25
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "E3",
+        "center": [
+          5.85,
+          2.05
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "E4",
+        "center": [
+          6.05,
+          -4.05
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "E5",
+        "center": [
+          10.2,
+          -2.45
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "E6",
+        "center": [
+          6.1,
+          0.25
+        ],
+        "radius": 0.55
+      },
+      {
+        "name": "E7",
+        "center": [
+          2.0,
+          -3.55
+        ],
+        "radius": 0.55
+      }
+    ],
+    "name": "Yard A3.6 / 回程通道与分散点组",
+    "design_routes": [],
+    "art_style": "architectural_plan_a",
+    "observation_positions": [
+      {
+        "name": "O1",
+        "center": [
+          -0.9,
+          3.0
+        ]
+      },
+      {
+        "name": "O2",
+        "center": [
+          0.9,
+          3.0
+        ]
+      }
+    ],
+    "concept": {
+      "source_sha256": "a1cd5a5522963746c052e12b53b8e3b8be517211e9963e9458510c2bad13aadf",
+      "coordinate_transform": "concept southwest origin minus [12,8]",
+      "layout_changed": true,
+      "revision": "A3.6 reviewed return-map option: two-piece collapse, east refuge with two exits, south corridor +0.60 m.",
+      "objective_revision": "Three west-local pairs, three east-local pairs, one central pair; 3-6.5 m center separation and 4-8 m navigable path targets.",
+      "cover_revision": "Low1/Low2 0.58 -> 0.70 m. CentralWall (0.5,-0.65) -> (0.30,0.20); SouthHighWall (0,-2.95) -> (0.35,-2.70). Panel gap 0.975 -> 1.575 m; southern passage 1.10 -> 1.35 m. Original wall sizes and all other geometry retained."
+    }
+  },
+  "fps": 12,
+  "playback_speed": 1.0,
+  "resolution": [
+    1280,
+    800
+  ],
+  "intro_seconds": 2,
+  "outro_seconds": 4,
+  "render_spp": 16,
+  "policy": {
+    "human_sensor_half_angle_degrees": 90.0,
+    "human_sensor_range": 8.0,
+    "human_memory_seconds": 12.0,
+    "human_scan_seconds": 1.8,
+    "human_patrol": [
+      [
+        -0.9,
+        3.0
+      ],
+      [
+        0.9,
+        3.0
+      ],
+      [
+        -7.6,
+        0.9
+      ],
+      [
+        7.45,
+        -0.2
+      ],
+      [
+        0.0,
+        1.5
+      ],
+      [
+        -6.5,
+        -6.9
+      ]
+    ],
+    "risk_weight": 7.0,
+    "low_hp_risk_multiplier": 1.8,
+    "a_replan_seconds": 1.0,
+    "a_react_seconds": 0.24,
+    "warning_risk_threshold": 0.55,
+    "reverse_speed_limit": 0.8,
+    "a_min_evasion_seconds": 0.6,
+    "dynamic_avoid_radius": 1.35,
+    "safety_stop_distance": 1.05,
+    "human_knowledge": "visible representative point only; last seen memory; map-known patrol",
+    "quadruped_knowledge": "current opponent position/yaw; public HP and hit events; no opponent aim state or future random outcomes",
+    "human_search_scan_rate": 2.4,
+    "human_patrol_scan_rate": 2.4,
+    "human_version": "objective_v9",
+    "human_prediction_seconds": 1.4,
+    "human_move_burst_seconds": 0.8,
+    "human_check_seconds": 0.45,
+    "human_arrival_m": 0.075,
+    "human_vantage_margin_m": 0.1,
+    "human_lost_check_seconds": 0.0,
+    "human_watch_cycle_seconds": 0.65,
+    "human_sector_dwell_seconds": 0.12,
+    "human_stall_seconds": 1.2,
+    "human_stall_progress_m": 0.08,
+    "human_local_search_budget_seconds": 4.0,
+    "human_search_hop_m": 2.5,
+    "human_search_reconsider_seconds": 1.0,
+    "human_empty_recheck_seconds": 3.0,
+    "human_evidence_decay_seconds": 6.0,
+    "human_local_episode_seconds": 4.0,
+    "human_branch_commit_seconds": 1.0,
+    "human_branch_switch_ratio": 1.3,
+    "human_search_region_radius_m": 2.0,
+    "human_preserve_valid_collapse_route": true,
+    "human_moving_search_min_leg_m": 1.2,
+    "human_moving_search_handoff_m": 0.6,
+    "human_moving_search_turn_cost": 0.6,
+    "human_track_grace_seconds": 0.8,
+    "human_pursuit_replan_seconds": 0.6,
+    "human_cooldown_standoff_m": 2.8,
+    "human_aim_standoff_m": 4.5,
+    "human_objective_exit_weight": 1.2,
+    "human_directed_check_seconds": 0.25
+  },
+  "target_rotation": {
+    "enabled": true,
+    "lifetime_seconds": 4.0,
+    "trigger": "first_quadruped_entry",
+    "order": "cyclic_config_order",
+    "refresh_on_hit": true
+  },
+  "experiment": {
+    "group": "a36-return-pairs",
+    "description": "Pilot: reviewed return-map option, split W7/E7 objective pairs, cached route-family comparison and local safety consistency fixes."
+  },
+  "feedback": {
+    "own_hit_confirmation": true,
+    "human_hurt_direction_sectors": 8
+  },
+  "skills": {
+    "on_hit_continuation": true,
+    "transit_safe_cover": true,
+    "cover_max_arrival_seconds": 3.0,
+    "cover_max_exposure_seconds": 1.5,
+    "recover_blocked": true,
+    "recovery_attempts_per_decision": 3,
+    "danger_interrupt_seconds": 0.6,
+    "continue_identical_navigation": true,
+    "danger_requires_weapon_range": true,
+    "strategic_wait": true,
+    "task_clock": true,
+    "fast_route_layer": true,
+    "robust_wait": true,
+    "proximity_replan": true,
+    "route_corridors": [
+      {
+        "name": "north",
+        "xy": [
+          1.8,
+          1.8
+        ]
+      },
+      {
+        "name": "south",
+        "xy": [
+          0.35,
+          -4.6
+        ]
+      },
+      {
+        "name": "collapse_gap",
+        "xy": [
+          3.85,
+          -0.65
+        ],
+        "after": 20
+      }
+    ],
+    "execution_v2": true,
+    "arrival_posture": true,
+    "cover_retreat_max_seconds": 4.0,
+    "cover_retreat_replan_seconds": 1.0,
+    "cover_retreat_min_occlusion": 0.8,
+    "composite_skills": true,
+    "default_exit_margin_seconds": 0.25,
+    "shoot_transfer_max_seconds": 1.2,
+    "reachable_belief": true,
+    "belief_max_hypotheses": 16,
+    "task_risk_weights": {
+      "ingress": 0.9,
+      "hold": 0.9,
+      "egress": 0.65,
+      "time": 0.08,
+      "uncertainty": 0.25
+    },
+    "belief_prediction_note": "地图可达集+当前合法未检测排除；有限代表样本非概率后验；仅当前检测授权射击"
+  },
+  "stun": {
+    "human_seconds": 1,
+    "refresh_while_active": false
+  },
+  "objective_stages": {
+    "sequence": [
+      [
+        "W1",
+        "W2"
+      ],
+      [
+        "E7",
+        "E3"
+      ],
+      [
+        "W7",
+        "E6"
+      ],
+      [
+        "W3",
+        "W4"
+      ],
+      [
+        "E1",
+        "E2"
+      ],
+      [
+        "W5",
+        "W6"
+      ],
+      [
+        "E4",
+        "E5"
+      ]
+    ],
+    "repeat_from": null,
+    "dual_stage_seconds": 15,
+    "advance_when": "all_current_points_invalid",
+    "independent_first_entry_timers": true
+  },
+  "human_non_eliminating": true,
+  "postures": {
+    "transition_seconds": 0.4,
+    "upright": {
+      "height": 0.4,
+      "camera_height": 0.6,
+      "speed": 3.2,
+      "acceleration": 6.0
+    },
+    "low": {
+      "height": 0.24,
+      "camera_height": 0.44,
+      "speed": 1.2,
+      "acceleration": 3.0
+    }
+  },
+  "geometric_sensor": {
+    "range_m": null,
+    "half_angle_degrees": 180.0,
+    "sensor_period_seconds": 0.02,
+    "observation_sample_seconds": 0.02,
+    "memory_seconds": 4.0,
+    "attack_requires_current_detection": true,
+    "heading": "omnidirectional",
+    "los": "dynamic representative points against 3D wall boxes"
+  },
+  "motion": {
+    "brake_before_turn": true,
+    "exact_segment_clearance": true,
+    "validate_grid_edges": true,
+    "continuous_quadruped": true
+  },
+  "presentation": {
+    "camera": {
+      "eye": [
+        -21,
+        -24,
+        29
+      ],
+      "target": [
+        0,
+        0,
+        0.3
+      ],
+      "focal": 25
+    }
+  },
+  "human_information": {
+    "enabled": true,
+    "on_hurt": true,
+    "on_capture": true,
+    "capture_event": "scoring_started",
+    "memory_seconds": 12.0,
+    "continuous_tracking": false,
+    "permits_blind_fire": false
+  },
+  "pair_design": {
+    "center_distance_m": [
+      3,
+      8.5
+    ],
+    "navigable_path_m": [
+      3,
+      12
+    ],
+    "note": "Keep opening W1/W2. Split W7/E7. One deliberately longer central cross-corridor pair W7/E6; all 14 coordinates appear once. Bounds are design targets, measured below; not an assurance of safety."
+  },
+  "opportunity_schedule": {
+    "mode": "legacy"
+  }
+}

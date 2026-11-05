@@ -1,0 +1,34 @@
+{
+  "action": {
+    "observation_id": 1,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 8,
+      "steps": [
+        {
+          "skill": "FOLLOW_ROUTE",
+          "params": {
+            "waypoints": [
+              "CENTRAL_SOUTH",
+              "WEST_HIDE",
+              "WEST_LANE",
+              "GOAL"
+            ],
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "当前合法检测到人形位于[-5.997,1.775]，距自身约1.63m，近距且在其前向视野内；自身静止在WestWarehouse东南侧，存在被瞄准风险。",
+      "state_evidence": "剩余53.42秒，目标在[-10.1,1.1]；自身速度0、冷却0、烟1；人形已知初始位[-6.3,-2.8]，当前已北移约4.5m，南侧绕行可利用其初始位与北侧位置差。",
+      "decision_summary": "立即以直立高速向东南脱离近距视线，经CENTRAL_SOUTH、WEST_HIDE、WEST_LANE从南侧绕向GOAL；不停稳开火，避免在1.6m处对枪。",
+      "uncertainty": "人形当前是否已开始锁定、后续巡逻路径未知；远路绕行增加时间但降低穿过其当前位置的暴露；末端仍需底层依据实时几何继续执行。"
+    }
+  },
+  "request_sha256": "a82c8f17bfc33bf507b6250c853a1bfed7188826d8b16e0bf2cceb6813bd8ce6",
+  "simulation_seconds": 6.58,
+  "normalization": null
+}

@@ -1,0 +1,28 @@
+[
+  {
+    "start": 5.86,
+    "end": 6.9,
+    "cycle": 1,
+    "candidate": "PK002",
+    "max_estimated_exposure": 0.3,
+    "samples": 16,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": {
+      "time": 6.2,
+      "position": [
+        2.157466582665282,
+        -4.5705851507119215
+      ],
+      "yaw": 9.616929184074774
+    },
+    "last_sample": {
+      "time": 6.5,
+      "position": [
+        1.9646031959344632,
+        -4.594979290555712
+      ],
+      "yaw": 9.620907917856792
+    }
+  }
+]

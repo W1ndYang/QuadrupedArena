@@ -1,0 +1,76 @@
+{
+  "status": "passed",
+  "games": [
+    {
+      "run": 1,
+      "status": "passed",
+      "checks": {
+        "visibility_checks": 1162,
+        "tracking_checks": 1162,
+        "public_detections": 235,
+        "memory_checks": 34,
+        "sensor_samples_checked": 420,
+        "model_decisions": 3,
+        "smoke_releases": 1
+      },
+      "api_calls": 3,
+      "end": 11.6,
+      "motion_sign_violations": [],
+      "metadata_assisted": false
+    },
+    {
+      "run": 2,
+      "status": "passed",
+      "checks": {
+        "visibility_checks": 688,
+        "tracking_checks": 688,
+        "public_detections": 140,
+        "memory_checks": 33,
+        "sensor_samples_checked": 330,
+        "model_decisions": 2,
+        "tag_windows": 1
+      },
+      "api_calls": 2,
+      "end": 6.86,
+      "motion_sign_violations": [],
+      "metadata_assisted": false
+    },
+    {
+      "run": 3,
+      "status": "passed",
+      "checks": {
+        "visibility_checks": 1468,
+        "tracking_checks": 1468,
+        "public_detections": 298,
+        "memory_checks": 215,
+        "sensor_samples_checked": 634,
+        "model_decisions": 4,
+        "smoke_releases": 1,
+        "tag_windows": 1
+      },
+      "api_calls": 4,
+      "end": 14.66,
+      "motion_sign_violations": [],
+      "metadata_assisted": false
+    }
+  ],
+  "frozen_source_files": 32,
+  "previous_batch_artifacts_unchanged": 181,
+  "unchanged_core_files": [
+    "qwen_fixed_goal.py",
+    "sequence_skills.py",
+    "peek_geometry.py",
+    "v04_model.py",
+    "run_goal_only.py",
+    "run_study.py",
+    "api_profile.json"
+  ],
+  "model": "deepseek-flash",
+  "reasoning_effort": "low",
+  "scene_checks": 3,
+  "braking_patch": "v0.4.1",
+  "limitations": [
+    "One sample per new layout, not a stable win-rate estimate.",
+    "No map, policy or prompt changes after paid start. Historical v0.4 used different layouts and lacked the isolated braking patch."
+  ]
+}

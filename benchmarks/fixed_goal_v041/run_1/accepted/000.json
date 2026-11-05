@@ -1,0 +1,28 @@
+{
+  "action": {
+    "observation_id": 0,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 6,
+      "steps": [
+        {
+          "skill": "PEEK_BURST",
+          "params": {
+            "candidate_id": "PK000",
+            "max_cycles": 2
+          },
+          "on_contact": "retreat"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "当前无合法检测；仅有初始人形位置[6.2,-2.7]、PK000等探身候选及预测暴露0.44秒/次。",
+      "state_evidence": "自身位于SPAWN[-5.8,-1.0]，直立停稳；烟1枚，标记冷却0，剩余60秒。",
+      "decision_summary": "先利用西侧LoadingHall候选PK000做最多2次短探获取东侧信息；若8米内发现人形立即撤回，不继续路线。",
+      "uncertainty": "人形当前真实位置与巡逻路径未知；探身暴露预测基于静止初始敌位，不是安全保证。"
+    }
+  },
+  "request_sha256": "e35d967661a543e26c84bd370139543ba1116e63f8f4136216fcacf311a57747",
+  "simulation_seconds": 0.0,
+  "normalization": null
+}

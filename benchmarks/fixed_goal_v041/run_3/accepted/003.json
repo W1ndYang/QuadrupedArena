@@ -1,0 +1,29 @@
+{
+  "action": {
+    "observation_id": 3,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 4,
+      "steps": [
+        {
+          "skill": "MOVE",
+          "params": {
+            "target": "GOAL",
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "当前无合法检测，last_legal_memory为空；最近有效观测为6.5s前目标附近约[1.96,-4.59]，旧位不能当作当前真值；本次无peek候选。",
+      "state_evidence": "自身位于[-0.28,-5.08]，距GOAL约2.12m，速度0，直立可用；剩余47.34s；smoke_remaining为0。",
+      "decision_summary": "距离目标仅约2.12m且路径短，选择直立全速直奔GOAL；fire=off避免停稳瞄准，on_contact=continue确保遇接触仍优先入圈。",
+      "uncertainty": "人形可能已在目标附近并先完成瞄准；直线路径暴露且无烟掩护；若被先标记或同时判定则失败。"
+    }
+  },
+  "request_sha256": "648b26aed2d141c30d03aac65b6e1b3f7389cf7c677ace94a40d0f39a905f274",
+  "simulation_seconds": 12.66,
+  "normalization": null
+}
