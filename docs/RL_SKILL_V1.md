@@ -107,3 +107,54 @@ trace, 10 Hz JPEG frames, source snapshot, logs, and SHA-256 manifest even if
 the trial fails. This test measures transfer from the CPU training sensor to
 the Isaac scene-derived sighting chain; the game referee and motion remain the
 same Python implementation.
+
+## First completed results (2026-11-05)
+
+The 200k-step checkpoint completed training and held-out evaluation. On seeds
+`33001..33020`, reproducibly sampled PPO scored 11.992 mean official points
+versus 4.000 for fixed safe or fast capture; argmax PPO scored 4.302. The
+checkpoint has 8,712 parameters. On a second 20-seed CPU ablation
+(`35001..35020`), sampled PPO scored 12.184, while disabling subsequent
+opponent visual updates scored 12.496. The learned benefit has not been shown
+to depend on current opponent sighting.
+
+One full Ubuntu Isaac trial on seed `34001` completed at 10 Hz simulation
+cadence: 12.000 official points, 359 policy decisions and distinct RGB frames,
+27 scene-derived opponent sightings, and no localization errors. The same
+checkpoint and seed scored 12.000 in the CPU geometry-sensor evaluation. The
+Isaac run took 398.2 wall-clock seconds for 35.88 simulation seconds; model
+inference averaged 0.159 ms per decision, so the complete rendering/sensor
+pipeline is not wall-clock real-time. This single online match establishes
+execution and sensor integration, not an Isaac cross-seed performance estimate
+or RGB-based opponent recognition.
+
+## Record a video of the learned policy
+
+On the Ubuntu Isaac machine, sync the current source and run:
+
+```bash
+export OMNI_KIT_ACCEPT_EULA=YES
+bash scripts/run_rl_skill_ubuntu_video.sh
+```
+
+The script uses the saved 200k checkpoint and match seed `34001` by default.
+Pass a checkpoint path as its sole argument to use another model, or set
+`RL_SKILL_POLICY_SEED` to change the match seed. It runs one live online match,
+encodes the exact onboard Isaac RGB frames as `rl_skill_onboard.mp4`, then
+re-renders the recorded 50 Hz match states in Isaac as a third-person
+`rl_skill_overview.mp4`. The overview does not rerun the policy or referee;
+its HUD and helper lines are presentation overlays. Both videos are 10 fps.
+The existing renderer adds a short intro, outro and collapse presentation to
+the overview, so its playback duration can exceed the match duration.
+
+The terminal prints `VIDEO_OVERVIEW`, `VIDEO_ONBOARD` and `UPLOAD_THIS` paths.
+The archive at `UPLOAD_THIS` contains both videos, the source match and replay
+records, logs, source snapshots, checkpoint and a SHA-256 manifest. It also
+packages diagnostics if either Isaac pass fails. The earlier completed online
+match can already be encoded to an onboard video without rerunning Isaac:
+
+```bash
+python3 scripts/rl_skill_video.py \
+  --archive ubuntu_logs/rl_skill_isaac_policy_trial_20261105-092650.tar.gz \
+  --output .arena-workspace/experiments/rl-skill-video/previous_onboard.mp4
+```

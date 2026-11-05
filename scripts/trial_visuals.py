@@ -19,7 +19,8 @@ def project_point(point,width,height):
 def panel(raw,s,events,cfg,collapse=None,intro=False,outro=False):
     w,h=raw.size;image=Image.new("RGB",(w,h+240),"#101d2d");image.paste(raw,(0,104));d=ImageDraw.Draw(image)
     adaptive='a_state' in s
-    llm='llm_decision' in s
+    rl_skill=cfg.get('_presentation_rl_skill',False)
+    llm='llm_decision' in s and not rl_skill
     partial_vision=cfg.get('_presentation_partial_vision',False)
     decision_count=cfg.get('_presentation_decisions',math.ceil(cfg['duration']/2))
     rotating=cfg.get('target_rotation',{}).get('enabled',False)
@@ -29,7 +30,7 @@ def panel(raw,s,events,cfg,collapse=None,intro=False,outro=False):
         else f"Qwen3.6-27B · {'思考开启' if effort in ('max','maximum_default_budget') else '思考关闭' if effort in ('min','thinking_off') else effort}｜非全知回放" if planner=='qwen3.6-27b'
         else "助手决策｜非全知视觉回放" if planner=='current_assistant_session'
         else "LLM｜非全知视觉决策回放")
-    heading=vision_heading if partial_vision else "LLM 首轮｜2 秒闭环规划 × 固定运动技能" if llm else "R0 规则 v0.4｜限时轮换占点 × 快速搜索" if rotating else "R0 策略改进｜有限感知 × 风险绕行" if adaptive else "R0 规则首轮试验｜轮足占点 × 人形施压"
+    heading="RL Skill v1｜10 Hz 策略真实赛局轨迹" if rl_skill else vision_heading if partial_vision else "LLM 首轮｜2 秒闭环规划 × 固定运动技能" if llm else "R0 规则 v0.4｜限时轮换占点 × 快速搜索" if rotating else "R0 策略改进｜有限感知 × 风险绕行" if adaptive else "R0 规则首轮试验｜轮足占点 × 人形施压"
     d.text((20,8),heading,font=FONTS[22],fill=WHITE)
     d.text((w-230,12),"Isaac Sim · 原生场景渲染",font=FONTS[17],fill="#aec3d8")
     d.text((20,44),f"轮足 A  HP {s['hp'][0]}/3    得分 {s['score']:05.2f}",font=FONTS[22],fill=CYAN)
@@ -98,9 +99,18 @@ def panel(raw,s,events,cfg,collapse=None,intro=False,outro=False):
         title=f"本轮结束：{reason}｜轮足得分 {s['score']:.2f}"
         detail=f"P1 {s['target_scores'][0]:.2f} 分 / P2 {s['target_scores'][1]:.2f} 分；这是基线结果，不代表规则已平衡。"
         if llm:detail=f"P1 {s['target_scores'][0]:.2f} 分 / P2 {s['target_scores'][1]:.2f} 分；单次探索结果，不代表已验证优于决策树。"
+    if rl_skill:
+        if intro:
+            title="已训练 PPO 策略｜每 0.1 秒选择 Skill"
+            detail="机载合成几何感知参与在线决策；本片从同一局保存的状态重渲染。"
+        elif outro:
+            detail=f"P1 {s['target_scores'][0]:.2f} 分 / P2 {s['target_scores'][1]:.2f} 分；单局展示，不代表跨赛局平均表现。"
+        else:
+            title=f"RL Skill 决策 {s.get('rl_skill_step',0):03d}/{cfg['_presentation_rl_decisions']} · {s.get('rl_skill_action','CONTINUE')}"
+            detail="第三视角为赛后展示；策略运行时只接收机载合成观测和公开状态。"
     y=h+115;d.text((20,y),title,font=FONTS[22],fill=WHITE)
     d.text((20,y+36),detail,font=FONTS[17],fill="#bbd0e2")
-    footer="非全知机载决策 · 本片为赛后全场回放 · 运动学姿态 · 不重跑策略，不调用模型API" if partial_vision else "无训练 · LLM 顶层 + 固定 A* 技能 · 运动学姿态 · 真实轨迹重放；图像不用于视觉闭环" if llm else "无训练 · 脚本/A* 决策 · 运动学姿态，非接触动力学验证 · 字幕与裁判辅助线为后期/场景叠加"
+    footer="已训练 PPO · 实际在线轨迹的 Isaac 重渲染 · 不重跑策略 · 运动学姿态" if rl_skill else "非全知机载决策 · 本片为赛后全场回放 · 运动学姿态 · 不重跑策略，不调用模型API" if partial_vision else "无训练 · LLM 顶层 + 固定 A* 技能 · 运动学姿态 · 真实轨迹重放；图像不用于视觉闭环" if llm else "无训练 · 脚本/A* 决策 · 运动学姿态，非接触动力学验证 · 字幕与裁判辅助线为后期/场景叠加"
     d.text((20,y+65),footer,font=FONTS[15],fill="#93aabd")
     legend='青线：轮足规划路径   小橙圈：人形最后观测位置   大扇形：120° 感知方向示意   小扇形：60° 射击' if adaptive else "绿圈：有效目标   红圈：本回合失效   扇形：正前 60°   红线：被墙阻挡的视线   黄线：有效瞄准"
     d.text((20,y+90),legend,font=FONTS[15],fill="#93aabd")

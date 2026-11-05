@@ -342,6 +342,15 @@ def main():
         summary=env.episode_summary();trajectory=summary.pop('trajectory')
         dump(root/'rl_skill_policy_trajectory.json',dict(summary=summary,steps=trajectory))
         dump(root/'rl_skill_policy_sensor_samples.json',sensor_samples)
+        # Preserve the exact 50 Hz match for a later Isaac spectator render.
+        # The replay renderer reads these states without rerunning the policy.
+        from llm_trial import public_events
+        dump(root/'trial_config.json',cfg)
+        dump(root/'timeline.json',match.states)
+        dump(root/'events.json',sorted(public_events(match.ref.events)+match.events,key=lambda event:event['time']))
+        dump(root/'validation.json',dict(score=summary['score'],finish=summary['finish'],
+            source='live_rl_skill_policy',match_seed=cfg['seed'],policy_rerun=False,
+            decision_period_seconds=cfg['decision_interval_seconds']))
         timing=dict(wall_seconds=time.monotonic()-started,
             simulation_seconds=match.t,sensor_frames=len(sensor_samples),
             mean_policy_inference_milliseconds=float(np.mean(inference_ns))/1e6,

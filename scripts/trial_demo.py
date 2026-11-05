@@ -77,12 +77,21 @@ def main():
     for name,data in (('trial_config.json',cfg),('timeline.json',states),('events.json',events)):
         (args.run_dir/name).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
     if 'llm_decision' in states[-1]:cfg=dict(cfg,_presentation_decisions=states[-1]['llm_decision'])
-    presentation_decisions=[]
+    presentation_decisions=[];rl_skill_steps=[]
     if args.replay_dir and (args.replay_dir/'protocol.json').exists():
         protocol=json.loads((args.replay_dir/'protocol.json').read_text())
         if protocol.get('mode') in ('deepseek_partial_observation','qwen_partial_observation','assistant_assessment_partial_observation','semantic_skills_short_intent','assistant_partial_observation'):
             cfg=dict(cfg,_presentation_partial_vision=True,_presentation_planner=protocol.get('planner','LLM'),_presentation_effort=protocol.get('reasoning_effort','low'))
             if (args.replay_dir/'decisions.json').exists():presentation_decisions=json.loads((args.replay_dir/'decisions.json').read_text())
+        if protocol.get('mode')=='rl_skill_policy_isaac_trial':
+            record=json.loads((args.replay_dir/'rl_skill_policy_trajectory.json').read_text())
+            rl_skill_steps=record['steps']
+            if not rl_skill_steps or abs(rl_skill_steps[-1]['time']-states[-1]['t'])>1e-6:
+                raise ValueError('RL Skill trajectory does not match the replay timeline')
+            cfg=dict(cfg,_presentation_rl_skill=True,
+                     _presentation_rl_decisions=len(rl_skill_steps),
+                     _presentation_rl_period=protocol['decision_period_seconds'],
+                     fps=10,render_spp=8)
     omni.usd.get_context().new_stage();stage=omni.usd.get_context().get_stage()
     UsdGeom.SetStageMetersPerUnit(stage,1.);UsdGeom.SetStageUpAxis(stage,UsdGeom.Tokens.z)
     stage.SetDefaultPrim(UsdGeom.Xform.Define(stage,'/World').GetPrim())
@@ -212,6 +221,10 @@ def main():
             if presentation_decisions and s.get('llm_decision',0)>0:
                 chosen=presentation_decisions[min(s['llm_decision']-1,len(presentation_decisions)-1)]
                 display_state=dict(s,llm_skill=chosen.get('skill',s.get('llm_skill','')))
+            if rl_skill_steps:
+                action_index=min(int(math.floor(t/cfg['_presentation_rl_period']+1e-8)),len(rl_skill_steps)-1)
+                display_state=dict(s,rl_skill_action=rl_skill_steps[action_index]['action_name'],
+                                   rl_skill_step=action_index+1)
             raw=Image.fromarray(pixels[...,:3]).convert('RGB');framed=panel(raw,display_state,events,cfg,collapse=fall)
             if index==0:
                 intro=panel(raw,display_state,events,cfg,intro=True);intro.save(args.run_dir/'intro.png')
@@ -254,6 +267,11 @@ def main():
         result['replay']=replay_manifest
         result['variant']='llm_closed_loop_replay' if 'llm_decision' in states[-1] else 'saved_match_replay'
         result['limitations'][2]='Recorded external LLM skill choices; no policy or referee rerun during rendering' if 'llm_decision' in states[-1] else 'Saved trajectory replay; no policy rerun'
+    if rl_skill_steps:
+        result['variant']='rl_skill_policy_replay'
+        result['policy_rerun']=False
+        result['source_decisions']=len(rl_skill_steps)
+        result['limitations'][2]='Recorded trained RL Skill choices; no policy or referee rerun during rendering'
     result['industrial_art']=args.industrial
     (args.run_dir/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
     print('TRIAL_RESULT '+json.dumps(result,ensure_ascii=False),flush=True)
