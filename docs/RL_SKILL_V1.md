@@ -92,3 +92,18 @@ bash scripts/run_rl_skill_ubuntu_validation.sh
 The wrapper packages artifacts even when the Isaac validation fails. Return the
 single path printed as `UPLOAD_THIS`; its archive contains the runtime log,
 result, RGB frames, per-sample diagnostics, source snapshot and SHA-256 manifest.
+
+For one complete match with the 200k checkpoint and live Isaac scene-derived
+perception, run on Ubuntu:
+
+```bash
+export OMNI_KIT_ACCEPT_EULA=YES
+bash scripts/run_rl_skill_ubuntu_policy_trial.sh \
+  "$PWD/.arena-workspace/experiments/rl-skill-jobs/20261104-153934/train/checkpoints/final.npz"
+```
+
+The script defaults to match seed `34001` and packages the checkpoint, match
+trace, 10 Hz JPEG frames, source snapshot, logs, and SHA-256 manifest even if
+the trial fails. This test measures transfer from the CPU training sensor to
+the Isaac scene-derived sighting chain; the game referee and motion remain the
+same Python implementation.

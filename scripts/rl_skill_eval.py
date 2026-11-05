@@ -11,6 +11,7 @@ import numpy as np
 from arena_paths import workspace_root
 from rl_skill_env import ACTION_NAMES,SkillEnv,load_rl_config
 from rl_skill_ppo import PPOAgent
+from semantic_skills import VisualMemory
 
 
 PROJECT=Path(__file__).resolve().parents[1]
@@ -32,6 +33,10 @@ def metrics(episodes):
 
 def run_episode(cfg,seed,policy,trajectory_dir,name):
     env=SkillEnv(cfg,seed=seed,record_trajectory=True);observation,_=env.reset(seed)
+    if name=='ppo_no_visual':
+        env.engine.memory=VisualMemory(cfg['start_b'])
+        env.sensor.sample=lambda match,camera_pan_degrees:None
+        observation=env._observation()
     inference_ns=[]
     while not env.match.ref.finished:
         started=time.perf_counter_ns();action=policy(observation,env);inference_ns.append(time.perf_counter_ns()-started)
@@ -57,11 +62,14 @@ def main():
     stochastic_rngs={}
     policies={
         'ppo':lambda obs,env:agent.act(obs,rng,deterministic=True)[0],
-        'ppo_stochastic':lambda obs,env:agent.act(obs,stochastic_rngs.setdefault(env.cfg['seed'],
+        'ppo_stochastic':lambda obs,env:agent.act(obs,stochastic_rngs.setdefault(('ppo_stochastic',env.cfg['seed']),
+            np.random.default_rng(900000+env.cfg['seed'])),deterministic=False)[0],
+        'ppo_no_visual':lambda obs,env:agent.act(obs,stochastic_rngs.setdefault(('ppo_no_visual',env.cfg['seed']),
             np.random.default_rng(900000+env.cfg['seed'])),deterministic=False)[0],
         'capture_safe':lambda obs,env:1,
         'capture_fast':lambda obs,env:2,
         'observe_then_capture':lambda obs,env:5 if env.decision_index%20==0 else 1,
+        'alternate_capture_1s':lambda obs,env:1 if (env.decision_index//10)%2==0 else 2,
     }
     results={name:[] for name in policies}
     for seed in seeds:
@@ -73,7 +81,7 @@ def main():
         paired={name:{} for name in ('ppo','ppo_stochastic')})
     for learned in ('ppo','ppo_stochastic'):
         learned_scores={x['seed']:x['score'] for x in results[learned]}
-        for baseline in ('capture_safe','capture_fast','observe_then_capture'):
+        for baseline in ('capture_safe','capture_fast','observe_then_capture','alternate_capture_1s'):
             other={x['seed']:x['score'] for x in results[baseline]};deltas=[learned_scores[s]-other[s] for s in seeds]
             summary['paired'][learned][baseline]=dict(mean_score_delta=float(np.mean(deltas)),delta_std=float(np.std(deltas)),
                 wins=sum(d>0 for d in deltas),ties=sum(d==0 for d in deltas),losses=sum(d<0 for d in deltas))

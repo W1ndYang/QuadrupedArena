@@ -35,6 +35,10 @@ parser.add_argument('--synthetic-vision-skill-runtime-smoke',action='store_true'
                     help='Three native Skill actions in the normal match loop with fresh synthetic observations')
 parser.add_argument('--rl-skill-10hz-sensor-smoke',action='store_true',
                     help='Eleven current-scene synthetic observations at 0.1 s cadence for the RL sensor contract')
+parser.add_argument('--rl-skill-policy-checkpoint',type=Path,
+                    help='Run a trained Skill policy for one full match with 10 Hz Isaac scene-derived observations')
+parser.add_argument('--rl-skill-policy-seed',type=int,default=34001,
+                    help='Official match seed for the live Skill policy trial')
 parser.add_argument('--synthetic-pixel-noise-std',type=float,default=1.0)
 parser.add_argument('--synthetic-miss-probability',type=float,default=0.0)
 parser.add_argument('--synthetic-seed',type=int,default=20261028)
@@ -53,6 +57,13 @@ if (args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.sy
     parser.error('Synthetic vision modes require --vision-trial --semantic-skills and exclude other diagnostic/planner modes')
 if args.synthetic_pixel_noise_std<0 or not math.isfinite(args.synthetic_pixel_noise_std) or not 0<=args.synthetic_miss_probability<=1 or not math.isfinite(args.synthetic_miss_probability):
     parser.error('Invalid synthetic sighting noise or miss probability')
+if args.rl_skill_policy_checkpoint and (
+        not args.vision_trial or not args.semantic_skills or args.vision_smoke or
+        args.geometry_diagnostic or args.geometry_interface_probe or
+        args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or
+        args.synthetic_vision_skill_runtime_smoke or args.rl_skill_10hz_sensor_smoke or
+        args.deepseek or args.qwen_vision or args.assessment or args.g1b1_visible_spawn):
+    parser.error('RL policy trial requires --vision-trial --semantic-skills and excludes other modes')
 from formal_geometry_diagnostic import diagnostic_mode_error
 mode_error=diagnostic_mode_error(args)
 if mode_error:parser.error(mode_error)
@@ -81,14 +92,25 @@ def main():
     root=args.run_dir;workspace=workspace_root()
     if not (args.geometry_diagnostic or args.geometry_interface_probe):
         for name in ('frames','observations','actions','decisions'):(root/name).mkdir()
-    cfg=load_config(PROJECT/'configs/trial_rotating.json');cfg['seed']=2026102107
+    policy_mode=args.rl_skill_policy_checkpoint is not None
+    if policy_mode:
+        from rl_skill_env import SkillEnv,load_rl_config
+        cfg=load_rl_config();cfg['seed']=args.rl_skill_policy_seed
+    else:
+        cfg=load_config(PROJECT/'configs/trial_rotating.json');cfg['seed']=2026102107
     if args.vision_smoke:cfg['duration']=2.
     if args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.rl_skill_10hz_sensor_smoke:
         # Explicit sighting modes use the previously checked clear A viewpoint.
         cfg['start_a']=[4.8,-1.0]
-    match=VisionMatch(cfg,initial_a_yaw=math.pi/2 if (args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.rl_skill_10hz_sensor_smoke) else 0.);rig=CameraRig()
-    engine=None;execution=[];api_planner=None
-    if args.semantic_skills:
+    if policy_mode:
+        env=SkillEnv(cfg,seed=cfg['seed'],record_trajectory=True)
+        observation,_=env.reset(cfg['seed'])
+        match=env.match;rig=env.rig;engine=env.engine
+    else:
+        match=VisionMatch(cfg,initial_a_yaw=math.pi/2 if (args.g1b1_visible_spawn or args.synthetic_vision_mvp or args.synthetic_vision_mvp_validation or args.rl_skill_10hz_sensor_smoke) else 0.);rig=CameraRig()
+        engine=None
+    execution=[];api_planner=None
+    if args.semantic_skills and not policy_mode:
         from semantic_skills import SemanticSkills
         engine=SemanticSkills(cfg)
     if not (args.geometry_diagnostic or args.geometry_interface_probe):dump(root/'protocol.json',dict(mode='engineering_smoke' if args.vision_smoke else 'assistant_partial_observation',
@@ -132,6 +154,25 @@ def main():
                 protocol.update(engine='Python match at 50 Hz; Isaac RGB plus current USD/PhysX geometry query',
                                 driver='finite_10hz_sensor_smoke',sensor_interval_seconds=.1,
                                 sample_count=11,diagnostic_pose_override=True)
+        dump(root/'protocol.json',protocol)
+    if policy_mode:
+        protocol=dict(mode='rl_skill_policy_isaac_trial',
+            contract_version=cfg['contract_version'],
+            decision_period_seconds=cfg['decision_interval_seconds'],
+            frame_interval_seconds=cfg['sensor_interval_seconds'],
+            sensor_interval_seconds=cfg['sensor_interval_seconds'],
+            referee_interval_seconds=cfg['dt'],
+            duration_seconds=cfg['duration'],
+            perception='Current Isaac USD/PhysX scene-derived foot pixel, localized to the ground plane; RGB is saved for review and is not used for detection.',
+            sighting_source='simulator_geometry_truth',same_frame_verified=False,
+            sync_integration_status='cadence_and_current_stage_verified',
+            policy_checkpoint=str(args.rl_skill_policy_checkpoint.resolve()),
+            policy_sampling='Categorical with independent RNG seed 900000 + match seed',
+            policy_seed=cfg['seed'],
+            skill_actions=list(env.action_names),
+            camera_mount=dict(forward=.36,height=.60,pitch_degrees=-5),
+            horizontal_fov_degrees=90,
+            engine='Python kinematic match and 50 Hz referee; Isaac RGB/current USD/PhysX geometry at 10 Hz')
         dump(root/'protocol.json',protocol)
     if args.deepseek or args.qwen_vision:
         from deepseek_trial import motion_request
@@ -240,11 +281,82 @@ def main():
         for _ in range(12 if not frames else 6):app.update()
         pixels=np.asarray(rgb.get_data())
         if pixels.shape[:2]!=(432,768) or pixels[...,:3].std()<1:raise RuntimeError('Missing or blank onboard image')
-        name=f'frames/{len(frames):03d}_{s["t"]:05.2f}.png';Image.fromarray(pixels[...,:3]).save(root/name)
+        suffix='jpg' if policy_mode else 'png'
+        name=f'frames/{len(frames):03d}_{s["t"]:05.2f}.{suffix}'
+        picture=Image.fromarray(pixels[...,:3])
+        if policy_mode:picture.save(root/name,quality=75)
+        else:picture.save(root/name)
         frame=dict(file=name,simulation_seconds=s['t'],own_xy=s['xy'][0],body_yaw_degrees=math.degrees(yaw),
             camera_pan_degrees=rig.pan,camera_world_yaw_degrees=math.degrees(heading),camera_eye=eye.tolist(),horizontal_fov_degrees=90)
         frames.append(frame);dump(root/'frame_index.json',frames)
         return frame
+    if policy_mode:
+        import json
+        from rl_skill_ppo import PPOAgent
+        from semantic_skills import VisualMemory,ground_point
+        from synthetic_vision_mvp import observe_current_scene,sample_visibility
+        checkpoint=args.rl_skill_policy_checkpoint.resolve()
+        policy_rng=np.random.default_rng(900000+cfg['seed'])
+        agent,metadata=PPOAgent.load(checkpoint,np.random.default_rng(0),restore_optimizer=False)
+        if metadata['contract_version']!=cfg['contract_version'] or agent.observation_size!=len(observation) or agent.action_size!=env.action_size:
+            raise ValueError('Policy checkpoint and live environment contract differ')
+        sensor_samples=[]
+        class IsaacSceneSensor:
+            last_sample_time=None
+            def sample(self,current_match,camera_pan_degrees):
+                if current_match is not match:raise ValueError('Sensor received the wrong match')
+                sample_id=len(sensor_samples)
+                if abs(match.t-sample_id*cfg['sensor_interval_seconds'])>1e-6:
+                    raise RuntimeError('Isaac sensor cadence diverged from the 10 Hz match clock')
+                frame=capture()
+                packet=public_packet(sample_id,match.states[-1],[frame],cfg['start_b'])
+                if packet['simulation_seconds']!=frame['simulation_seconds'] or abs(frame['simulation_seconds']-match.t)>1e-6:
+                    raise RuntimeError('Isaac frame and public observation timestamps diverged')
+                packet['perception']='Current simulator-derived foot pixel; RGB saved as review evidence.'
+                with Image.open(root/frame['file']) as image:image_size=image.size
+                synthetic=observe_current_scene(stage,camera,packet,frame,cfg,image_size,
+                    seed=args.synthetic_seed+sample_id,pixel_noise_std=args.synthetic_pixel_noise_std,
+                    miss_probability=args.synthetic_miss_probability)
+                sighting=synthetic.get('sighting');estimate=None;localization_error=None
+                if sighting is not None:
+                    try:
+                        estimate=dict(time=sighting['time'],xy=ground_point(frame,sighting['feet']),
+                            uncertainty=cfg['sensor']['base_uncertainty_m'])
+                    except ValueError as exc:localization_error=str(exc)
+                self.last_sample_time=match.t
+                sensor_samples.append(dict(sample_id=sample_id,simulation_seconds=match.t,frame_file=frame['file'],
+                    camera_pan_degrees=rig.pan,packet_time_matches_frame=packet['simulation_seconds']==frame['simulation_seconds']==match.t,
+                    visibility=sample_visibility(synthetic),sighting=sighting,estimate=estimate,
+                    localization_error=localization_error,synthetic_status=synthetic.get('status'),
+                    synthetic_reason=synthetic.get('reason')))
+                return estimate
+        env.engine.memory=VisualMemory(cfg['start_b'])
+        env.sensor=IsaacSceneSensor();env._sample_sensor();observation=env._observation()
+        started=time.monotonic();inference_ns=[]
+        while not match.ref.finished:
+            inference_started=time.perf_counter_ns()
+            chosen,_,_=agent.act(observation,policy_rng,deterministic=False)
+            inference_ns.append(time.perf_counter_ns()-inference_started)
+            observation,_,done,_,_=env.step(chosen)
+            if done:break
+        summary=env.episode_summary();trajectory=summary.pop('trajectory')
+        dump(root/'rl_skill_policy_trajectory.json',dict(summary=summary,steps=trajectory))
+        dump(root/'rl_skill_policy_sensor_samples.json',sensor_samples)
+        timing=dict(wall_seconds=time.monotonic()-started,
+            simulation_seconds=match.t,sensor_frames=len(sensor_samples),
+            mean_policy_inference_milliseconds=float(np.mean(inference_ns))/1e6,
+            model_parameters=agent.parameter_count())
+        dump(root/'result.json',dict(status='passed',mode='rl_skill_policy_isaac_trial',
+            score=summary['score'],finish=summary['finish'],final_hp=summary['final_hp'],
+            decisions=summary['decisions'],blocked_actions=summary['blocked_actions'],
+            committed_actions=summary['committed_actions'],
+            sensor_sightings=sum(x['estimate'] is not None for x in sensor_samples),
+            sensor_localization_errors=sum(x['localization_error'] is not None for x in sensor_samples),
+            same_frame_verified=False,**timing))
+        print(f'RL Skill live Isaac policy: score={summary["score"]:.3f}, '
+              f'finish={summary["finish"]}, frames={len(sensor_samples)}, '
+              f'wall={timing["wall_seconds"]:.1f}s',flush=True)
+        return
     if args.rl_skill_10hz_sensor_smoke:
         from synthetic_vision_mvp import (observe_current_scene,sample_visibility,
             smoke_observation,summarize_ten_hz_sensor_samples)
@@ -577,5 +689,5 @@ except Exception:
     traceback.print_exc()
     if (args.geometry_diagnostic or args.geometry_interface_probe or args.synthetic_vision_mvp or
             args.synthetic_vision_mvp_validation or args.synthetic_vision_skill_runtime_smoke or
-            args.rl_skill_10hz_sensor_smoke):raise SystemExit(1)
+            args.rl_skill_10hz_sensor_smoke or args.rl_skill_policy_checkpoint):raise SystemExit(1)
 finally:app.close(wait_for_replicator=False,skip_cleanup=True)

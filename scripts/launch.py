@@ -37,6 +37,7 @@ if "--help" in sys.argv:
     print("--vision-trial --semantic-skills --synthetic-vision-mvp-validation --headless: three finite fresh sighting cycles, then exit; no external action or API.")
     print("--vision-trial --semantic-skills --synthetic-vision-skill-runtime-smoke --headless: four native Skill actions in the normal loop with fresh half-second synthetic observations; no external input or API.")
     print("--vision-trial --semantic-skills --rl-skill-10hz-sensor-smoke --headless: eleven Isaac RGB/geometric sensor samples at 10 Hz; no policy evaluation.")
+    print("--vision-trial --semantic-skills --rl-skill-policy-checkpoint PATH --rl-skill-policy-seed N --headless: one full learned-policy match with 10 Hz Isaac scene-derived perception.")
     print("--vision-trial --semantic-skills --deepseek --headless: paid official DeepSeek Flash RGB planner, effort from config.")
     print("--vision-trial --semantic-skills --qwen-vision max|min --headless: paid Qwen3.6-27B public RGB; default max thinking budget or thinking off.")
     print("--vision-trial --semantic-skills --assessment --headless: external assistant, same four-field decision/assessment schema.")
@@ -54,6 +55,8 @@ if "--synthetic-vision-skill-runtime-smoke" in sys.argv and not {"--vision-trial
     raise SystemExit("--synthetic-vision-skill-runtime-smoke requires --vision-trial --semantic-skills")
 if "--rl-skill-10hz-sensor-smoke" in sys.argv and not {"--vision-trial", "--semantic-skills"}.issubset(sys.argv):
     raise SystemExit("--rl-skill-10hz-sensor-smoke requires --vision-trial --semantic-skills")
+if "--rl-skill-policy-checkpoint" in sys.argv and not {"--vision-trial", "--semantic-skills"}.issubset(sys.argv):
+    raise SystemExit("--rl-skill-policy-checkpoint requires --vision-trial --semantic-skills")
 if sum(flag in sys.argv for flag in ("--synthetic-vision-mvp", "--synthetic-vision-mvp-validation",
                                      "--synthetic-vision-skill-runtime-smoke","--rl-skill-10hz-sensor-smoke")) > 1:
     raise SystemExit("Choose one synthetic vision mode")
@@ -95,6 +98,7 @@ if '--synthetic-vision-mvp' in sys.argv:timeout=180
 if '--synthetic-vision-mvp-validation' in sys.argv:timeout=300
 if '--synthetic-vision-skill-runtime-smoke' in sys.argv:timeout=300
 if '--rl-skill-10hz-sensor-smoke' in sys.argv:timeout=300
+if '--rl-skill-policy-checkpoint' in sys.argv:timeout=1800
 if '--vision-trial' in sys.argv and '--deepseek' in sys.argv:
     from deepseek_trial import settings
     timeout=settings().get('launch_timeout_seconds',timeout)
