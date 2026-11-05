@@ -1,0 +1,23 @@
+[
+  {
+    "run": 1,
+    "pair": 1,
+    "mode": "low",
+    "layout": "SE",
+    "label": "西库遮挡出生 → 东侧目标"
+  },
+  {
+    "run": 2,
+    "pair": 2,
+    "mode": "low",
+    "layout": "EW",
+    "label": "东库遮挡出生 → 西侧目标"
+  },
+  {
+    "run": 3,
+    "pair": 3,
+    "mode": "low",
+    "layout": "WC",
+    "label": "西北侧翼出生 → 南中部目标"
+  }
+]

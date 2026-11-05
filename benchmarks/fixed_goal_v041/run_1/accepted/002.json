@@ -1,0 +1,32 @@
+{
+  "action": {
+    "observation_id": 2,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 6,
+      "steps": [
+        {
+          "skill": "SMOKE_AND_MOVE",
+          "params": {
+            "location": [
+              7.0,
+              -2.6
+            ],
+            "target": "GOAL",
+            "posture": "upright"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "最近合法观测8.32s人形在[5.73,-1.0]朝19°，当前无检测；自身在[4.4,-4.2]掩体停稳，烟剩余1，目标距6.77m。",
+      "state_evidence": "系统烟雾建议含[7.0,-2.6]，投掷距离约2.9m<6m，直线z=1m无遮挡；直立速度3.2m/s，施放加延迟约0.75s后烟生效。",
+      "decision_summary": "在烟点[7.0,-2.6]施烟遮断敌方视线，随后向GOAL全速冲刺；on_contact=continue确保途中不因看见人形而中止进圈。",
+      "uncertainty": "对手可能已移动或转向；烟按静态敌位假设可能不完美遮挡，施放前有短暂暴露，投掷若被拒则保留烟继续冲向GOAL。"
+    }
+  },
+  "request_sha256": "a47879dbe75a5c3f7dc0c69a0db6588afdf8c75e7e5526039ff6025034fce8bc",
+  "simulation_seconds": 8.38,
+  "normalization": null
+}

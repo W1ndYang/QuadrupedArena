@@ -1,0 +1,94 @@
+[
+  {
+    "time": 0.0,
+    "type": "plan_accepted",
+    "decision": 0,
+    "nodes": 2,
+    "horizon": 6
+  },
+  {
+    "time": 3.06,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "MOVE",
+    "reason": "target_reached"
+  },
+  {
+    "time": 3.08,
+    "type": "peek_selected",
+    "candidate": "PK002",
+    "home": [
+      -4.47,
+      -6.15
+    ],
+    "out": [
+      -4.47,
+      -5.85
+    ]
+  },
+  {
+    "time": 5.86,
+    "type": "peek_burst_started",
+    "cycle": 1,
+    "source": "memory",
+    "assumption_age": 1.4400000000000004,
+    "predicted_exposure": 0.34
+  },
+  {
+    "time": 6.9,
+    "type": "peek_burst_completed",
+    "cycle": 1,
+    "candidate": "PK002",
+    "max_estimated_exposure": 0.3,
+    "samples": 16,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": {
+      "time": 6.2,
+      "position": [
+        2.157466582665282,
+        -4.5705851507119215
+      ],
+      "yaw": 9.616929184074774
+    },
+    "last_sample": {
+      "time": 6.5,
+      "position": [
+        1.9646031959344632,
+        -4.594979290555712
+      ],
+      "yaw": 9.620907917856792
+    }
+  },
+  {
+    "time": 6.92,
+    "type": "plan_accepted",
+    "decision": 1,
+    "nodes": 3,
+    "horizon": 8
+  },
+  {
+    "time": 7.54,
+    "type": "interrupt",
+    "reason": "contact_guard",
+    "retreat_found": true,
+    "target": [
+      -4.6000000000000005,
+      -6.0
+    ]
+  },
+  {
+    "time": 7.66,
+    "type": "plan_accepted",
+    "decision": 2,
+    "nodes": 1,
+    "horizon": 5
+  },
+  {
+    "time": 12.66,
+    "type": "plan_accepted",
+    "decision": 3,
+    "nodes": 1,
+    "horizon": 4
+  }
+]

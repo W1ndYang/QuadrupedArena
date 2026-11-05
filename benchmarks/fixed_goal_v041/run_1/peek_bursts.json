@@ -1,0 +1,26 @@
+[
+  {
+    "start": 2.4,
+    "end": 3.44,
+    "cycle": 1,
+    "candidate": "PK000",
+    "max_estimated_exposure": 0.4,
+    "samples": 0,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": null,
+    "last_sample": null
+  },
+  {
+    "start": 3.64,
+    "end": 4.68,
+    "cycle": 2,
+    "candidate": "PK000",
+    "max_estimated_exposure": 0.4,
+    "samples": 0,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": null,
+    "last_sample": null
+  }
+]

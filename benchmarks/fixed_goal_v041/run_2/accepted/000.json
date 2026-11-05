@@ -1,0 +1,40 @@
+{
+  "action": {
+    "observation_id": 0,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 8,
+      "steps": [
+        {
+          "skill": "FOLLOW_ROUTE",
+          "params": {
+            "waypoints": [
+              "NORTH_WINDOW",
+              "CENTRAL_NORTH"
+            ],
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "retreat"
+        },
+        {
+          "skill": "PEEK_BURST",
+          "params": {
+            "candidate_id": "PK005",
+            "max_cycles": 2
+          },
+          "on_contact": "retreat"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "初始无检测；仅已知自身SPAWN与人形初始位置(-6.3,-2.8)，无当前敌情。",
+      "state_evidence": "自机(5.8,-0.1)满烟满冷却；目标(-10.1,1.1)西侧；剩余60s；北侧路线经NORTH_WINDOW、CENTRAL_NORTH。",
+      "decision_summary": "避开人形初始南侧区域，沿北侧快速抵达中央北，再从-WestWarehouse南侧PK005探身确认目标附近威胁。",
+      "uncertainty": "人形可能已移动或北侧巡逻；接近与探身仍可能暴露，烟未使用，需依赖on_contact撤退。"
+    }
+  },
+  "request_sha256": "765e478bef79f2b7a326dec688e8d43732bf0ee7ba265b37c3236314e74f3b1c",
+  "simulation_seconds": 0.0,
+  "normalization": null
+}

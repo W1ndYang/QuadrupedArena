@@ -1,0 +1,119 @@
+{
+  "status": "exploratory_candidate_not_production",
+  "recommended_variant": "goal_only",
+  "source_map": "source_snapshot/configs/trial_a391_feedback_fix.json",
+  "start_a": [
+    -6.5,
+    -6.9
+  ],
+  "rules": {
+    "version": "fixed-goal-v0.3-tracking-error",
+    "duration": 60.0,
+    "dt": 0.02,
+    "goal_radius_m": 1.0,
+    "tag_seconds": 1.0,
+    "tag_range_m": 8.0,
+    "aim_half_angle_degrees": 30.0,
+    "aim_max_speed_mps": 0.15,
+    "reaction_seconds": 0.2,
+    "human_half_fov_degrees": 90.0,
+    "human_sensor_range_m": null,
+    "robot_half_fov_degrees": 180.0,
+    "robot_sensor_range_m": null,
+    "memory_seconds": [
+      4.0,
+      12.0
+    ],
+    "min_actor_separation_m": 0.7,
+    "smoke_count": 1,
+    "smoke_throw_range_m": 6.0,
+    "smoke_radius_m": 2.0,
+    "smoke_duration_seconds": 5.0,
+    "smoke_cast_seconds": 0.35,
+    "smoke_fuse_seconds": 0.4,
+    "smoke_height_m": 2.5,
+    "smoke_penetration_m": 0.0,
+    "scan_radps": 2.4,
+    "collapse_enabled": false,
+    "win_condition": "attacker_goal_only; defender_tag_or_timeout",
+    "timing": "50Hz simultaneous snapshot; opposing success in same tick is draw",
+    "sensor": "3D representative point LOS; same smoke/wall test for both actors and tag",
+    "throw": "stationary cast, bounded range, clear segment at z=1m; no ballistic simulation",
+    "human_stun_seconds": 1.0,
+    "tag_cooldown_seconds": 4.0,
+    "aim_tracking_error_degrees": 5.0
+  },
+  "tested_scope": "Three layouts preselected by geometry; nine offline tests passed; paid matched runs pending.",
+  "version": "fixed-goal-v0.3-tracking-error",
+  "layouts": {
+    "E": {
+      "label": "东庭院：南侧接近",
+      "goal": [
+        10.1,
+        -0.8
+      ],
+      "human_start": [
+        6.4,
+        -4.4
+      ],
+      "human_yaw_degrees": 180,
+      "patrol": [
+        [
+          6.4,
+          -4.4
+        ],
+        [
+          6.1,
+          -2.6
+        ]
+      ],
+      "purpose": "同在南侧通道接触，检验提前发现后正面机会射击是否仍可行。"
+    },
+    "W": {
+      "label": "西庭院：低墙与侧路",
+      "goal": [
+        -10.1,
+        1.1
+      ],
+      "human_start": [
+        -6.0,
+        1.8
+      ],
+      "human_yaw_degrees": -90,
+      "patrol": [
+        [
+          -6.0,
+          1.8
+        ],
+        [
+          -9.6,
+          1.8
+        ]
+      ],
+      "purpose": "短程目标在西侧开阔庭院，低墙分隔南北，允许低姿态、绕行和烟雾选择。"
+    },
+    "C": {
+      "label": "中部通道：多入口",
+      "goal": [
+        1.3,
+        2.0
+      ],
+      "human_start": [
+        5.6,
+        3.2
+      ],
+      "human_yaw_degrees": 180,
+      "patrol": [
+        [
+          5.6,
+          3.2
+        ],
+        [
+          2.0,
+          2.3
+        ]
+      ],
+      "purpose": "目标在中央高墙与北部建筑之间，检验遮挡下的信息获取和多入口选择。"
+    }
+  }
+}

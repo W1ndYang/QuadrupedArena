@@ -1,0 +1,53 @@
+{
+  "action": {
+    "observation_id": 1,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 8,
+      "steps": [
+        {
+          "skill": "FOLLOW_ROUTE",
+          "params": {
+            "waypoints": [
+              "WEST_LANE",
+              "WEST_LOW_NORTH",
+              "CENTRAL_WEST"
+            ],
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "retreat"
+        },
+        {
+          "skill": "FOLLOW_ROUTE",
+          "params": {
+            "waypoints": [
+              "CENTRAL_EAST"
+            ],
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "continue"
+        },
+        {
+          "skill": "MOVE",
+          "params": {
+            "target": "GOAL",
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "6.5秒最近合法敌位[1.965,-4.595]几乎位于目标中心，年龄0.42秒；其朝向约191度，主要面向西南，当前被LoadingHall遮挡。",
+      "state_evidence": "自身在LoadingHall西侧掩体，目标距离约6.99米；烟投掷若越墙不可行，直接南侧突入会进入对手正面视野。",
+      "decision_summary": "沿西侧公开路点绕到北侧，利用对手背后视野盲区经CENTRAL_EAST接近GOAL；首段遇8米内人形即撤回，后段继续进圈。",
+      "uncertainty": "对手可能离开目标巡逻或转向；路线对未知移动并非绝对安全，但当前信息足够支持绕后，不需额外探身。"
+    }
+  },
+  "request_sha256": "1aa4b894b3a852a7763158d8e85e19c60be1a2ec0a5842de7aa928138cd4bf71",
+  "simulation_seconds": 6.92,
+  "normalization": null
+}

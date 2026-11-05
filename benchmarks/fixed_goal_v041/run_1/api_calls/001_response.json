@@ -1,0 +1,27 @@
+{
+  "content": "{\"observation_id\":1,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":4.5,\"steps\":[{\"skill\":\"FOLLOW_ROUTE\",\"params\":{\"waypoints\":[\"SOUTH_ENTRY\"],\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"PK000两轮探身均0样本；当前current_detection=null且last_legal_memory=null；peek_candidates为空。\",\"state_evidence\":\"自身位于[-4.47,-4.65]，剩余55.3s；目标中心[10.1,-0.8]；SOUTH_ENTRY约10.07m、巡航约3.15s。\",\"decision_summary\":\"先沿南侧公开路点推进到SOUTH_ENTRY，保持不开火；若8m内出现合法接触立即中止并撤回，完成后再重新决策。\",\"uncertainty\":\"人形当前位置未知；路线末端接近其初始位置[6.2,-2.7]附近，可能暴露且无绝对安全保证。\"}}",
+  "tool_calls": [],
+  "usage": {
+    "prompt_tokens": 4845,
+    "completion_tokens": 3235,
+    "total_tokens": 8080,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3000
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 2413
+  },
+  "response_model": "deepseek-flash",
+  "response_id": "009bc044-6bfb-4fd3-b4af-b811b8e54710",
+  "finish_reason": "stop",
+  "api_wall_seconds": 19.9901823180262,
+  "time_to_first_output_seconds": 0.596542539075017,
+  "time_to_first_visible_content_seconds": 19.300222571007907,
+  "reasoning_characters_received": 10500,
+  "reasoning_text_saved": false,
+  "api_started_utc": "2026-11-04T09:43:58.647971+00:00",
+  "api_finished_utc": "2026-11-04T09:44:18.638125+00:00"
+}

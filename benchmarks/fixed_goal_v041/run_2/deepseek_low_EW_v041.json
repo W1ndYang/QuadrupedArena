@@ -1,0 +1,4999 @@
+{
+  "summary": {
+    "id": "deepseek_low_EW_v041",
+    "winner": "defender",
+    "reason": "tag",
+    "seconds": 6.86,
+    "first_detection": [
+      5.3,
+      5.3
+    ],
+    "smoke_used": 0,
+    "minimum_separation_m": 1.632169974840373,
+    "minimum_wall_clearance_m": 0.4210840839865501,
+    "collision_stop_ticks": [
+      0,
+      0
+    ],
+    "distance_m": [
+      13.375384995727707,
+      4.627487951565805
+    ],
+    "attacker_policy": "deepseek_flash_low",
+    "defender_policy": "patrol",
+    "yaw": 1.5707963267948966,
+    "posture": "upright",
+    "condition": "peek_sequences_v04",
+    "layout": "EW",
+    "model_decisions": 2,
+    "route_build_seconds": 0.0006446830229833722,
+    "human_tags": 0,
+    "peek_bursts": 0,
+    "skill_event_count": 6
+  },
+  "metadata": {
+    "goal": [
+      -10.1,
+      1.1
+    ],
+    "goal_radius": 1.0,
+    "defender_start": [
+      -6.3,
+      -2.8
+    ],
+    "attacker_start": [
+      5.8,
+      -0.1
+    ],
+    "defender_policy": "patrol",
+    "attacker_policy": "deepseek_flash_low",
+    "yaw": 1.5707963267948966,
+    "posture": "upright",
+    "route": [
+      [
+        -10.1,
+        1.1
+      ]
+    ],
+    "rules": {
+      "version": "fixed-goal-v0.4.1-peek-braking",
+      "duration": 60.0,
+      "dt": 0.02,
+      "goal_radius_m": 1.0,
+      "tag_seconds": 1.0,
+      "tag_range_m": 8.0,
+      "aim_half_angle_degrees": 30.0,
+      "aim_max_speed_mps": 0.15,
+      "reaction_seconds": 0.2,
+      "human_half_fov_degrees": 90.0,
+      "human_sensor_range_m": null,
+      "robot_half_fov_degrees": 180.0,
+      "robot_sensor_range_m": null,
+      "memory_seconds": [
+        4.0,
+        12.0
+      ],
+      "min_actor_separation_m": 0.7,
+      "smoke_count": 1,
+      "smoke_throw_range_m": 6.0,
+      "smoke_radius_m": 2.0,
+      "smoke_duration_seconds": 5.0,
+      "smoke_cast_seconds": 0.35,
+      "smoke_fuse_seconds": 0.4,
+      "smoke_height_m": 2.5,
+      "smoke_penetration_m": 0.0,
+      "scan_radps": 2.4,
+      "collapse_enabled": false,
+      "win_condition": "attacker_goal_only; defender_tag_or_timeout",
+      "timing": "50Hz simultaneous snapshot; opposing success in same tick is draw",
+      "sensor": "3D representative point LOS; same smoke/wall test for both actors and tag",
+      "throw": "stationary cast, bounded range, clear segment at z=1m; no ballistic simulation",
+      "human_stun_seconds": 1.0,
+      "tag_cooldown_seconds": 4.0,
+      "aim_tracking_error_degrees": 5.0,
+      "decision_period_seconds": null,
+      "posture_transition_seconds": 0.4,
+      "decision_policy": "event_driven_plan_or_peek_completion"
+    },
+    "architecture": "peek-sequences-v0.4.1-braking"
+  },
+  "events": [
+    {
+      "time": 0.0,
+      "type": "mode",
+      "actor": 0,
+      "mode": "FOLLOW_PATH"
+    },
+    {
+      "time": 0.0,
+      "type": "mode",
+      "actor": 1,
+      "mode": "PATROL"
+    },
+    {
+      "time": 4.88,
+      "type": "mode",
+      "actor": 0,
+      "mode": "WAIT"
+    },
+    {
+      "time": 4.9,
+      "type": "mode",
+      "actor": 0,
+      "mode": "ADVANCE"
+    },
+    {
+      "time": 5.3,
+      "type": "detected",
+      "actor": 0
+    },
+    {
+      "time": 5.3,
+      "type": "detected",
+      "actor": 1
+    },
+    {
+      "time": 5.5,
+      "type": "mode",
+      "actor": 1,
+      "mode": "AIM"
+    },
+    {
+      "time": 6.52,
+      "type": "mode",
+      "actor": 0,
+      "mode": "WAIT"
+    },
+    {
+      "time": 6.58,
+      "type": "mode",
+      "actor": 0,
+      "mode": "FOLLOW_PATH"
+    },
+    {
+      "time": 6.86,
+      "type": "tag",
+      "actors": [
+        1
+      ]
+    },
+    {
+      "time": 6.86,
+      "type": "finish",
+      "winner": "defender",
+      "reason": "tag"
+    }
+  ],
+  "states": [
+    {
+      "t": 0.0,
+      "xy": [
+        [
+          5.8,
+          -0.1
+        ],
+        [
+          -6.3,
+          -2.8
+        ]
+      ],
+      "yaw": [
+        0.0,
+        1.5707963267948966
+      ],
+      "speed": [
+        0.0,
+        0.0
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "IDLE",
+        "IDLE"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        0.0
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        -167.42106476250694,
+        -77.42106476250694
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.1,
+      "xy": [
+        [
+          5.8,
+          -0.1
+        ],
+        [
+          -6.299289796374841,
+          -2.795738778249045
+        ]
+      ],
+      "yaw": [
+        0.25,
+        1.8107963267948968
+      ],
+      "speed": [
+        0.0,
+        0.10800000000000001
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        178.23648209865428,
+        -91.19056010621487
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.2,
+      "xy": [
+        [
+          5.8,
+          -0.1
+        ],
+        [
+          -6.295738778249045,
+          -2.77443266949427
+        ]
+      ],
+      "yaw": [
+        0.49999999999999994,
+        2.050796326794897
+      ],
+      "speed": [
+        0.0,
+        0.28800000000000003
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        163.81992338835377,
+        -105.03416102138459
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.3,
+      "xy": [
+        [
+          5.8,
+          -0.1
+        ],
+        [
+          -6.289228578351753,
+          -2.7353714701105174
+        ]
+      ],
+      "yaw": [
+        0.7500000000000001,
+        2.290796326794897
+      ],
+      "speed": [
+        0.0,
+        0.4680000000000002
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        149.3258731807407,
+        -118.95525343386683
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.4,
+      "xy": [
+        [
+          5.8,
+          -0.1
+        ],
+        [
+          -6.279759196682964,
+          -2.6785551800977863
+        ]
+      ],
+      "yaw": [
+        1.0000000000000002,
+        2.5307963267948974
+      ],
+      "speed": [
+        0.0,
+        0.6480000000000004
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        134.7537813733455,
+        -132.95438744613125
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.5,
+      "xy": [
+        [
+          5.8,
+          -0.1
+        ],
+        [
+          -6.267330633242678,
+          -2.603983799456076
+        ]
+      ],
+      "yaw": [
+        1.2500000000000004,
+        2.7707963267948976
+      ],
+      "speed": [
+        0.0,
+        0.8280000000000005
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        120.10285435772946,
+        -147.03235666661647
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.6,
+      "xy": [
+        [
+          5.800449780434239,
+          -0.08560702610434608
+        ],
+        [
+          -6.252051391362518,
+          -2.512308348175116
+        ]
+      ],
+      "yaw": [
+        1.5000000000000007,
+        3.010796326794898
+      ],
+      "speed": [
+        0.36,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        105.440299348295,
+        -161.12195388092007
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.7,
+      "xy": [
+        [
+          5.802698682605436,
+          -0.013642156626076402
+        ],
+        [
+          -6.236022490100248,
+          -2.4161349406014816
+        ]
+      ],
+      "yaw": [
+        1.5395564933646286,
+        3.250796326794898
+      ],
+      "speed": [
+        0.96,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        103.07580916141563,
+        -174.97101102880882
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.8,
+      "xy": [
+        [
+          5.8068216699192945,
+          0.11829343741741803
+        ],
+        [
+          -6.219993588837977,
+          -2.3199615330278474
+        ]
+      ],
+      "yaw": [
+        1.5395564933646286,
+        3.4907963267948983
+      ],
+      "speed": [
+        1.5600000000000005,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        103.25043390600878,
+        171.4526266326446
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 0.9,
+      "xy": [
+        [
+          5.812818742375817,
+          0.31019975602613725
+        ],
+        [
+          -6.203964687575707,
+          -2.223788125454213
+        ]
+      ],
+      "yaw": [
+        1.5395564933646282,
+        3.7307963267948985
+      ],
+      "speed": [
+        2.160000000000001,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        103.69746326305383,
+        158.14866890654986
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.0,
+      "xy": [
+        [
+          5.820689899975003,
+          0.5620767992000812
+        ],
+        [
+          -6.187935786313436,
+          -2.127614717880579
+        ]
+      ],
+      "yaw": [
+        1.5395564933646282,
+        3.9707963267948987
+      ],
+      "speed": [
+        2.7600000000000016,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        104.4146542085188,
+        145.11487276887505
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.1,
+      "xy": [
+        [
+          5.830310203707341,
+          0.8699265186349017
+        ],
+        [
+          -6.171906885051166,
+          -2.0314413103069446
+        ]
+      ],
+      "yaw": [
+        1.5395564933646286,
+        4.210796326794899
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        105.37965451395658,
+        132.3288859911731
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.2,
+      "xy": [
+        [
+          5.840305324468211,
+          1.1897703829827668
+        ],
+        [
+          -6.155877983788895,
+          -1.9352679027333104
+        ]
+      ],
+      "yaw": [
+        1.5395564933646286,
+        4.450796326794899
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        106.3911029669537,
+        119.58934736103039
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.3,
+      "xy": [
+        [
+          5.850300445229082,
+          1.509614247330632
+        ],
+        [
+          -6.139849082526622,
+          -1.8390944951596762
+        ]
+      ],
+      "yaw": [
+        1.5395564933646282,
+        4.690796326794899
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        107.39433837639584,
+        106.84159568733277
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.4,
+      "xy": [
+        [
+          5.8602955659899525,
+          1.8294581116784971
+        ],
+        [
+          -6.12382018126435,
+          -1.742921087586042
+        ]
+      ],
+      "yaw": [
+        1.5395564933646277,
+        4.9307963267948995
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        108.3888529979506,
+        94.08512322574776
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.5,
+      "xy": [
+        [
+          5.869522520636916,
+          2.124720660381316
+        ],
+        [
+          -6.107791280002076,
+          -1.6467476800124077
+        ]
+      ],
+      "yaw": [
+        1.5395564933646277,
+        5.1707963267949
+      ],
+      "speed": [
+        2.718947104300836,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        8.881784197001252e-14,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        109.26830817646567,
+        81.21359132112306
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.6,
+      "xy": [
+        [
+          5.872917189236984,
+          2.3613721243825894
+        ],
+        [
+          -6.091762378739803,
+          -1.5505742724387734
+        ]
+      ],
+      "yaw": [
+        1.5800771000357725,
+        5.4107963267949
+      ],
+      "speed": [
+        2.133493257875188,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        1.3721839771254185,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        107.57381596759285,
+        68.08977177467669
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.7,
+      "xy": [
+        [
+          5.851984192476105,
+          2.5383658340384243
+        ],
+        [
+          -6.075733477477531,
+          -1.4544008648651392
+        ]
+      ],
+      "yaw": [
+        1.7473985379263224,
+        5.6507963267949
+      ],
+      "speed": [
+        1.552558093561149,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        1.8964230180032349,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        98.38924959677485,
+        54.74103053390776
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.8,
+      "xy": [
+        [
+          5.816373590504844,
+          2.658746459843065
+        ],
+        [
+          -6.059704576215259,
+          -1.358227457291505
+        ]
+      ],
+      "yaw": [
+        1.9249632668603052,
+        5.8907963267949
+      ],
+      "speed": [
+        1.1148376333346088,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.421521983381969,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        88.39536253678072,
+        41.169865949075565
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 1.9,
+      "xy": [
+        [
+          5.773739361444393,
+          2.7439198991282527
+        ],
+        [
+          -6.043675674952985,
+          -1.2620540497178707
+        ]
+      ],
+      "yaw": [
+        2.079981184489251,
+        6.130796326794901
+      ],
+      "speed": [
+        0.880448335096783,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        79.55195129395642,
+        27.45734005215671
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.0,
+      "xy": [
+        [
+          5.725025456704845,
+          2.809687992976365
+        ],
+        [
+          -6.027646773690713,
+          -1.1658806421442365
+        ]
+      ],
+      "yaw": [
+        2.256058512476751,
+        6.370796326794901
+      ],
+      "speed": [
+        0.806361176406601,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        69.42647062803664,
+        13.66936006472167
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.1,
+      "xy": [
+        [
+          5.667843988551584,
+          2.863129115686556
+        ],
+        [
+          -6.01161787242844,
+          -1.0697072345706022
+        ]
+      ],
+      "yaw": [
+        2.4472869644250435,
+        6.610796326794901
+      ],
+      "speed": [
+        0.8375456832061129,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        58.39075802091159,
+        -0.1607564060857179
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.2,
+      "xy": [
+        [
+          5.603536842489342,
+          2.9048602496747478
+        ],
+        [
+          -5.995588971166168,
+          -0.9735338269969682
+        ]
+      ],
+      "yaw": [
+        2.5908926682845945,
+        6.850796326794901
+      ],
+      "speed": [
+        0.7252751734203212,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.695363661055004,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        50.04114910911407,
+        -14.03335165586517
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.3,
+      "xy": [
+        [
+          5.5207066570242675,
+          2.939833800890052
+        ],
+        [
+          -5.979560069903894,
+          -0.8773604194233345
+        ]
+      ],
+      "yaw": [
+        2.7731623965913856,
+        7.0907963267949015
+      ],
+      "speed": [
+        0.8672132077031314,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.4392498691249358,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        39.471651768982525,
+        -27.910549914161187
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.4,
+      "xy": [
+        [
+          5.412687869204561,
+          2.9642704592222175
+        ],
+        [
+          -5.963531168641622,
+          -0.7811870118497009
+        ]
+      ],
+      "yaw": [
+        2.983026819112775,
+        7.330796326794902
+      ],
+      "speed": [
+        1.2701892914109223,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        2.4798600991975395,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        27.30854356957164,
+        -41.80029951628599
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.5,
+      "xy": [
+        [
+          5.2675752585978115,
+          2.971481194169382
+        ],
+        [
+          -5.947502267379349,
+          -0.6850136042760672
+        ]
+      ],
+      "yaw": [
+        3.1500895687392485,
+        7.570796326794902
+      ],
+      "speed": [
+        1.6945069251796787,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        1.896423018006299,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        17.57088369990557,
+        -55.716956001644085
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.6,
+      "xy": [
+        [
+          5.063528533702256,
+          2.949160391448889
+        ],
+        [
+          -5.931473366117077,
+          -0.5888401967024335
+        ]
+      ],
+      "yaw": [
+        3.279482546269708,
+        7.810796326794902
+      ],
+      "speed": [
+        2.2945069251796792,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        1.4635472469336719,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        9.93676438266146,
+        -69.68839089090154
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.7,
+      "xy": [
+        [
+          4.802291252638586,
+          2.9020525209676142
+        ],
+        [
+          -5.9154444648548035,
+          -0.49266678912879974
+        ]
+      ],
+      "yaw": [
+        3.3200031529408336,
+        8.050796326794902
+      ],
+      "speed": [
+        2.89450692517968,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        7.352829620241002,
+        -83.70165299089662
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.8,
+      "xy": [
+        [
+          4.4923106520734715,
+          2.8461543798821016
+        ],
+        [
+          -5.899415563592531,
+          -0.3964933815551658
+        ]
+      ],
+      "yaw": [
+        3.3200031529408336,
+        8.290796326794903
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        7.1079095404785955,
+        -97.69756015379885
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 2.9,
+      "xy": [
+        [
+          4.177390006491039,
+          2.789365411006581
+        ],
+        [
+          -5.883386662330258,
+          -0.3003199739815318
+        ]
+      ],
+      "yaw": [
+        3.3200031529408336,
+        8.530796326794903
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        6.849662124613846,
+        -111.70679465280332
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.0,
+      "xy": [
+        [
+          3.8624693609086074,
+          2.73257644213106
+        ],
+        [
+          -5.867357761067986,
+          -0.20414656640789786
+        ]
+      ],
+      "yaw": [
+        3.3200031529408336,
+        8.770796326794903
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        6.573055165122941,
+        -125.73438869543405
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.1,
+      "xy": [
+        [
+          3.547548715326177,
+          2.6757874732555393
+        ],
+        [
+          -5.8513288598057125,
+          -0.1079731588342639
+        ]
+      ],
+      "yaw": [
+        3.3200031529408336,
+        9.010796326794903
+      ],
+      "speed": [
+        3.2,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        6.276073042851878,
+        -139.78235790084483
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.2,
+      "xy": [
+        [
+          3.2326280697437464,
+          2.6189985043800186
+        ],
+        [
+          -5.836165065926084,
+          -0.01699039555649364
+        ]
+      ],
+      "yaw": [
+        3.3200031529408336,
+        9.250796326794903
+      ],
+      "speed": [
+        3.2,
+        0.8552219653521127
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        5.985177487839199,
+        -153.82424053899732
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.3,
+      "xy": [
+        [
+          2.917707424161316,
+          2.562209535504498
+        ],
+        [
+          -5.823880812486464,
+          0.05671512508122992
+        ]
+      ],
+      "yaw": [
+        3.3200031529408327,
+        9.490796326794904
+      ],
+      "speed": [
+        3.2,
+        0.6752219653521125
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        5.771074113951915,
+        -167.78933099602438
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.4,
+      "xy": [
+        [
+          2.6027867785788854,
+          2.505420566628977
+        ],
+        [
+          -5.8145557408183395,
+          0.11266555508997486
+        ]
+      ],
+      "yaw": [
+        3.3200031529408327,
+        9.730796326794904
+      ],
+      "speed": [
+        3.2,
+        0.4952219653521124
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        5.646421557919647,
+        178.33502936480357
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.5,
+      "xy": [
+        [
+          2.287866132996455,
+          2.4486315977534563
+        ],
+        [
+          -5.808189850921711,
+          0.15086089446974124
+        ]
+      ],
+      "yaw": [
+        3.3200031529408327,
+        9.970796326794904
+      ],
+      "speed": [
+        3.2,
+        0.3152219653521122
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        5.6224938924077845,
+        164.56011461615194
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.6,
+      "xy": [
+        [
+          1.9729454874140242,
+          2.3918426288779355
+        ],
+        [
+          -5.80478314279658,
+          0.17130114322052903
+        ]
+      ],
+      "yaw": [
+        3.320003152940832,
+        10.210796326794904
+      ],
+      "speed": [
+        3.2,
+        0.13522196535211217
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        5.711875313569981,
+        150.89850895417433
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.7,
+      "xy": [
+        [
+          1.6580248418315926,
+          2.3350536600024148
+        ],
+        [
+          -5.80415952517182,
+          0.17504284896909203
+        ]
+      ],
+      "yaw": [
+        3.320003152940831,
+        10.450796326794904
+      ],
+      "speed": [
+        3.2,
+        0.0
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        -4.440892098500626e-14,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        5.921495770737934,
+        137.35714232820246
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.8,
+      "xy": [
+        [
+          1.343104196249161,
+          2.2782646911268953
+        ],
+        [
+          -5.804676432720873,
+          0.17933181231537185
+        ]
+      ],
+      "yaw": [
+        3.320003152940831,
+        10.690796326794905
+      ],
+      "speed": [
+        3.2,
+        0.10800000000000001
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        6.142612455820479,
+        123.82727193014523
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 3.9,
+      "xy": [
+        [
+          1.0281835506667294,
+          2.2214757222513755
+        ],
+        [
+          -5.80726097046614,
+          0.20077662904677088
+        ]
+      ],
+      "yaw": [
+        3.320003152940831,
+        10.930796326794905
+      ],
+      "speed": [
+        3.2,
+        0.28800000000000003
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        6.246602961801382,
+        110.18027535298637
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.0,
+      "xy": [
+        [
+          0.7132629050842983,
+          2.164686753375856
+        ],
+        [
+          -5.8119992896657955,
+          0.24009212638766908
+        ]
+      ],
+      "yaw": [
+        3.320003152940831,
+        11.170796326794905
+      ],
+      "speed": [
+        3.2,
+        0.4680000000000002
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        6.211001006637827,
+        96.393686314683
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.1,
+      "xy": [
+        [
+          0.3983422595018672,
+          2.107897784500336
+        ],
+        [
+          -5.81889139031984,
+          0.2972783043380665
+        ]
+      ],
+      "yaw": [
+        3.320003152940831,
+        11.410796326794905
+      ],
+      "speed": [
+        3.2,
+        0.6480000000000004
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        6.014759294751311,
+        82.44645751965676
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.2,
+      "xy": [
+        [
+          0.0863256567519667,
+          2.0558086845646457
+        ],
+        [
+          -5.827937272428273,
+          0.37233516289796315
+        ]
+      ],
+      "yaw": [
+        3.2923386931143885,
+        11.650796326794906
+      ],
+      "speed": [
+        3.1022595399482293,
+        0.8280000000000005
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        -0.9236560373688363,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        7.251699369381155,
+        68.34735372058246
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.3,
+      "xy": [
+        [
+          -0.22618876733854487,
+          2.0405077544781234
+        ],
+        [
+          -5.839057964004435,
+          0.464607443778344
+        ]
+      ],
+      "yaw": [
+        3.141607145909387,
+        11.890796326794906
+      ],
+      "speed": [
+        3.149781001342671,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        -1.8996882225162715,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        15.682081999306467,
+        54.39046777304441
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.4,
+      "xy": [
+        [
+          -0.5289405931924319,
+          2.067727221010996
+        ],
+        [
+          -5.850724280215709,
+          0.5614069637464645
+        ]
+      ],
+      "yaw": [
+        3.0091287349746363,
+        12.130796326794906
+      ],
+      "speed": [
+        2.864949104082204,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        -0.9384887042017676,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        23.39368305981382,
+        40.76062792725104
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.5,
+      "xy": [
+        [
+          -0.7757027418780152,
+          2.115140548375603
+        ],
+        [
+          -5.862390596426983,
+          0.6582064837145849
+        ]
+      ],
+      "yaw": [
+        2.9441970937399122,
+        12.370796326794906
+      ],
+      "speed": [
+        2.278683829965666,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        27.29275550976232,
+        27.188404294452383
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.6,
+      "xy": [
+        [
+          -0.9648469130265611,
+          2.152969382605312
+        ],
+        [
+          -5.874056912638257,
+          0.7550060036827053
+        ]
+      ],
+      "yaw": [
+        2.944197093739912,
+        12.610796326794906
+      ],
+      "speed": [
+        1.6963845171369463,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        4.440892098500626e-14,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        27.204946343520316,
+        13.34960804507066
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.7,
+      "xy": [
+        [
+          -1.0972741233092043,
+          2.179454824661841
+        ],
+        [
+          -5.885723228849531,
+          0.8518055236508257
+        ]
+      ],
+      "yaw": [
+        2.944197093739912,
+        12.850796326794907
+      ],
+      "speed": [
+        1.121214965790907,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        -6.661338147750939e-14,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        26.80654177590359,
+        -0.7997836056858347
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.8,
+      "xy": [
+        [
+          -1.174142396882558,
+          2.1948284793765116
+        ],
+        [
+          -5.897389545060805,
+          0.9486050436189462
+        ]
+      ],
+      "yaw": [
+        2.9441970937399113,
+        13.090796326794907
+      ],
+      "speed": [
+        0.5625266348266355,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        6.661338147750939e-14,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        26.090515006387147,
+        -15.266797458341998
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 4.9,
+      "xy": [
+        [
+          -1.1987057027643115,
+          2.1997411405528626
+        ],
+        [
+          -5.909055861272079,
+          1.0454045635870666
+        ]
+      ],
+      "yaw": [
+        2.9441970937399042,
+        13.330796326794907
+      ],
+      "speed": [
+        0.03793616304785907,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "WAIT",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        25.07968465741469,
+        -30.028614890454634
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.0,
+      "xy": [
+        [
+          -1.2383074884165008,
+          2.2036437642562925
+        ],
+        [
+          -5.920722177483353,
+          1.142204083555187
+        ]
+      ],
+      "yaw": [
+        3.043363157753501,
+        13.570796326794907
+      ],
+      "speed": [
+        0.637936163047859,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        18.40045291711155,
+        -44.77703677499436
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.1,
+      "xy": [
+        [
+          -1.3376200357379078,
+          2.2134306840843156
+        ],
+        [
+          -5.932388493694627,
+          1.2390036035233074
+        ]
+      ],
+      "yaw": [
+        3.043363157753501,
+        13.810796326794907
+      ],
+      "speed": [
+        1.2379361630478591,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        17.60163348607256,
+        -59.32684328917306
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.2,
+      "xy": [
+        [
+          -1.4966433447285323,
+          2.2291019000369325
+        ],
+        [
+          -5.944054809905901,
+          1.3358031234914278
+        ]
+      ],
+      "yaw": [
+        3.043363157753501,
+        14.050796326794908
+      ],
+      "speed": [
+        1.8379361630478597,
+        0.975
+      ],
+      "visible": [
+        false,
+        false
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        16.985336703819186,
+        -73.6941271545662
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.3,
+      "xy": [
+        [
+          -1.7153774153883743,
+          2.2506574121141423
+        ],
+        [
+          -5.955721126117175,
+          1.4326026434595482
+        ]
+      ],
+      "yaw": [
+        3.043363157753501,
+        14.290796326794908
+      ],
+      "speed": [
+        2.43793616304786,
+        0.975
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        2.400000000000002
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        16.547590015053924,
+        -87.8828609264713
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.4,
+      "xy": [
+        [
+          -1.9938222477174339,
+          2.2780972203159457
+        ],
+        [
+          -5.967356279372166,
+          1.5291435934425694
+        ]
+      ],
+      "yaw": [
+        3.043363157753501,
+        13.840796326794909
+      ],
+      "speed": [
+        3.0379361630478607,
+        0.9619779449549526
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        -4.5
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        16.302329459526213,
+        -62.345020701112
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.5,
+      "xy": [
+        [
+          -2.3114424220388803,
+          2.309397627622855
+        ],
+        [
+          -5.977574511929393,
+          1.613927855119494
+        ]
+      ],
+      "yaw": [
+        3.0433631577535007,
+        13.39079632679491
+      ],
+      "speed": [
+        3.2,
+        0.7819779449549524
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "PATROL"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        -4.5
+      ],
+      "requested_fire": [
+        false,
+        false
+      ],
+      "aim_error_degrees": [
+        16.36957998256768,
+        -36.49466939718353
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.6,
+      "xy": [
+        [
+          -2.629899817608041,
+          2.3407805402873523
+        ],
+        [
+          -5.9856389630322315,
+          1.6808414361869197
+        ]
+      ],
+      "yaw": [
+        3.0433631577535007,
+        12.94079632679491
+      ],
+      "speed": [
+        3.2,
+        0.6019779449549523
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        -4.5
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        16.753933634349348,
+        -10.327214964514907
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.7,
+      "xy": [
+        [
+          -2.9483572131772013,
+          2.3721634529518494
+        ],
+        [
+          -5.991549632680681,
+          1.729884336644846
+        ]
+      ],
+      "yaw": [
+        3.0433631577535,
+        12.770940220201378
+      ],
+      "speed": [
+        3.2,
+        0.4219779449549521
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        -2.220446049250313e-14,
+        0.15395680250946953
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        17.545762757559487,
+        0.1966521910287766
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.8,
+      "xy": [
+        [
+          -3.266814608746362,
+          2.403546365616347
+        ],
+        [
+          -5.995306520874743,
+          1.761056556493273
+        ]
+      ],
+      "yaw": [
+        3.0433631577534994,
+        12.792081410383433
+      ],
+      "speed": [
+        3.2,
+        0.24197794495495198
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.0
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        0.2536796006686437
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        18.87843888730797,
+        0.3180273494620874
+      ],
+      "lock_geometry_valid": [
+        false,
+        false
+      ],
+      "lock_valid": [
+        false,
+        false
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 5.9,
+      "xy": [
+        [
+          -3.5852720043155224,
+          2.434929278280845
+        ],
+        [
+          -5.996909627614415,
+          1.774358095732201
+        ]
+      ],
+      "yaw": [
+        3.0433631577534994,
+        12.825266224048928
+      ],
+      "speed": [
+        3.2,
+        0.06197794495495196
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.04
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        0.38981574243202033
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        20.946298537660493,
+        0.4845372328537227
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.0,
+      "xy": [
+        [
+          -3.8879538813133596,
+          2.4647575662814187
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.0433631577534994,
+        12.872491921381636
+      ],
+      "speed": [
+        2.8254268281736747,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.14
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        0.4979896262531369
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        23.741642386880308,
+        0.574047940347187
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.1,
+      "xy": [
+        [
+          -4.134115582193027,
+          2.489015979706687
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.0433631577534994,
+        12.92259447093163
+      ],
+      "speed": [
+        2.239372120278167,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.23999999999999996
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        0.4978589837643099
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        26.602894041572107,
+        0.564634962979257
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.2,
+      "xy": [
+        [
+          -4.32218277369528,
+          2.5075493732723295
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.0433631577535,
+        12.970034821476105
+      ],
+      "speed": [
+        1.6574224711805758,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.34
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        0.4518345350231101
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        29.2562284033063,
+        0.4998374598938677
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.3,
+      "xy": [
+        [
+          -4.452740946299419,
+          2.5204154451095038
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.043363157753501,
+        13.009646667954632
+      ],
+      "speed": [
+        1.0829414143791078,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.4400000000000001
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        0.0,
+        0.35176069768469986
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        31.398990785175908,
+        0.3730082198237704
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.4,
+      "xy": [
+        [
+          -4.527040228977583,
+          2.5277373912529
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.043363157753497,
+        13.036282868975118
+      ],
+      "speed": [
+        0.5261671360663563,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.5400000000000001
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        -2.6645352591003757e-13,
+        0.20443735179469513
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        32.748564826184314,
+        0.19644036009604746
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.5,
+      "xy": [
+        [
+          -4.549736378690536,
+          2.5299740210004646
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.043363157753615,
+        13.046891324430934
+      ],
+      "speed": [
+        0.056380665669370916,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.6400000000000002
+      ],
+      "modes": [
+        "ADVANCE",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        7.105427357601002e-12,
+        0.04323269307979771
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        33.18159286713483,
+        0.021648676282513542
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 1,
+      "exec_skill": "PEEK_BURST",
+      "plan_node": 1,
+      "skill_phase": "approach",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.6,
+      "xy": [
+        [
+          -4.5499868651282975,
+          2.529998705602265
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.191592653589793,
+        13.0473535643349
+      ],
+      "speed": [
+        0.0,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.7400000000000003
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        0.0
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        24.69350407570713,
+        0.0
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 2,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.7,
+      "xy": [
+        [
+          -4.5499868651282975,
+          2.529998705602265
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.441592653589792,
+        13.0473535643349
+      ],
+      "speed": [
+        0.0,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.8400000000000004
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        0.0
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        10.369559197436548,
+        0.0
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 2,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.8,
+      "xy": [
+        [
+          -4.5499868651282975,
+          2.529998705602265
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.691592653589791,
+        13.0473535643349
+      ],
+      "speed": [
+        0.0,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        0.9400000000000005
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        0.0
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        -3.954385680833931,
+        0.0
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 2,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    },
+    {
+      "t": 6.86,
+      "xy": [
+        [
+          -4.5499868651282975,
+          2.529998705602265
+        ],
+        [
+          -5.996971795187823,
+          1.7748739219068466
+        ]
+      ],
+      "yaw": [
+        3.8415926535897906,
+        13.0473535643349
+      ],
+      "speed": [
+        0.0,
+        0.0
+      ],
+      "visible": [
+        true,
+        true
+      ],
+      "aim": [
+        0.0,
+        1.0000000000000004
+      ],
+      "modes": [
+        "FOLLOW_PATH",
+        "AIM"
+      ],
+      "smoke": [],
+      "omega": [
+        2.499999999999991,
+        0.0
+      ],
+      "requested_fire": [
+        false,
+        true
+      ],
+      "aim_error_degrees": [
+        -12.548752607796299,
+        0.0
+      ],
+      "lock_geometry_valid": [
+        false,
+        true
+      ],
+      "lock_valid": [
+        false,
+        true
+      ],
+      "posture": "upright",
+      "posture_target": "upright",
+      "representative_heights": [
+        0.4,
+        1.05
+      ],
+      "cooldown_remaining": 0.0,
+      "smoke_remaining": 1,
+      "human_disabled_remaining": 0.0,
+      "llm_decision": 2,
+      "exec_skill": "FOLLOW_ROUTE",
+      "plan_node": 0,
+      "skill_phase": "start",
+      "peek_cycle": 0,
+      "peek_exposure_estimate": 0.0
+    }
+  ]
+}

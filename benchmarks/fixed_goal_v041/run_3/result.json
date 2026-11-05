@@ -1,0 +1,49 @@
+{
+  "id": "deepseek_low_WC_v041",
+  "winner": "defender",
+  "reason": "tag",
+  "seconds": 14.66,
+  "first_detection": [
+    3.02,
+    3.02
+  ],
+  "smoke_used": 1,
+  "minimum_separation_m": 0.7006529410773256,
+  "minimum_wall_clearance_m": 0.447230566262099,
+  "collision_stop_ticks": [
+    139,
+    139
+  ],
+  "distance_m": [
+    16.16971791492743,
+    5.712599999999983
+  ],
+  "attacker_policy": "deepseek_flash_low",
+  "defender_policy": "patrol",
+  "yaw": 3.141592653589793,
+  "posture": "upright",
+  "condition": "peek_sequences_v04",
+  "layout": "WC",
+  "model_decisions": 4,
+  "route_build_seconds": 1.757087972946465,
+  "human_tags": 0,
+  "peek_bursts": 1,
+  "skill_event_count": 9,
+  "status": "complete",
+  "thinking_mode": "low",
+  "run": 3,
+  "usage": {
+    "prompt_tokens": 22129,
+    "completion_tokens": 16691,
+    "total_tokens": 38820,
+    "reasoning_tokens": 15600,
+    "calls": 4,
+    "usage_complete": true
+  },
+  "api_total_seconds": 114.22874803305604,
+  "api_median_seconds": 20.44861712952843,
+  "response_models": [
+    "deepseek-flash"
+  ],
+  "completion_mode": "unassisted"
+}

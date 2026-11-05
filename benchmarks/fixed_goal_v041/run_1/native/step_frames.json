@@ -1,0 +1,14 @@
+{
+  "0": {
+    "file": "steps/000.png",
+    "time": 0.0
+  },
+  "1": {
+    "file": "steps/001.png",
+    "time": 4.7
+  },
+  "2": {
+    "file": "steps/002.png",
+    "time": 8.38
+  }
+}

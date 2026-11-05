@@ -1,0 +1,27 @@
+{
+  "content": "{\"observation_id\":3,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":4,\"steps\":[{\"skill\":\"MOVE\",\"params\":{\"target\":\"GOAL\",\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"当前无合法检测，last_legal_memory为空；最近有效观测为6.5s前目标附近约[1.96,-4.59]，旧位不能当作当前真值；本次无peek候选。\",\"state_evidence\":\"自身位于[-0.28,-5.08]，距GOAL约2.12m，速度0，直立可用；剩余47.34s；smoke_remaining为0。\",\"decision_summary\":\"距离目标仅约2.12m且路径短，选择直立全速直奔GOAL；fire=off避免停稳瞄准，on_contact=continue确保遇接触仍优先入圈。\",\"uncertainty\":\"人形可能已在目标附近并先完成瞄准；直线路径暴露且无烟掩护；若被先标记或同时判定则失败。\"}}",
+  "tool_calls": [],
+  "usage": {
+    "prompt_tokens": 5237,
+    "completion_tokens": 2668,
+    "total_tokens": 7905,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2433
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 2805
+  },
+  "response_model": "deepseek-flash",
+  "response_id": "0d4672bf-c511-47c0-bd92-3df6658842fa",
+  "finish_reason": "stop",
+  "api_wall_seconds": 18.713454767945223,
+  "time_to_first_output_seconds": 1.413199258968234,
+  "time_to_first_visible_content_seconds": 17.61692444398068,
+  "reasoning_characters_received": 4328,
+  "reasoning_text_saved": false,
+  "api_started_utc": "2026-11-04T09:48:11.875855+00:00",
+  "api_finished_utc": "2026-11-04T09:48:30.589284+00:00"
+}

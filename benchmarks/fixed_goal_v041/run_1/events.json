@@ -1,0 +1,138 @@
+[
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 2.24,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 2.4,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 2.9,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 2.94,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 3.44,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 3.64,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 4.14,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 4.18,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 4.68,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 4.7,
+    "type": "mode",
+    "actor": 0,
+    "mode": "FOLLOW_PATH"
+  },
+  {
+    "time": 8.3,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 8.3,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 8.34,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 8.38,
+    "type": "smoke_cast_started",
+    "center": [
+      7.0,
+      -2.6
+    ]
+  },
+  {
+    "time": 8.38,
+    "type": "mode",
+    "actor": 0,
+    "mode": "THROW"
+  },
+  {
+    "time": 8.76,
+    "type": "smoke_released",
+    "center": [
+      7.0,
+      -2.6
+    ],
+    "radius": 2.0,
+    "height": 2.5,
+    "active_at": 9.16,
+    "expires_at": 14.16
+  },
+  {
+    "time": 8.78,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 8.98,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 9.16,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 11.6,
+    "type": "finish",
+    "winner": "attacker",
+    "reason": "goal"
+  }
+]

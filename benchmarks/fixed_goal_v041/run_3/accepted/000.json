@@ -1,0 +1,37 @@
+{
+  "action": {
+    "observation_id": 0,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 6,
+      "steps": [
+        {
+          "skill": "MOVE",
+          "params": {
+            "target": "WEST_HIDE",
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "retreat"
+        },
+        {
+          "skill": "PEEK_BURST",
+          "params": {
+            "candidate_id": "PK002",
+            "max_cycles": 2
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "仿真0秒初始态，无当前检测与旧记忆；仅知对手初始位置[5.8,-3.2]、自身[-9.8,1.5]、目标中心[1.8,-4.7]。",
+      "state_evidence": "自身直立、速度0、冷却0、烟1；目标半径1m，剩余60秒；公开路点WEST_HIDE距离约6.68m。",
+      "decision_summary": "先以直立高速到WEST_HIDE建立西侧掩体接近位，再用PK002短探获取东侧最新几何信息；途中若8m内发现人形立即撤回。",
+      "uncertainty": "对手可能已移动或巡逻，初始位置不是当前真值；PK002预测暴露约0.42秒，但静态假设非安全保证。"
+    }
+  },
+  "request_sha256": "479899f8f347e3ee121442bc296815a4bc499b88249540572ee0e788e3cf9d57",
+  "simulation_seconds": 0.0,
+  "normalization": null
+}

@@ -1,0 +1,27 @@
+{
+  "content": "{\"observation_id\":1,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":8,\"steps\":[{\"skill\":\"FOLLOW_ROUTE\",\"params\":{\"waypoints\":[\"WEST_LANE\",\"WEST_LOW_NORTH\",\"CENTRAL_WEST\"],\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"retreat\"},{\"skill\":\"FOLLOW_ROUTE\",\"params\":{\"waypoints\":[\"CENTRAL_EAST\"],\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"continue\"},{\"skill\":\"MOVE\",\"params\":{\"target\":\"GOAL\",\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"6.5秒最近合法敌位[1.965,-4.595]几乎位于目标中心，年龄0.42秒；其朝向约191度，主要面向西南，当前被LoadingHall遮挡。\",\"state_evidence\":\"自身在LoadingHall西侧掩体，目标距离约6.99米；烟投掷若越墙不可行，直接南侧突入会进入对手正面视野。\",\"decision_summary\":\"沿西侧公开路点绕到北侧，利用对手背后视野盲区经CENTRAL_EAST接近GOAL；首段遇8米内人形即撤回，后段继续进圈。\",\"uncertainty\":\"对手可能离开目标巡逻或转向；路线对未知移动并非绝对安全，但当前信息足够支持绕后，不需额外探身。\"}}",
+  "tool_calls": [],
+  "usage": {
+    "prompt_tokens": 6267,
+    "completion_tokens": 7965,
+    "total_tokens": 14232,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 7641
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 3835
+  },
+  "response_model": "deepseek-flash",
+  "response_id": "72e49e4e-16ac-48a8-ab33-76ee800c4188",
+  "finish_reason": "stop",
+  "api_wall_seconds": 54.618059006053954,
+  "time_to_first_output_seconds": 1.010793789057061,
+  "time_to_first_visible_content_seconds": 52.81380706210621,
+  "reasoning_characters_received": 12659,
+  "reasoning_text_saved": false,
+  "api_started_utc": "2026-11-04T09:46:55.460066+00:00",
+  "api_finished_utc": "2026-11-04T09:47:50.078093+00:00"
+}

@@ -1,0 +1,27 @@
+{
+  "content": "{\n  \"observation_id\": 1,\n  \"skill\": \"PLAN\",\n  \"params\": {\n    \"horizon_seconds\": 8,\n    \"steps\": [\n      {\n        \"skill\": \"FOLLOW_ROUTE\",\n        \"params\": {\n          \"waypoints\": [\"CENTRAL_SOUTH\", \"WEST_HIDE\", \"WEST_LANE\", \"GOAL\"],\n          \"posture\": \"upright\",\n          \"fire\": \"off\"\n        },\n        \"on_contact\": \"continue\"\n      }\n    ]\n  },\n  \"assessment\": {\n    \"observation_evidence\": \"当前合法检测到人形位于[-5.997,1.775]，距自身约1.63m，近距且在其前向视野内；自身静止在WestWarehouse东南侧，存在被瞄准风险。\",\n    \"state_evidence\": \"剩余53.42秒，目标在[-10.1,1.1]；自身速度0、冷却0、烟1；人形已知初始位[-6.3,-2.8]，当前已北移约4.5m，南侧绕行可利用其初始位与北侧位置差。\",\n    \"decision_summary\": \"立即以直立高速向东南脱离近距视线，经CENTRAL_SOUTH、WEST_HIDE、WEST_LANE从南侧绕向GOAL；不停稳开火，避免在1.6m处对枪。\",\n    \"uncertainty\": \"人形当前是否已开始锁定、后续巡逻路径未知；远路绕行增加时间但降低穿过其当前位置的暴露；末端仍需底层依据实时几何继续执行。\"\n  }\n}",
+  "tool_calls": [],
+  "usage": {
+    "prompt_tokens": 5935,
+    "completion_tokens": 6613,
+    "total_tokens": 12548,
+    "prompt_tokens_details": {
+      "cached_tokens": 2432
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6257
+    },
+    "prompt_cache_hit_tokens": 2432,
+    "prompt_cache_miss_tokens": 3503
+  },
+  "response_model": "deepseek-flash",
+  "response_id": "bcdea87b-d3b7-4a3c-acbb-a80070ef5d80",
+  "finish_reason": "stop",
+  "api_wall_seconds": 45.129258104017936,
+  "time_to_first_output_seconds": 0.7714057270204648,
+  "time_to_first_visible_content_seconds": 43.20456691796426,
+  "reasoning_characters_received": 10470,
+  "reasoning_text_saved": false,
+  "api_started_utc": "2026-11-04T09:45:45.551577+00:00",
+  "api_finished_utc": "2026-11-04T09:46:30.680820+00:00"
+}

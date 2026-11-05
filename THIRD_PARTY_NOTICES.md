@@ -17,3 +17,5 @@
 PBR 单项来源与文件哈希见 `assets/pbr_manifest.json`。贴图变更需同步审核清单；不能只改 URL 让程序默默下载另一份素材。
 
 兼容性补丁 `patches/isaaclab-v2.3.2-starlette.patch` 仅修改上游安装依赖的版本约束。其上下文来自指定 Isaac Lab 版本；使用者应保留上游的许可证和版权通知。
+
+`benchmarks/fixed_goal_v041/run_*/native/*.png`、`native/steps/*.png` 和 `demo.gif` 是本项目在 Isaac Sim 中生成的固定目标比赛回放，使用上述素材；本发布不分发这些第三方的原始 USD、URDF、mesh 或贴图。渲染辅助代码只是项目自身的场景装配逻辑。
