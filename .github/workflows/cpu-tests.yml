@@ -25,3 +25,5 @@ jobs:
         run: python benchmarks/fixed_goal_v041/benchmark.py audit
       - name: Replay all three fixed-goal games without API calls
         run: python benchmarks/fixed_goal_v041/benchmark.py replay --output .arena-workspace/ci-fixed-goal
+      - name: Verify six-game lightweight showcase integrity (no API / Isaac)
+        run: python benchmarks/fixed_goal_v05_showcase/verify.py

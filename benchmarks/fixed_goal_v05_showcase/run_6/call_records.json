@@ -1,0 +1,56 @@
+[
+  {
+    "content": "{\"observation_id\":0,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":6,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK000\",\"max_cycles\":1},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"仿真0秒无当前检测，仅有初始敌位(5.8,-3.2)与初始自身位。\",\"state_evidence\":\"自身在SPAWN，直立、静止、冷却0、烟1；PK000接近暴露估计0m。\",\"decision_summary\":\"当前敌情未知，先到EntryRoom东侧掩体PK000低成本探身获取信息，完成即重评。\",\"uncertainty\":\"旧敌位非当前真值；接近与探身仍可能被移动中的人形发现。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 5896,
+      "completion_tokens": 941,
+      "total_tokens": 6837,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 765
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 3976
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "a1bce9ad-1037-4645-9220-6e1d0f51d6a0",
+    "finish_reason": "stop",
+    "api_wall_seconds": 7.903232848038897,
+    "time_to_first_output_seconds": 1.4660361290443689,
+    "time_to_first_visible_content_seconds": 6.908323985990137,
+    "reasoning_characters_received": 1415,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:24:24.350952+00:00",
+    "api_finished_utc": "2026-11-05T07:24:32.254166+00:00"
+  },
+  {
+    "content": "{\"observation_id\":1,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":6,\"steps\":[{\"skill\":\"FOLLOW_CANDIDATE\",\"params\":{\"route_id\":\"R01_04\",\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"当前合法检测人形于(2.74,-4.41)，朝向西偏南约181°，距我约10.3m，超出8m射程；运动估计向西南约(-0.91,-0.36)m/s。\",\"state_evidence\":\"我在(-7.53,-4.65)，直立，速度0，烟剩余1，标记冷却0，剩余56.32s；R01_04预测烟0.78s生效并持续至5.78s。\",\"decision_summary\":\"选R01_04先向(-2.53,-4.53)投烟再直立直冲GOAL，不主动停下开火，遇8m内敌情不撤，争取在烟有效期与1s瞄准窗口内入圈。\",\"uncertainty\":\"人形继续西南移动可能缩短距离或进入烟区；静态风险估计不保证安全，出烟后最后约2m仍可能暴露。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 6989,
+      "completion_tokens": 2272,
+      "total_tokens": 9261,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2002
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 4429
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "bb8463b3-a0e1-4adf-943d-1f9ce93e2eec",
+    "finish_reason": "stop",
+    "api_wall_seconds": 17.68593607703224,
+    "time_to_first_output_seconds": 1.0950638089561835,
+    "time_to_first_visible_content_seconds": 16.168599106022157,
+    "reasoning_characters_received": 3060,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:24:35.364662+00:00",
+    "api_finished_utc": "2026-11-05T07:24:53.050581+00:00"
+  }
+]

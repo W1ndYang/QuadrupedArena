@@ -1,0 +1,60 @@
+[
+  {
+    "time": 0.0,
+    "type": "plan_accepted",
+    "decision": 0,
+    "nodes": 1,
+    "horizon": 6
+  },
+  {
+    "time": 0.0,
+    "type": "peek_selected",
+    "candidate": "PK000",
+    "home": [
+      -7.53,
+      -4.65
+    ],
+    "out": [
+      -7.53,
+      -4.95
+    ]
+  },
+  {
+    "time": 3.66,
+    "type": "peek_rejected",
+    "reason": "home_exposed_to_latest_legal_track",
+    "candidate": "PK000"
+  },
+  {
+    "time": 3.66,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "PEEK_BURST",
+    "reason": "unsafe_home"
+  },
+  {
+    "time": 3.68,
+    "type": "plan_accepted",
+    "decision": 1,
+    "nodes": 1,
+    "horizon": 6
+  },
+  {
+    "time": 3.68,
+    "type": "route_selected",
+    "route_id": "R01_04",
+    "description": "沿 direct；先投烟再推进",
+    "length_m": 9.33,
+    "resume": false
+  },
+  {
+    "time": 7.62,
+    "type": "blocked_recovery_started",
+    "target": [
+      -0.4797009238563846,
+      -4.687782681830073
+    ],
+    "source": "own_traveled_path_and_collision_feedback",
+    "collision_count": 8
+  }
+]

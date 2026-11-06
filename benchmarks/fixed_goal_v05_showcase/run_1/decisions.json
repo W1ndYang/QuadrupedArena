@@ -1,0 +1,2276 @@
+[
+  {
+    "observation_id": 0,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 5,
+      "steps": [
+        {
+          "skill": "PEEK_BURST",
+          "params": {
+            "candidate_id": "PK000",
+            "max_cycles": 1
+          },
+          "on_contact": "retreat"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "初始位于SPAWN，当前无合法检测，仅有对手初始位置记忆；目标位于东侧[10.1,-0.8]。",
+      "state_evidence": "PK000接近路程3.89m、预测暴露约0.44s，低位墙线可先确认东向威胁；自身满烟、冷却0。",
+      "decision_summary": "先执行一次低成本掩体探身，确认人形当前是否仍在东路及运动趋势，再规划绕行或突击路线。",
+      "uncertainty": "对手可能已离开初始位置；探身预测基于静止假设，不保证绝对安全；探身后需重新评估路线。"
+    },
+    "simulation_seconds": 0.0,
+    "public_observation": {
+      "observation_id": 0,
+      "simulation_seconds": 0.0,
+      "decision_trigger": "initial",
+      "self_state": {
+        "position": [
+          -5.8,
+          -1.0
+        ],
+        "yaw": 0.0,
+        "speed": 0.0,
+        "tag_cooldown_remaining": 0.0,
+        "posture": "upright",
+        "posture_target": "upright",
+        "height": 0.4,
+        "transition_remaining": 0.0,
+        "smoke_remaining": 1,
+        "execution_feedback": "initial",
+        "collision_stop_ticks": 0,
+        "recovery_count": 0
+      },
+      "current_detection": null,
+      "last_legal_memory": null,
+      "track_source": "initial_only",
+      "sensor_samples_since_previous_decision": [
+        [
+          0.0,
+          null
+        ]
+      ],
+      "full_legal_sample_count": 1,
+      "motion_estimate": null,
+      "goal": {
+        "center": [
+          10.1,
+          -0.8
+        ],
+        "radius": 1.0
+      },
+      "remaining_seconds": 60.0,
+      "route_options": [
+        {
+          "target": "GOAL",
+          "path_m": 18.34,
+          "cruise_time_upright_s": 5.73,
+          "cruise_time_low_s": 15.29,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "SOUTH_ENTRY",
+          "path_m": 12.92,
+          "cruise_time_upright_s": 4.04,
+          "cruise_time_low_s": 10.77,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "EAST_LOW_SOUTH",
+          "path_m": 14.56,
+          "cruise_time_upright_s": 4.55,
+          "cruise_time_low_s": 12.14,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "EAST_COURT_WEST",
+          "path_m": 15.47,
+          "cruise_time_upright_s": 4.83,
+          "cruise_time_low_s": 12.89,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "NORTH_WINDOW",
+          "path_m": 14.45,
+          "cruise_time_upright_s": 4.52,
+          "cruise_time_low_s": 12.04,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_NORTH",
+          "path_m": 7.23,
+          "cruise_time_upright_s": 2.26,
+          "cruise_time_low_s": 6.03,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_SOUTH",
+          "path_m": 6.03,
+          "cruise_time_upright_s": 1.89,
+          "cruise_time_low_s": 5.03,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "WEST_HIDE",
+          "path_m": 2.3,
+          "cruise_time_upright_s": 0.72,
+          "cruise_time_low_s": 1.92,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "SPAWN",
+          "path_m": 0.0,
+          "cruise_time_upright_s": 0.0,
+          "cruise_time_low_s": 0.0,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "WEST_LANE",
+          "path_m": 4.59,
+          "cruise_time_upright_s": 1.43,
+          "cruise_time_low_s": 3.82,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "WEST_LOW_NORTH",
+          "path_m": 3.07,
+          "cruise_time_upright_s": 0.96,
+          "cruise_time_low_s": 2.56,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_WEST",
+          "path_m": 7.66,
+          "cruise_time_upright_s": 2.39,
+          "cruise_time_low_s": 6.38,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_EAST",
+          "path_m": 10.27,
+          "cruise_time_upright_s": 3.21,
+          "cruise_time_low_s": 8.56,
+          "exposure_length_at_last_known": null
+        }
+      ],
+      "smoke_suggestions": [
+        [
+          -5.8,
+          -3.3
+        ],
+        [
+          -5.8,
+          -1.0
+        ],
+        [
+          -10.2,
+          -2.3
+        ],
+        [
+          -7.5,
+          1.1
+        ]
+      ],
+      "peek_candidates": [
+        {
+          "id": "PK000",
+          "wall": "LoadingHall",
+          "side": "W",
+          "home": [
+            -4.47,
+            -4.65
+          ],
+          "out": [
+            -4.47,
+            -4.95
+          ],
+          "expected_threat": [
+            6.2,
+            -2.7
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 3.89,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.44,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK001",
+          "wall": "EntryRoom",
+          "side": "E",
+          "home": [
+            -7.53,
+            -5.25
+          ],
+          "out": [
+            -7.53,
+            -5.55
+          ],
+          "expected_threat": [
+            6.2,
+            -2.7
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 4.59,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.38,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK002",
+          "wall": "LoadingHall",
+          "side": "W",
+          "home": [
+            -4.47,
+            -6.15
+          ],
+          "out": [
+            -4.47,
+            -5.85
+          ],
+          "expected_threat": [
+            6.2,
+            -2.7
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 5.32,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.46,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK003",
+          "wall": "SouthHighWall",
+          "side": "W",
+          "home": [
+            -0.32,
+            -3.8
+          ],
+          "out": [
+            -0.32,
+            -4.1
+          ],
+          "expected_threat": [
+            6.2,
+            -2.7
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 6.87,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.42,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK004",
+          "wall": "SouthHighWall",
+          "side": "E",
+          "home": [
+            1.02,
+            -2.4
+          ],
+          "out": [
+            1.02,
+            -2.7
+          ],
+          "expected_threat": [
+            6.2,
+            -2.7
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 10.02,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.56,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK005",
+          "wall": "EntryRoom",
+          "side": "E",
+          "home": [
+            -7.53,
+            -7.05
+          ],
+          "out": [
+            -7.53,
+            -6.75
+          ],
+          "expected_threat": [
+            6.2,
+            -2.7
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 6.29,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.52,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        }
+      ],
+      "recent_skill_events": [],
+      "recent_bursts": [],
+      "model_call_behind_known_cover": true,
+      "cover_assessment_observation_age": 0.0,
+      "execution_repairs": {
+        "peek_approach_guard": true,
+        "blocked_recovery": true,
+        "humanoid_exact_path": true
+      }
+    }
+  },
+  {
+    "observation_id": 1,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 8,
+      "steps": [
+        {
+          "skill": "FOLLOW_ROUTE",
+          "params": {
+            "waypoints": [
+              "CENTRAL_NORTH",
+              "CENTRAL_EAST",
+              "EAST_COURT_WEST"
+            ],
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "retreat"
+        },
+        {
+          "skill": "SMOKE_AND_MOVE",
+          "params": {
+            "location": [
+              10.1,
+              -0.8
+            ],
+            "target": "GOAL",
+            "posture": "upright"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "obs_id=1，t=3.46，PK000探身完成但有效样本0；当前无detection、无last_legal_memory，peek_candidates为空。",
+      "state_evidence": "自位[-4.47,-4.65]直立静止，剩56.54s；绿目标[10.1,-0.8]半径1m；烟剩余1。",
+      "decision_summary": "先经CENTRAL_NORTH、CENTRAL_EAST绕北侧接近EAST_COURT_WEST，途中遇8m内合法人形即撤回；到达后用烟覆盖公开目标中心并进入GOAL。",
+      "uncertainty": "人形当前位置未知，初始[6.2,-2.7]仅为旧信息；中央/东侧仍可能暴露，投烟可行性与途中遮挡需实际执行确认。"
+    },
+    "simulation_seconds": 3.46,
+    "public_observation": {
+      "observation_id": 1,
+      "simulation_seconds": 3.46,
+      "decision_trigger": "peek_completed_in_cover",
+      "self_state": {
+        "position": [
+          -4.470007872290726,
+          -4.649982229023053
+        ],
+        "yaw": -1.5707700873801511,
+        "speed": 0.0,
+        "tag_cooldown_remaining": 0.0,
+        "posture": "upright",
+        "posture_target": "upright",
+        "height": 0.4,
+        "transition_remaining": 0.0,
+        "smoke_remaining": 1,
+        "execution_feedback": "ROUTE_ACTIVE",
+        "collision_stop_ticks": 0,
+        "recovery_count": 0
+      },
+      "current_detection": null,
+      "last_legal_memory": null,
+      "track_source": "unknown",
+      "sensor_samples_since_previous_decision": [
+        [
+          0.02,
+          null
+        ],
+        [
+          0.08,
+          null
+        ],
+        [
+          0.14,
+          null
+        ],
+        [
+          0.2,
+          null
+        ],
+        [
+          0.26,
+          null
+        ],
+        [
+          0.32,
+          null
+        ],
+        [
+          0.38,
+          null
+        ],
+        [
+          0.44,
+          null
+        ],
+        [
+          0.5,
+          null
+        ],
+        [
+          0.56,
+          null
+        ],
+        [
+          0.62,
+          null
+        ],
+        [
+          0.68,
+          null
+        ],
+        [
+          0.74,
+          null
+        ],
+        [
+          0.8,
+          null
+        ],
+        [
+          0.86,
+          null
+        ],
+        [
+          0.92,
+          null
+        ],
+        [
+          0.98,
+          null
+        ],
+        [
+          1.04,
+          null
+        ],
+        [
+          1.1,
+          null
+        ],
+        [
+          1.16,
+          null
+        ],
+        [
+          1.22,
+          null
+        ],
+        [
+          1.28,
+          null
+        ],
+        [
+          1.34,
+          null
+        ],
+        [
+          1.4,
+          null
+        ],
+        [
+          1.46,
+          null
+        ],
+        [
+          1.52,
+          null
+        ],
+        [
+          1.58,
+          null
+        ],
+        [
+          1.64,
+          null
+        ],
+        [
+          1.7,
+          null
+        ],
+        [
+          1.76,
+          null
+        ],
+        [
+          1.82,
+          null
+        ],
+        [
+          1.88,
+          null
+        ],
+        [
+          1.94,
+          null
+        ],
+        [
+          2.0,
+          null
+        ],
+        [
+          2.06,
+          null
+        ],
+        [
+          2.12,
+          null
+        ],
+        [
+          2.18,
+          null
+        ],
+        [
+          2.24,
+          null
+        ],
+        [
+          2.3,
+          null
+        ],
+        [
+          2.36,
+          null
+        ],
+        [
+          2.42,
+          null
+        ],
+        [
+          2.48,
+          null
+        ],
+        [
+          2.54,
+          null
+        ],
+        [
+          2.6,
+          null
+        ],
+        [
+          2.66,
+          null
+        ],
+        [
+          2.72,
+          null
+        ],
+        [
+          2.78,
+          null
+        ],
+        [
+          2.84,
+          null
+        ],
+        [
+          2.9,
+          null
+        ],
+        [
+          2.96,
+          null
+        ],
+        [
+          3.02,
+          null
+        ],
+        [
+          3.08,
+          null
+        ],
+        [
+          3.14,
+          null
+        ],
+        [
+          3.2,
+          null
+        ],
+        [
+          3.26,
+          null
+        ],
+        [
+          3.32,
+          null
+        ],
+        [
+          3.38,
+          null
+        ],
+        [
+          3.44,
+          null
+        ],
+        [
+          3.46,
+          null
+        ]
+      ],
+      "full_legal_sample_count": 173,
+      "motion_estimate": null,
+      "goal": {
+        "center": [
+          10.1,
+          -0.8
+        ],
+        "radius": 1.0
+      },
+      "remaining_seconds": 56.54,
+      "route_options": [
+        {
+          "target": "GOAL",
+          "path_m": 15.54,
+          "cruise_time_upright_s": 4.86,
+          "cruise_time_low_s": 12.95,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "SOUTH_ENTRY",
+          "path_m": 10.07,
+          "cruise_time_upright_s": 3.15,
+          "cruise_time_low_s": 8.39,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "EAST_LOW_SOUTH",
+          "path_m": 11.84,
+          "cruise_time_upright_s": 3.7,
+          "cruise_time_low_s": 9.87,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "EAST_COURT_WEST",
+          "path_m": 13.52,
+          "cruise_time_upright_s": 4.23,
+          "cruise_time_low_s": 11.27,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "NORTH_WINDOW",
+          "path_m": 13.69,
+          "cruise_time_upright_s": 4.28,
+          "cruise_time_low_s": 11.41,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_NORTH",
+          "path_m": 8.41,
+          "cruise_time_upright_s": 2.63,
+          "cruise_time_low_s": 7.01,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_SOUTH",
+          "path_m": 2.97,
+          "cruise_time_upright_s": 0.93,
+          "cruise_time_low_s": 2.48,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "WEST_HIDE",
+          "path_m": 1.9,
+          "cruise_time_upright_s": 0.59,
+          "cruise_time_low_s": 1.58,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "SPAWN",
+          "path_m": 3.9,
+          "cruise_time_upright_s": 1.22,
+          "cruise_time_low_s": 3.25,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "WEST_LANE",
+          "path_m": 6.19,
+          "cruise_time_upright_s": 1.94,
+          "cruise_time_low_s": 5.16,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "WEST_LOW_NORTH",
+          "path_m": 6.98,
+          "cruise_time_upright_s": 2.18,
+          "cruise_time_low_s": 5.81,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_WEST",
+          "path_m": 7.51,
+          "cruise_time_upright_s": 2.35,
+          "cruise_time_low_s": 6.26,
+          "exposure_length_at_last_known": null
+        },
+        {
+          "target": "CENTRAL_EAST",
+          "path_m": 9.87,
+          "cruise_time_upright_s": 3.09,
+          "cruise_time_low_s": 8.23,
+          "exposure_length_at_last_known": null
+        }
+      ],
+      "smoke_suggestions": [
+        [
+          -1.5,
+          -4.6
+        ],
+        [
+          -5.8,
+          -3.3
+        ],
+        [
+          -5.8,
+          -1.0
+        ]
+      ],
+      "peek_candidates": [],
+      "recent_skill_events": [
+        {
+          "time": 0.0,
+          "type": "plan_accepted",
+          "decision": 0,
+          "nodes": 1,
+          "horizon": 5
+        },
+        {
+          "time": 0.0,
+          "type": "peek_selected",
+          "candidate": "PK000",
+          "home": [
+            -4.47,
+            -4.65
+          ],
+          "out": [
+            -4.47,
+            -4.95
+          ]
+        },
+        {
+          "time": 2.4,
+          "type": "peek_burst_started",
+          "cycle": 1,
+          "source": "stale_plan_hypothesis",
+          "assumption_age": 2.4,
+          "predicted_exposure": 0.44
+        },
+        {
+          "time": 3.44,
+          "type": "peek_burst_completed",
+          "cycle": 1,
+          "candidate": "PK000",
+          "max_estimated_exposure": 0.4,
+          "samples": 0,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": null,
+          "last_sample": null
+        },
+        {
+          "time": 3.44,
+          "type": "node_completed",
+          "node": 0,
+          "skill": "PEEK_BURST",
+          "reason": "observation_complete"
+        }
+      ],
+      "recent_bursts": [
+        {
+          "start": 2.4,
+          "end": 3.44,
+          "cycle": 1,
+          "candidate": "PK000",
+          "max_estimated_exposure": 0.4,
+          "samples": 0,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": null,
+          "last_sample": null
+        }
+      ],
+      "model_call_behind_known_cover": false,
+      "cover_assessment_observation_age": null,
+      "execution_repairs": {
+        "peek_approach_guard": true,
+        "blocked_recovery": true,
+        "humanoid_exact_path": true
+      }
+    }
+  },
+  {
+    "observation_id": 2,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 5,
+      "steps": [
+        {
+          "skill": "PEEK_BURST",
+          "params": {
+            "candidate_id": "PK006",
+            "max_cycles": 1
+          },
+          "on_contact": "retreat"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "自机静止于[4.8,1.6]；最近合法记忆人形[6.096,-2.57]，9.66秒更新，当前无检测；PK006接近暴露0，预测探身暴露0.44秒。",
+      "state_evidence": "剩余50.2秒，烟1枚，标记冷却0；到目标约5.8米，仍需先确认人形动态。",
+      "decision_summary": "先利用EastStore北侧PK006进行低成本单次探身，确认人形当前位置与运动趋势；完成后重新规划进圈或烟突进路线。",
+      "uncertainty": "人形可能已离开最后位置或正监视该区域；探身预测假设其暂时静止，不构成绝对安全保证。"
+    },
+    "simulation_seconds": 9.8,
+    "public_observation": {
+      "observation_id": 2,
+      "simulation_seconds": 9.8,
+      "decision_trigger": "retreated_to_known_cover",
+      "self_state": {
+        "position": [
+          4.800000000000001,
+          1.6
+        ],
+        "yaw": 0.32121603901085505,
+        "speed": 0.0,
+        "tag_cooldown_remaining": 0.0,
+        "posture": "upright",
+        "posture_target": "upright",
+        "height": 0.4,
+        "transition_remaining": 0.0,
+        "smoke_remaining": 1,
+        "execution_feedback": "ROUTE_ACTIVE",
+        "collision_stop_ticks": 0,
+        "recovery_count": 0
+      },
+      "current_detection": null,
+      "last_legal_memory": {
+        "position": [
+          6.095658794121763,
+          -2.5695734926478724
+        ],
+        "yaw": 24.754796326794594,
+        "last_seen": 9.66
+      },
+      "track_source": "memory",
+      "sensor_samples_since_previous_decision": [
+        [
+          3.48,
+          null
+        ],
+        [
+          3.58,
+          null
+        ],
+        [
+          3.68,
+          null
+        ],
+        [
+          3.78,
+          null
+        ],
+        [
+          3.88,
+          null
+        ],
+        [
+          3.98,
+          null
+        ],
+        [
+          4.08,
+          null
+        ],
+        [
+          4.18,
+          null
+        ],
+        [
+          4.28,
+          null
+        ],
+        [
+          4.38,
+          null
+        ],
+        [
+          4.48,
+          null
+        ],
+        [
+          4.58,
+          null
+        ],
+        [
+          4.68,
+          null
+        ],
+        [
+          4.78,
+          null
+        ],
+        [
+          4.88,
+          null
+        ],
+        [
+          4.98,
+          null
+        ],
+        [
+          5.08,
+          null
+        ],
+        [
+          5.18,
+          null
+        ],
+        [
+          5.28,
+          null
+        ],
+        [
+          5.38,
+          null
+        ],
+        [
+          5.48,
+          null
+        ],
+        [
+          5.58,
+          null
+        ],
+        [
+          5.68,
+          null
+        ],
+        [
+          5.78,
+          null
+        ],
+        [
+          5.88,
+          null
+        ],
+        [
+          5.98,
+          null
+        ],
+        [
+          6.08,
+          null
+        ],
+        [
+          6.18,
+          null
+        ],
+        [
+          6.28,
+          null
+        ],
+        [
+          6.38,
+          null
+        ],
+        [
+          6.48,
+          null
+        ],
+        [
+          6.58,
+          null
+        ],
+        [
+          6.68,
+          null
+        ],
+        [
+          6.78,
+          null
+        ],
+        [
+          6.88,
+          null
+        ],
+        [
+          6.98,
+          null
+        ],
+        [
+          7.08,
+          null
+        ],
+        [
+          7.18,
+          null
+        ],
+        [
+          7.28,
+          null
+        ],
+        [
+          7.38,
+          null
+        ],
+        [
+          7.48,
+          null
+        ],
+        [
+          7.58,
+          null
+        ],
+        [
+          7.68,
+          null
+        ],
+        [
+          7.78,
+          null
+        ],
+        [
+          7.88,
+          null
+        ],
+        [
+          7.98,
+          null
+        ],
+        [
+          8.08,
+          null
+        ],
+        [
+          8.18,
+          null
+        ],
+        [
+          8.28,
+          null
+        ],
+        [
+          8.38,
+          null
+        ],
+        [
+          8.48,
+          null
+        ],
+        [
+          8.58,
+          null
+        ],
+        [
+          8.68,
+          null
+        ],
+        [
+          8.78,
+          null
+        ],
+        [
+          8.88,
+          null
+        ],
+        [
+          8.98,
+          null
+        ],
+        [
+          9.08,
+          null
+        ],
+        [
+          9.18,
+          null
+        ],
+        [
+          9.28,
+          null
+        ],
+        [
+          9.38,
+          null
+        ],
+        [
+          9.48,
+          null
+        ],
+        [
+          9.58,
+          null
+        ],
+        [
+          9.62,
+          null
+        ],
+        [
+          9.64,
+          [
+            6.086,
+            -2.557,
+            24.7068
+          ]
+        ],
+        [
+          9.66,
+          [
+            6.096,
+            -2.57,
+            24.7548
+          ]
+        ],
+        [
+          9.68,
+          null
+        ],
+        [
+          9.78,
+          null
+        ],
+        [
+          9.8,
+          null
+        ]
+      ],
+      "full_legal_sample_count": 317,
+      "motion_estimate": null,
+      "goal": {
+        "center": [
+          10.1,
+          -0.8
+        ],
+        "radius": 1.0
+      },
+      "remaining_seconds": 50.2,
+      "route_options": [
+        {
+          "target": "GOAL",
+          "path_m": 5.98,
+          "cruise_time_upright_s": 1.87,
+          "cruise_time_low_s": 4.98,
+          "exposure_length_at_last_known": 2.87
+        },
+        {
+          "target": "SOUTH_ENTRY",
+          "path_m": 6.62,
+          "cruise_time_upright_s": 2.07,
+          "cruise_time_low_s": 5.52,
+          "exposure_length_at_last_known": 6.21
+        },
+        {
+          "target": "EAST_LOW_SOUTH",
+          "path_m": 5.75,
+          "cruise_time_upright_s": 1.8,
+          "cruise_time_low_s": 4.79,
+          "exposure_length_at_last_known": 5.34
+        },
+        {
+          "target": "EAST_COURT_WEST",
+          "path_m": 2.22,
+          "cruise_time_upright_s": 0.69,
+          "cruise_time_low_s": 1.85,
+          "exposure_length_at_last_known": 1.86
+        },
+        {
+          "target": "NORTH_WINDOW",
+          "path_m": 1.86,
+          "cruise_time_upright_s": 0.58,
+          "cruise_time_low_s": 1.55,
+          "exposure_length_at_last_known": 1.4
+        },
+        {
+          "target": "CENTRAL_NORTH",
+          "path_m": 6.1,
+          "cruise_time_upright_s": 1.91,
+          "cruise_time_low_s": 5.08,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "CENTRAL_SOUTH",
+          "path_m": 10.37,
+          "cruise_time_upright_s": 3.24,
+          "cruise_time_low_s": 8.64,
+          "exposure_length_at_last_known": 0.45
+        },
+        {
+          "target": "WEST_HIDE",
+          "path_m": 12.86,
+          "cruise_time_upright_s": 4.02,
+          "cruise_time_low_s": 10.72,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "SPAWN",
+          "path_m": 13.32,
+          "cruise_time_upright_s": 4.16,
+          "cruise_time_low_s": 11.1,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "WEST_LANE",
+          "path_m": 17.26,
+          "cruise_time_upright_s": 5.39,
+          "cruise_time_low_s": 14.38,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "WEST_LOW_NORTH",
+          "path_m": 12.53,
+          "cruise_time_upright_s": 3.92,
+          "cruise_time_low_s": 10.45,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "CENTRAL_WEST",
+          "path_m": 6.11,
+          "cruise_time_upright_s": 1.91,
+          "cruise_time_low_s": 5.09,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "CENTRAL_EAST",
+          "path_m": 3.0,
+          "cruise_time_upright_s": 0.94,
+          "cruise_time_low_s": 2.5,
+          "exposure_length_at_last_known": 0.0
+        }
+      ],
+      "smoke_suggestions": [
+        [
+          10.1,
+          -0.8
+        ],
+        [
+          7.0,
+          -2.6
+        ],
+        [
+          6.1,
+          0.1
+        ],
+        [
+          5.9,
+          3.1
+        ],
+        [
+          1.8,
+          1.7
+        ]
+      ],
+      "peek_candidates": [
+        {
+          "id": "PK006",
+          "wall": "EastStore",
+          "side": "N",
+          "home": [
+            4.75,
+            1.47
+          ],
+          "out": [
+            5.05,
+            1.47
+          ],
+          "expected_threat": [
+            6.095658794121763,
+            -2.5695734926478724
+          ],
+          "observed_at": 9.66,
+          "created_at": 9.8,
+          "approach_m": 0.14,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.44,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK007",
+          "wall": "EastReturnScreen",
+          "side": "W",
+          "home": [
+            6.58,
+            -0.25
+          ],
+          "out": [
+            6.58,
+            0.05
+          ],
+          "expected_threat": [
+            6.095658794121763,
+            -2.5695734926478724
+          ],
+          "observed_at": 9.66,
+          "created_at": 9.8,
+          "approach_m": 2.72,
+          "approach_exposed_m": 2.15,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.42,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK008",
+          "wall": "Low2",
+          "side": "N",
+          "home": [
+            6.35,
+            -0.73
+          ],
+          "out": [
+            6.05,
+            -0.73
+          ],
+          "expected_threat": [
+            6.095658794121763,
+            -2.5695734926478724
+          ],
+          "observed_at": 9.66,
+          "created_at": 9.8,
+          "approach_m": 3.08,
+          "approach_exposed_m": 2.1,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.38,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK009",
+          "wall": "EastReturnScreen",
+          "side": "E",
+          "home": [
+            7.82,
+            1.95
+          ],
+          "out": [
+            7.82,
+            1.65
+          ],
+          "expected_threat": [
+            6.095658794121763,
+            -2.5695734926478724
+          ],
+          "observed_at": 9.66,
+          "created_at": 9.8,
+          "approach_m": 4.6,
+          "approach_exposed_m": 2.71,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.54,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK010",
+          "wall": "EastReturnScreen",
+          "side": "N",
+          "home": [
+            7.3,
+            3.07
+          ],
+          "out": [
+            7.0,
+            3.07
+          ],
+          "expected_threat": [
+            6.095658794121763,
+            -2.5695734926478724
+          ],
+          "observed_at": 9.66,
+          "created_at": 9.8,
+          "approach_m": 3.05,
+          "approach_exposed_m": 2.69,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.54,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK011",
+          "wall": "EastReturnScreen",
+          "side": "E",
+          "home": [
+            7.82,
+            -0.25
+          ],
+          "out": [
+            7.82,
+            0.05
+          ],
+          "expected_threat": [
+            6.095658794121763,
+            -2.5695734926478724
+          ],
+          "observed_at": 9.66,
+          "created_at": 9.8,
+          "approach_m": 3.63,
+          "approach_exposed_m": 2.65,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.42,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        }
+      ],
+      "recent_skill_events": [
+        {
+          "time": 0.0,
+          "type": "plan_accepted",
+          "decision": 0,
+          "nodes": 1,
+          "horizon": 5
+        },
+        {
+          "time": 0.0,
+          "type": "peek_selected",
+          "candidate": "PK000",
+          "home": [
+            -4.47,
+            -4.65
+          ],
+          "out": [
+            -4.47,
+            -4.95
+          ]
+        },
+        {
+          "time": 2.4,
+          "type": "peek_burst_started",
+          "cycle": 1,
+          "source": "stale_plan_hypothesis",
+          "assumption_age": 2.4,
+          "predicted_exposure": 0.44
+        },
+        {
+          "time": 3.44,
+          "type": "peek_burst_completed",
+          "cycle": 1,
+          "candidate": "PK000",
+          "max_estimated_exposure": 0.4,
+          "samples": 0,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": null,
+          "last_sample": null
+        },
+        {
+          "time": 3.44,
+          "type": "node_completed",
+          "node": 0,
+          "skill": "PEEK_BURST",
+          "reason": "observation_complete"
+        },
+        {
+          "time": 3.46,
+          "type": "plan_accepted",
+          "decision": 1,
+          "nodes": 2,
+          "horizon": 8
+        },
+        {
+          "time": 9.64,
+          "type": "interrupt",
+          "reason": "contact_guard",
+          "retreat_found": true,
+          "target": [
+            4.800000000000001,
+            1.6
+          ]
+        }
+      ],
+      "recent_bursts": [
+        {
+          "start": 2.4,
+          "end": 3.44,
+          "cycle": 1,
+          "candidate": "PK000",
+          "max_estimated_exposure": 0.4,
+          "samples": 0,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": null,
+          "last_sample": null
+        }
+      ],
+      "model_call_behind_known_cover": true,
+      "cover_assessment_observation_age": 0.14,
+      "execution_repairs": {
+        "peek_approach_guard": true,
+        "blocked_recovery": true,
+        "humanoid_exact_path": true
+      }
+    }
+  },
+  {
+    "observation_id": 3,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 5,
+      "steps": [
+        {
+          "skill": "SMOKE_AND_MOVE",
+          "params": {
+            "location": [
+              6.1,
+              0.1
+            ],
+            "target": "GOAL",
+            "posture": "upright"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "12.08-12.38s合法样本显示人形在[5.60,-1.50]附近，yaw约31°，向北移动；当前无合法检测，仍处EastStore北侧遮挡，目标距6.03m。",
+      "state_evidence": "自身在[4.75,1.47]停稳，冷却0，烟剩余1；剩余47.2s，烟建议含[6.1,0.1]且目标可投掷性被列出。",
+      "decision_summary": "向[6.1,0.1]投烟以覆盖/阻断最后已知人形区域，随后直立快速冲GOAL；途中合法见敌也不中止，优先进圈。",
+      "uncertainty": "人形真实位置与朝向未知，烟可能未完全遮住；若投掷被拒会保留烟并继续冲目标，存在暴露风险。"
+    },
+    "simulation_seconds": 12.8,
+    "public_observation": {
+      "observation_id": 3,
+      "simulation_seconds": 12.8,
+      "decision_trigger": "peek_completed_in_cover",
+      "self_state": {
+        "position": [
+          4.750000958099593,
+          1.4700024327492993
+        ],
+        "yaw": -8.109190229171892e-06,
+        "speed": 0.0,
+        "tag_cooldown_remaining": 0.0,
+        "posture": "upright",
+        "posture_target": "upright",
+        "height": 0.4,
+        "transition_remaining": 0.0,
+        "smoke_remaining": 1,
+        "execution_feedback": "ROUTE_ACTIVE",
+        "collision_stop_ticks": 0,
+        "recovery_count": 0
+      },
+      "current_detection": null,
+      "last_legal_memory": {
+        "position": [
+          5.615578976843146,
+          -1.4909471642882088
+        ],
+        "yaw": 31.282796326794358,
+        "last_seen": 12.38
+      },
+      "track_source": "memory",
+      "sensor_samples_since_previous_decision": [
+        [
+          9.82,
+          null
+        ],
+        [
+          9.88,
+          null
+        ],
+        [
+          9.94,
+          null
+        ],
+        [
+          10.0,
+          null
+        ],
+        [
+          10.06,
+          null
+        ],
+        [
+          10.12,
+          null
+        ],
+        [
+          10.18,
+          null
+        ],
+        [
+          10.24,
+          null
+        ],
+        [
+          10.3,
+          null
+        ],
+        [
+          10.36,
+          null
+        ],
+        [
+          10.42,
+          null
+        ],
+        [
+          10.48,
+          null
+        ],
+        [
+          10.54,
+          null
+        ],
+        [
+          10.6,
+          null
+        ],
+        [
+          10.66,
+          null
+        ],
+        [
+          10.72,
+          null
+        ],
+        [
+          10.78,
+          null
+        ],
+        [
+          10.84,
+          null
+        ],
+        [
+          10.9,
+          null
+        ],
+        [
+          10.96,
+          null
+        ],
+        [
+          11.02,
+          null
+        ],
+        [
+          11.08,
+          null
+        ],
+        [
+          11.14,
+          null
+        ],
+        [
+          11.2,
+          null
+        ],
+        [
+          11.26,
+          null
+        ],
+        [
+          11.32,
+          null
+        ],
+        [
+          11.38,
+          null
+        ],
+        [
+          11.44,
+          null
+        ],
+        [
+          11.5,
+          null
+        ],
+        [
+          11.56,
+          null
+        ],
+        [
+          11.62,
+          null
+        ],
+        [
+          11.68,
+          null
+        ],
+        [
+          11.74,
+          null
+        ],
+        [
+          11.8,
+          null
+        ],
+        [
+          11.86,
+          null
+        ],
+        [
+          11.92,
+          null
+        ],
+        [
+          11.98,
+          null
+        ],
+        [
+          12.04,
+          null
+        ],
+        [
+          12.06,
+          null
+        ],
+        [
+          12.08,
+          [
+            5.6,
+            -1.598,
+            30.5628
+          ]
+        ],
+        [
+          12.1,
+          [
+            5.601,
+            -1.596,
+            30.6108
+          ]
+        ],
+        [
+          12.16,
+          [
+            5.602,
+            -1.585,
+            30.7548
+          ]
+        ],
+        [
+          12.22,
+          [
+            5.605,
+            -1.568,
+            30.8988
+          ]
+        ],
+        [
+          12.28,
+          [
+            5.608,
+            -1.544,
+            31.0428
+          ]
+        ],
+        [
+          12.34,
+          [
+            5.612,
+            -1.514,
+            31.1868
+          ]
+        ],
+        [
+          12.38,
+          [
+            5.616,
+            -1.491,
+            31.2828
+          ]
+        ],
+        [
+          12.4,
+          null
+        ],
+        [
+          12.46,
+          null
+        ],
+        [
+          12.52,
+          null
+        ],
+        [
+          12.58,
+          null
+        ],
+        [
+          12.64,
+          null
+        ],
+        [
+          12.7,
+          null
+        ],
+        [
+          12.76,
+          null
+        ],
+        [
+          12.8,
+          null
+        ]
+      ],
+      "full_legal_sample_count": 150,
+      "motion_estimate": {
+        "estimate_xy_mps": [
+          0.053,
+          0.357
+        ],
+        "first_time": 12.08,
+        "last_time": 12.38,
+        "assumption": "Average across legal samples; not a future-motion guarantee."
+      },
+      "goal": {
+        "center": [
+          10.1,
+          -0.8
+        ],
+        "radius": 1.0
+      },
+      "remaining_seconds": 47.2,
+      "route_options": [
+        {
+          "target": "GOAL",
+          "path_m": 6.03,
+          "cruise_time_upright_s": 1.89,
+          "cruise_time_low_s": 5.03,
+          "exposure_length_at_last_known": 5.61
+        },
+        {
+          "target": "SOUTH_ENTRY",
+          "path_m": 6.65,
+          "cruise_time_upright_s": 2.08,
+          "cruise_time_low_s": 5.54,
+          "exposure_length_at_last_known": 6.23
+        },
+        {
+          "target": "EAST_LOW_SOUTH",
+          "path_m": 5.78,
+          "cruise_time_upright_s": 1.81,
+          "cruise_time_low_s": 4.81,
+          "exposure_length_at_last_known": 5.35
+        },
+        {
+          "target": "EAST_COURT_WEST",
+          "path_m": 2.25,
+          "cruise_time_upright_s": 0.7,
+          "cruise_time_low_s": 1.87,
+          "exposure_length_at_last_known": 1.82
+        },
+        {
+          "target": "NORTH_WINDOW",
+          "path_m": 1.99,
+          "cruise_time_upright_s": 0.62,
+          "cruise_time_low_s": 1.66,
+          "exposure_length_at_last_known": 1.5
+        },
+        {
+          "target": "CENTRAL_NORTH",
+          "path_m": 6.06,
+          "cruise_time_upright_s": 1.89,
+          "cruise_time_low_s": 5.05,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "CENTRAL_SOUTH",
+          "path_m": 10.39,
+          "cruise_time_upright_s": 3.25,
+          "cruise_time_low_s": 8.66,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "WEST_HIDE",
+          "path_m": 12.89,
+          "cruise_time_upright_s": 4.03,
+          "cruise_time_low_s": 10.74,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "SPAWN",
+          "path_m": 13.22,
+          "cruise_time_upright_s": 4.13,
+          "cruise_time_low_s": 11.02,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "WEST_LANE",
+          "path_m": 17.21,
+          "cruise_time_upright_s": 5.38,
+          "cruise_time_low_s": 14.34,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "WEST_LOW_NORTH",
+          "path_m": 12.48,
+          "cruise_time_upright_s": 3.9,
+          "cruise_time_low_s": 10.4,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "CENTRAL_WEST",
+          "path_m": 6.06,
+          "cruise_time_upright_s": 1.89,
+          "cruise_time_low_s": 5.05,
+          "exposure_length_at_last_known": 0.0
+        },
+        {
+          "target": "CENTRAL_EAST",
+          "path_m": 2.96,
+          "cruise_time_upright_s": 0.92,
+          "cruise_time_low_s": 2.47,
+          "exposure_length_at_last_known": 0.0
+        }
+      ],
+      "smoke_suggestions": [
+        [
+          10.1,
+          -0.8
+        ],
+        [
+          6.1,
+          0.1
+        ],
+        [
+          5.9,
+          3.1
+        ],
+        [
+          1.8,
+          1.7
+        ]
+      ],
+      "peek_candidates": [
+        {
+          "id": "PK012",
+          "wall": "EastStore",
+          "side": "N",
+          "home": [
+            4.85,
+            1.47
+          ],
+          "out": [
+            5.15,
+            1.47
+          ],
+          "expected_threat": [
+            5.615578976843146,
+            -1.4909471642882088
+          ],
+          "observed_at": 12.38,
+          "created_at": 12.8,
+          "approach_m": 0.1,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.56,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK013",
+          "wall": "EastReturnScreen",
+          "side": "E",
+          "home": [
+            7.82,
+            1.35
+          ],
+          "out": [
+            7.82,
+            1.05
+          ],
+          "expected_threat": [
+            5.615578976843146,
+            -1.4909471642882088
+          ],
+          "observed_at": 12.38,
+          "created_at": 12.8,
+          "approach_m": 4.81,
+          "approach_exposed_m": 4.24,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.5,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK014",
+          "wall": "EastReturnScreen",
+          "side": "N",
+          "home": [
+            7.4,
+            3.07
+          ],
+          "out": [
+            7.1,
+            3.07
+          ],
+          "expected_threat": [
+            5.615578976843146,
+            -1.4909471642882088
+          ],
+          "observed_at": 12.38,
+          "created_at": 12.8,
+          "approach_m": 3.26,
+          "approach_exposed_m": 2.82,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.5,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK015",
+          "wall": "EastFactoryMain",
+          "side": "W",
+          "home": [
+            8.33,
+            1.95
+          ],
+          "out": [
+            8.33,
+            1.65
+          ],
+          "expected_threat": [
+            5.615578976843146,
+            -1.4909471642882088
+          ],
+          "observed_at": 12.38,
+          "created_at": 12.8,
+          "approach_m": 4.84,
+          "approach_exposed_m": 2.81,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.52,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK016",
+          "wall": "NorthEastLink",
+          "side": "S",
+          "home": [
+            4.15,
+            4.53
+          ],
+          "out": [
+            4.45,
+            4.53
+          ],
+          "expected_threat": [
+            5.615578976843146,
+            -1.4909471642882088
+          ],
+          "observed_at": 12.38,
+          "created_at": 12.8,
+          "approach_m": 3.12,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.44,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK017",
+          "wall": "EastFactoryUpper",
+          "side": "S",
+          "home": [
+            7.55,
+            3.53
+          ],
+          "out": [
+            7.25,
+            3.53
+          ],
+          "expected_threat": [
+            5.615578976843146,
+            -1.4909471642882088
+          ],
+          "observed_at": 12.38,
+          "created_at": 12.8,
+          "approach_m": 3.48,
+          "approach_exposed_m": 2.9,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.52,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        }
+      ],
+      "recent_skill_events": [
+        {
+          "time": 0.0,
+          "type": "plan_accepted",
+          "decision": 0,
+          "nodes": 1,
+          "horizon": 5
+        },
+        {
+          "time": 0.0,
+          "type": "peek_selected",
+          "candidate": "PK000",
+          "home": [
+            -4.47,
+            -4.65
+          ],
+          "out": [
+            -4.47,
+            -4.95
+          ]
+        },
+        {
+          "time": 2.4,
+          "type": "peek_burst_started",
+          "cycle": 1,
+          "source": "stale_plan_hypothesis",
+          "assumption_age": 2.4,
+          "predicted_exposure": 0.44
+        },
+        {
+          "time": 3.44,
+          "type": "peek_burst_completed",
+          "cycle": 1,
+          "candidate": "PK000",
+          "max_estimated_exposure": 0.4,
+          "samples": 0,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": null,
+          "last_sample": null
+        },
+        {
+          "time": 3.44,
+          "type": "node_completed",
+          "node": 0,
+          "skill": "PEEK_BURST",
+          "reason": "observation_complete"
+        },
+        {
+          "time": 3.46,
+          "type": "plan_accepted",
+          "decision": 1,
+          "nodes": 2,
+          "horizon": 8
+        },
+        {
+          "time": 9.64,
+          "type": "interrupt",
+          "reason": "contact_guard",
+          "retreat_found": true,
+          "target": [
+            4.800000000000001,
+            1.6
+          ]
+        },
+        {
+          "time": 9.8,
+          "type": "plan_accepted",
+          "decision": 2,
+          "nodes": 1,
+          "horizon": 5
+        },
+        {
+          "time": 9.8,
+          "type": "peek_selected",
+          "candidate": "PK006",
+          "home": [
+            4.75,
+            1.47
+          ],
+          "out": [
+            5.05,
+            1.47
+          ]
+        },
+        {
+          "time": 11.74,
+          "type": "peek_burst_started",
+          "cycle": 1,
+          "source": "memory",
+          "assumption_age": 2.08,
+          "predicted_exposure": 0.44
+        },
+        {
+          "time": 12.78,
+          "type": "peek_burst_completed",
+          "cycle": 1,
+          "candidate": "PK006",
+          "max_estimated_exposure": 0.4,
+          "samples": 16,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": {
+            "time": 12.08,
+            "position": [
+              5.600305470394912,
+              -1.597861709607243
+            ],
+            "yaw": 30.562796326794384
+          },
+          "last_sample": {
+            "time": 12.38,
+            "position": [
+              5.615578976843146,
+              -1.4909471642882088
+            ],
+            "yaw": 31.282796326794358
+          }
+        },
+        {
+          "time": 12.78,
+          "type": "node_completed",
+          "node": 0,
+          "skill": "PEEK_BURST",
+          "reason": "observation_complete"
+        }
+      ],
+      "recent_bursts": [
+        {
+          "start": 2.4,
+          "end": 3.44,
+          "cycle": 1,
+          "candidate": "PK000",
+          "max_estimated_exposure": 0.4,
+          "samples": 0,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": null,
+          "last_sample": null
+        },
+        {
+          "start": 11.74,
+          "end": 12.78,
+          "cycle": 1,
+          "candidate": "PK006",
+          "max_estimated_exposure": 0.4,
+          "samples": 16,
+          "returned_home": true,
+          "home_safe_for_latest_legal_track": true,
+          "first_sample": {
+            "time": 12.08,
+            "position": [
+              5.600305470394912,
+              -1.597861709607243
+            ],
+            "yaw": 30.562796326794384
+          },
+          "last_sample": {
+            "time": 12.38,
+            "position": [
+              5.615578976843146,
+              -1.4909471642882088
+            ],
+            "yaw": 31.282796326794358
+          }
+        }
+      ],
+      "model_call_behind_known_cover": true,
+      "cover_assessment_observation_age": 0.42,
+      "execution_repairs": {
+        "peek_approach_guard": true,
+        "blocked_recovery": true,
+        "humanoid_exact_path": true
+      }
+    }
+  }
+]

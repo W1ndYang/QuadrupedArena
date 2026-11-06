@@ -1,0 +1,110 @@
+[
+  {
+    "content": "{\"observation_id\":0,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":8,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK000\",\"max_cycles\":2},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"t=0，自身在SPAWN(-9.8,1.5)，无当前检测；仅知人形初始(5.8,-3.2)，目标(1.8,-4.7)。\",\"state_evidence\":\"烟1枚，冷却0，直立；PK000从EntryRoom东侧探身，预测暴露0.48s，接近暴露0m（按静态初始敌位估算）。\",\"decision_summary\":\"先用PK000执行最多两次短探获取近目标区信息，不盲射；发现8m内人形立即撤回，探身结束后再规划路线。\",\"uncertainty\":\"人形可能已离开初始位置，静态预测不保证安全；移动对手或遮挡变化可能使早退或中断。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 4778,
+      "completion_tokens": 2432,
+      "total_tokens": 7210,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2208
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 2858
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "9c485939-8b7c-4b24-a396-aae2a4626bdb",
+    "finish_reason": "stop",
+    "api_wall_seconds": 17.31780309404712,
+    "time_to_first_output_seconds": 1.1250977310119197,
+    "time_to_first_visible_content_seconds": 15.14732772402931,
+    "reasoning_characters_received": 7517,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:22:29.653807+00:00",
+    "api_finished_utc": "2026-11-05T07:22:46.971590+00:00"
+  },
+  {
+    "content": "{\n  \"observation_id\": 1,\n  \"skill\": \"PLAN\",\n  \"params\": {\n    \"horizon_seconds\": 6.0,\n    \"steps\": [\n      {\n        \"skill\": \"SMOKE_AND_MOVE\",\n        \"params\": {\n          \"location\": [-2.531, -4.533],\n          \"target\": \"GOAL\",\n          \"posture\": \"upright\"\n        },\n        \"on_contact\": \"continue\"\n      }\n    ]\n  },\n  \"assessment\": {\n    \"observation_evidence\": \"t=3.68 合法当前观测人形在(2.735,-4.410)，距离约10.27m>8m，运动估计向西南；烟建议含(-2.531,-4.533)。\",\n    \"state_evidence\": \"自身(-7.530,-4.650)，直立静止，烟1，冷却0，剩余56.32s；到GOAL路径约9.33m。\",\n    \"decision_summary\": \"在自身与人形间施烟，然后直立快速冲向GOAL；烟后若出现合法接触仍继续以争取入圈。\",\n    \"uncertainty\": \"人形可能移动出烟或改变拦截角度，烟不保证末段隐蔽；依据最近合法几何选择直接烟冲。\"\n  }\n}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 5994,
+      "completion_tokens": 5211,
+      "total_tokens": 11205,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 4924
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 3434
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "e152a611-345a-4503-817e-4872ebe54bd0",
+    "finish_reason": "stop",
+    "api_wall_seconds": 32.87654007796664,
+    "time_to_first_output_seconds": 1.1229170629521832,
+    "time_to_first_visible_content_seconds": 31.255010938970372,
+    "reasoning_characters_received": 16061,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:22:47.871806+00:00",
+    "api_finished_utc": "2026-11-05T07:23:20.748316+00:00"
+  },
+  {
+    "content": "{\"observation_id\":2,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":6,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK012\",\"max_cycles\":2},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"当前无合法检测；最后合法记忆人形在(0.77,-4.63)，时间9.74s，靠近目标区；自身在SouthHighWall北侧，刚由暴露中断撤回。\",\"state_evidence\":\"位置(0.40,-1.00)，速度0.075m/s，冷却0，烟剩余0；目标中心(1.8,-4.7)，直线约4.2m；剩余49.08s。\",\"decision_summary\":\"当前距离PK012掩体home仅约0.13m，预测暴露0.44s，先用低成本短探确认人形是否仍守目标，再由下一轮决定直冲、绕行或标记。\",\"uncertainty\":\"人形最后位置已滞后1.18s，可能移动或藏于目标附近；探身暴露预测基于其静止假设，非绝对安全，但暴露窗口短。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 6173,
+      "completion_tokens": 1441,
+      "total_tokens": 7614,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1187
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 3613
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "1a742078-88ea-4d89-9b20-20155b73a076",
+    "finish_reason": "stop",
+    "api_wall_seconds": 10.595760287949815,
+    "time_to_first_output_seconds": 1.0285119459731504,
+    "time_to_first_visible_content_seconds": 9.40588666696567,
+    "reasoning_characters_received": 2033,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:23:23.043500+00:00",
+    "api_finished_utc": "2026-11-05T07:23:33.639242+00:00"
+  },
+  {
+    "content": "{\"observation_id\":3,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":6,\"steps\":[{\"skill\":\"SMOKE_AND_MOVE\",\"params\":{\"location\":[-1.5,-4.6],\"target\":\"CENTRAL_SOUTH\",\"posture\":\"upright\"},\"on_contact\":\"continue\"},{\"skill\":\"MOVE\",\"params\":{\"target\":\"GOAL\",\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"14.5s最后合法看到人形在(1.0,-3.27)，yaw约103.5°，朝向北偏西；当前无检测但记忆年龄0.3s，烟候选[-1.5,-4.6]合法。\",\"state_evidence\":\"自身在SouthHighWall北侧掩体后停稳，冷却0，烟1枚；目标在(1.8,-4.7)，距离约4.3m。\",\"decision_summary\":\"先向建议烟点投烟并移动到CENTRAL_SOUTH，利用烟和SouthHighWall遮挡人形视线，再直立快速冲入GOAL圈。\",\"uncertainty\":\"人形可能转向或离开最后位置；烟点至目标和路线仍有短暂暴露，且人形若提前转身可能尝试标记。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 7080,
+      "completion_tokens": 6395,
+      "total_tokens": 13475,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 6114
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 4520
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "4d5f15c0-b0aa-405c-a7d5-ab99e742c3b9",
+    "finish_reason": "stop",
+    "api_wall_seconds": 42.326885401969776,
+    "time_to_first_output_seconds": 1.2850615970091894,
+    "time_to_first_visible_content_seconds": 41.09941486699972,
+    "reasoning_characters_received": 9820,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:23:34.687250+00:00",
+    "api_finished_utc": "2026-11-05T07:24:17.014099+00:00"
+  }
+]

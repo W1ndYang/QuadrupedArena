@@ -1,0 +1,1251 @@
+[
+  {
+    "observation_id": 0,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 6,
+      "steps": [
+        {
+          "skill": "PEEK_BURST",
+          "params": {
+            "candidate_id": "PK000",
+            "max_cycles": 1
+          },
+          "on_contact": "retreat"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "仿真0秒无当前检测，仅有初始敌位(5.8,-3.2)与初始自身位。",
+      "state_evidence": "自身在SPAWN，直立、静止、冷却0、烟1；PK000接近暴露估计0m。",
+      "decision_summary": "当前敌情未知，先到EntryRoom东侧掩体PK000低成本探身获取信息，完成即重评。",
+      "uncertainty": "旧敌位非当前真值；接近与探身仍可能被移动中的人形发现。"
+    },
+    "simulation_seconds": 0.0,
+    "public_observation": {
+      "observation_id": 0,
+      "simulation_seconds": 0.0,
+      "decision_trigger": "initial",
+      "self_state": {
+        "position": [
+          -9.8,
+          1.5
+        ],
+        "yaw": 0.0,
+        "speed": 0.0,
+        "tag_cooldown_remaining": 0.0,
+        "posture": "upright",
+        "posture_target": "upright",
+        "height": 0.4,
+        "transition_remaining": 0.0,
+        "smoke_remaining": 1,
+        "execution_feedback": "initial",
+        "collision_stop_ticks": 0,
+        "recovery_count": 0
+      },
+      "current_detection": null,
+      "last_legal_memory": null,
+      "track_source": "initial_only",
+      "sensor_samples_since_previous_decision": [
+        [
+          0.0,
+          null
+        ]
+      ],
+      "full_legal_sample_count": 1,
+      "motion_estimate": null,
+      "goal": {
+        "center": [
+          1.8,
+          -4.7
+        ],
+        "radius": 1.0
+      },
+      "remaining_seconds": 60.0,
+      "smoke_suggestions": [
+        [
+          -9.8,
+          1.5
+        ],
+        [
+          -10.2,
+          -2.3
+        ],
+        [
+          -7.5,
+          1.1
+        ]
+      ],
+      "peek_candidates": [
+        {
+          "id": "PK000",
+          "wall": "EntryRoom",
+          "side": "E",
+          "home": [
+            -7.53,
+            -4.65
+          ],
+          "out": [
+            -7.53,
+            -4.95
+          ],
+          "expected_threat": [
+            5.8,
+            -3.2
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 6.71,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.48,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK001",
+          "wall": "EntryRoom",
+          "side": "E",
+          "home": [
+            -7.53,
+            -6.95
+          ],
+          "out": [
+            -7.53,
+            -6.65
+          ],
+          "expected_threat": [
+            5.8,
+            -3.2
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 9.11,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.46,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK002",
+          "wall": "LoadingHall",
+          "side": "W",
+          "home": [
+            -4.47,
+            -6.15
+          ],
+          "out": [
+            -4.47,
+            -5.85
+          ],
+          "expected_threat": [
+            5.8,
+            -3.2
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 9.56,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.42,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK003",
+          "wall": "SouthHighWall",
+          "side": "W",
+          "home": [
+            -0.32,
+            -3.8
+          ],
+          "out": [
+            -0.32,
+            -4.1
+          ],
+          "expected_threat": [
+            5.8,
+            -3.2
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 11.92,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.56,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK004",
+          "wall": "SouthHighWall",
+          "side": "E",
+          "home": [
+            1.02,
+            -2.1
+          ],
+          "out": [
+            1.02,
+            -2.4
+          ],
+          "expected_threat": [
+            5.8,
+            -3.2
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 13.92,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.46,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK005",
+          "wall": "EastStore",
+          "side": "W",
+          "home": [
+            2.13,
+            -2.35
+          ],
+          "out": [
+            2.13,
+            -2.65
+          ],
+          "expected_threat": [
+            5.8,
+            -3.2
+          ],
+          "observed_at": 0.0,
+          "created_at": 0.0,
+          "approach_m": 14.64,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.54,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        }
+      ],
+      "recent_skill_events": [],
+      "recent_bursts": [],
+      "model_call_behind_known_cover": true,
+      "cover_assessment_observation_age": 0.0,
+      "execution_repairs": {
+        "peek_approach_guard": true,
+        "blocked_recovery": true,
+        "humanoid_exact_path": true
+      },
+      "route_candidates": [
+        {
+          "id": "R00_00",
+          "description": "沿 direct",
+          "via": [
+            "GOAL"
+          ],
+          "length_m": 14.07,
+          "nominal_motion_seconds": 5.54,
+          "static_reference_exposure_seconds": 1.22,
+          "static_reference_longest_exposure_seconds": 1.22,
+          "static_reference_min_distance_m": 4.27,
+          "map_motion_valid": true,
+          "cover_checkpoints": [
+            {
+              "xy": [
+                -4.89,
+                -2.75
+              ],
+              "eta_s": 3.0
+            }
+          ],
+          "enemy_movement_radius_at_finish_m": 5.4,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 12.7,
+            "static_reference_exposure_seconds": 2.56,
+            "static_reference_longest_exposure_seconds": 2.56,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "initial_only",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R00_01",
+          "description": "沿 via CENTRAL_EAST",
+          "via": [
+            "CENTRAL_EAST",
+            "GOAL"
+          ],
+          "length_m": 17.77,
+          "nominal_motion_seconds": 6.6,
+          "static_reference_exposure_seconds": 1.06,
+          "static_reference_longest_exposure_seconds": 1.06,
+          "static_reference_min_distance_m": 4.0,
+          "map_motion_valid": true,
+          "cover_checkpoints": [
+            {
+              "xy": [
+                -1.11,
+                1.98
+              ],
+              "eta_s": 3.0
+            },
+            {
+              "xy": [
+                1.8,
+                -0.72
+              ],
+              "eta_s": 5.0
+            }
+          ],
+          "enemy_movement_radius_at_finish_m": 6.43,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 15.32,
+            "static_reference_exposure_seconds": 2.16,
+            "static_reference_longest_exposure_seconds": 2.16,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "initial_only",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R00_02",
+          "description": "沿 via WEST_LOW_NORTH",
+          "via": [
+            "WEST_LOW_NORTH",
+            "GOAL"
+          ],
+          "length_m": 14.41,
+          "nominal_motion_seconds": 5.82,
+          "static_reference_exposure_seconds": 1.2,
+          "static_reference_longest_exposure_seconds": 1.2,
+          "static_reference_min_distance_m": 4.27,
+          "map_motion_valid": true,
+          "cover_checkpoints": [
+            {
+              "xy": [
+                -5.2,
+                -2.64
+              ],
+              "eta_s": 3.0
+            }
+          ],
+          "enemy_movement_radius_at_finish_m": 5.67,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 12.64,
+            "static_reference_exposure_seconds": 2.56,
+            "static_reference_longest_exposure_seconds": 2.56,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "initial_only",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R00_03",
+          "description": "沿 via CENTRAL_SOUTH",
+          "via": [
+            "CENTRAL_SOUTH",
+            "GOAL"
+          ],
+          "length_m": 14.24,
+          "nominal_motion_seconds": 5.56,
+          "static_reference_exposure_seconds": 1.6,
+          "static_reference_longest_exposure_seconds": 1.6,
+          "static_reference_min_distance_m": 4.27,
+          "map_motion_valid": true,
+          "cover_checkpoints": [
+            {
+              "xy": [
+                -4.91,
+                -3.01
+              ],
+              "eta_s": 3.0
+            }
+          ],
+          "enemy_movement_radius_at_finish_m": 5.42,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 12.84,
+            "static_reference_exposure_seconds": 3.62,
+            "static_reference_longest_exposure_seconds": 3.62,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "initial_only",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R00_04",
+          "description": "沿 direct；先投烟再推进",
+          "via": [
+            "GOAL"
+          ],
+          "length_m": 14.07,
+          "nominal_motion_seconds": 6.32,
+          "static_reference_exposure_seconds": 1.22,
+          "static_reference_longest_exposure_seconds": 1.22,
+          "static_reference_min_distance_m": 4.27,
+          "map_motion_valid": true,
+          "cover_checkpoints": [
+            {
+              "xy": [
+                -7.19,
+                -1.82
+              ],
+              "eta_s": 3.0
+            },
+            {
+              "xy": [
+                -1.19,
+                -3.91
+              ],
+              "eta_s": 5.0
+            }
+          ],
+          "enemy_movement_radius_at_finish_m": 6.16,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 13.48,
+            "static_reference_exposure_seconds": 2.56,
+            "static_reference_longest_exposure_seconds": 2.56,
+            "map_motion_valid": true
+          },
+          "smoke_location": [
+            -9.8,
+            1.5
+          ],
+          "smoke_active_after_s": 0.78,
+          "smoke_expires_after_s": 5.78,
+          "observation_source": "initial_only",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        }
+      ],
+      "route_generation": {
+        "elapsed_seconds": 2.6058127810247242,
+        "raw_count": 77,
+        "returned_count": 5,
+        "source": "initial_only",
+        "observation_age_s": 0.0,
+        "assumption": "Static last legal position; map-only alternatives and identical reference mover."
+      },
+      "active_route": null
+    }
+  },
+  {
+    "observation_id": 1,
+    "skill": "PLAN",
+    "params": {
+      "horizon_seconds": 6,
+      "steps": [
+        {
+          "skill": "FOLLOW_CANDIDATE",
+          "params": {
+            "route_id": "R01_04",
+            "posture": "upright",
+            "fire": "off"
+          },
+          "on_contact": "continue"
+        }
+      ]
+    },
+    "assessment": {
+      "observation_evidence": "当前合法检测人形于(2.74,-4.41)，朝向西偏南约181°，距我约10.3m，超出8m射程；运动估计向西南约(-0.91,-0.36)m/s。",
+      "state_evidence": "我在(-7.53,-4.65)，直立，速度0，烟剩余1，标记冷却0，剩余56.32s；R01_04预测烟0.78s生效并持续至5.78s。",
+      "decision_summary": "选R01_04先向(-2.53,-4.53)投烟再直立直冲GOAL，不主动停下开火，遇8m内敌情不撤，争取在烟有效期与1s瞄准窗口内入圈。",
+      "uncertainty": "人形继续西南移动可能缩短距离或进入烟区；静态风险估计不保证安全，出烟后最后约2m仍可能暴露。"
+    },
+    "simulation_seconds": 3.68,
+    "public_observation": {
+      "observation_id": 1,
+      "simulation_seconds": 3.68,
+      "decision_trigger": "plan_completed",
+      "self_state": {
+        "position": [
+          -7.529999679593103,
+          -4.649998890899202
+        ],
+        "yaw": -1.5707963267948966,
+        "speed": 0.0,
+        "tag_cooldown_remaining": 0.0,
+        "posture": "upright",
+        "posture_target": "upright",
+        "height": 0.4,
+        "transition_remaining": 0.0,
+        "smoke_remaining": 1,
+        "execution_feedback": "ROUTE_ACTIVE",
+        "collision_stop_ticks": 0,
+        "recovery_count": 0
+      },
+      "current_detection": {
+        "position": [
+          2.7354547984885578,
+          -4.40968889533346
+        ],
+        "yaw": 9.448837839596234,
+        "disabled_remaining": 0.0
+      },
+      "last_legal_memory": {
+        "position": [
+          2.7354547984885578,
+          -4.40968889533346
+        ],
+        "yaw": 9.448837839596234,
+        "last_seen": 3.68
+      },
+      "track_source": "current",
+      "sensor_samples_since_previous_decision": [
+        [
+          0.02,
+          null
+        ],
+        [
+          0.08,
+          null
+        ],
+        [
+          0.14,
+          null
+        ],
+        [
+          0.2,
+          null
+        ],
+        [
+          0.26,
+          null
+        ],
+        [
+          0.32,
+          null
+        ],
+        [
+          0.38,
+          null
+        ],
+        [
+          0.44,
+          null
+        ],
+        [
+          0.5,
+          null
+        ],
+        [
+          0.56,
+          null
+        ],
+        [
+          0.62,
+          null
+        ],
+        [
+          0.68,
+          null
+        ],
+        [
+          0.74,
+          null
+        ],
+        [
+          0.8,
+          null
+        ],
+        [
+          0.86,
+          null
+        ],
+        [
+          0.92,
+          null
+        ],
+        [
+          0.98,
+          null
+        ],
+        [
+          1.04,
+          null
+        ],
+        [
+          1.1,
+          null
+        ],
+        [
+          1.16,
+          null
+        ],
+        [
+          1.22,
+          null
+        ],
+        [
+          1.28,
+          null
+        ],
+        [
+          1.34,
+          null
+        ],
+        [
+          1.4,
+          null
+        ],
+        [
+          1.46,
+          null
+        ],
+        [
+          1.52,
+          null
+        ],
+        [
+          1.58,
+          null
+        ],
+        [
+          1.64,
+          null
+        ],
+        [
+          1.7,
+          null
+        ],
+        [
+          1.76,
+          null
+        ],
+        [
+          1.82,
+          null
+        ],
+        [
+          1.88,
+          null
+        ],
+        [
+          1.94,
+          null
+        ],
+        [
+          2.0,
+          null
+        ],
+        [
+          2.06,
+          null
+        ],
+        [
+          2.12,
+          null
+        ],
+        [
+          2.18,
+          null
+        ],
+        [
+          2.24,
+          null
+        ],
+        [
+          2.3,
+          null
+        ],
+        [
+          2.36,
+          null
+        ],
+        [
+          2.42,
+          null
+        ],
+        [
+          2.46,
+          null
+        ],
+        [
+          2.48,
+          [
+            3.824,
+            -3.98,
+            9.0936
+          ]
+        ],
+        [
+          2.54,
+          [
+            3.769,
+            -4.002,
+            9.3636
+          ]
+        ],
+        [
+          2.6,
+          [
+            3.715,
+            -4.023,
+            9.4075
+          ]
+        ],
+        [
+          2.66,
+          [
+            3.66,
+            -4.045,
+            9.4139
+          ]
+        ],
+        [
+          2.72,
+          [
+            3.606,
+            -4.066,
+            9.4188
+          ]
+        ],
+        [
+          2.78,
+          [
+            3.552,
+            -4.088,
+            9.4222
+          ]
+        ],
+        [
+          2.84,
+          [
+            3.497,
+            -4.109,
+            9.4248
+          ]
+        ],
+        [
+          2.9,
+          [
+            3.443,
+            -4.13,
+            9.4271
+          ]
+        ],
+        [
+          2.96,
+          [
+            3.388,
+            -4.152,
+            9.4294
+          ]
+        ],
+        [
+          3.02,
+          [
+            3.334,
+            -4.173,
+            9.432
+          ]
+        ],
+        [
+          3.08,
+          [
+            3.28,
+            -4.195,
+            9.4345
+          ]
+        ],
+        [
+          3.14,
+          [
+            3.225,
+            -4.216,
+            9.4375
+          ]
+        ],
+        [
+          3.2,
+          [
+            3.171,
+            -4.238,
+            9.4406
+          ]
+        ],
+        [
+          3.26,
+          [
+            3.116,
+            -4.259,
+            9.4456
+          ]
+        ],
+        [
+          3.32,
+          [
+            3.062,
+            -4.281,
+            9.4505
+          ]
+        ],
+        [
+          3.38,
+          [
+            3.008,
+            -4.302,
+            9.4536
+          ]
+        ],
+        [
+          3.44,
+          [
+            2.953,
+            -4.324,
+            9.4548
+          ]
+        ],
+        [
+          3.5,
+          [
+            2.899,
+            -4.345,
+            9.4544
+          ]
+        ],
+        [
+          3.56,
+          [
+            2.844,
+            -4.367,
+            9.4527
+          ]
+        ],
+        [
+          3.62,
+          [
+            2.79,
+            -4.388,
+            9.4508
+          ]
+        ],
+        [
+          3.68,
+          [
+            2.735,
+            -4.41,
+            9.4488
+          ]
+        ]
+      ],
+      "full_legal_sample_count": 184,
+      "motion_estimate": {
+        "estimate_xy_mps": [
+          -0.907,
+          -0.358
+        ],
+        "first_time": 2.48,
+        "last_time": 3.68,
+        "assumption": "Average across legal samples; not a future-motion guarantee."
+      },
+      "goal": {
+        "center": [
+          1.8,
+          -4.7
+        ],
+        "radius": 1.0
+      },
+      "remaining_seconds": 56.32,
+      "smoke_suggestions": [
+        [
+          -4.531,
+          -4.58
+        ],
+        [
+          -2.531,
+          -4.533
+        ],
+        [
+          -5.8,
+          -3.3
+        ]
+      ],
+      "peek_candidates": [
+        {
+          "id": "PK006",
+          "wall": "EntryRoom",
+          "side": "E",
+          "home": [
+            -7.53,
+            -6.75
+          ],
+          "out": [
+            -7.53,
+            -6.45
+          ],
+          "expected_threat": [
+            2.7354547984885578,
+            -4.40968889533346
+          ],
+          "observed_at": 3.68,
+          "created_at": 3.68,
+          "approach_m": 2.1,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.44,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK007",
+          "wall": "WestStore",
+          "side": "W",
+          "home": [
+            -5.47,
+            -2.45
+          ],
+          "out": [
+            -5.47,
+            -2.75
+          ],
+          "expected_threat": [
+            2.7354547984885578,
+            -4.40968889533346
+          ],
+          "observed_at": 3.68,
+          "created_at": 3.68,
+          "approach_m": 3.01,
+          "approach_exposed_m": 0.0,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.5,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK008",
+          "wall": "LoadingHall",
+          "side": "W",
+          "home": [
+            -4.47,
+            -6.05
+          ],
+          "out": [
+            -4.47,
+            -5.75
+          ],
+          "expected_threat": [
+            2.7354547984885578,
+            -4.40968889533346
+          ],
+          "observed_at": 3.68,
+          "created_at": 3.68,
+          "approach_m": 3.37,
+          "approach_exposed_m": 0.44,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.56,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK009",
+          "wall": "SouthHighWall",
+          "side": "W",
+          "home": [
+            -0.32,
+            -3.5
+          ],
+          "out": [
+            -0.32,
+            -3.8
+          ],
+          "expected_threat": [
+            2.7354547984885578,
+            -4.40968889533346
+          ],
+          "observed_at": 3.68,
+          "created_at": 3.68,
+          "approach_m": 7.3,
+          "approach_exposed_m": 4.17,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.38,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK010",
+          "wall": "CentralWall",
+          "side": "S",
+          "home": [
+            -0.5,
+            -0.445
+          ],
+          "out": [
+            -0.2,
+            -0.445
+          ],
+          "expected_threat": [
+            2.7354547984885578,
+            -4.40968889533346
+          ],
+          "observed_at": 3.68,
+          "created_at": 3.68,
+          "approach_m": 8.69,
+          "approach_exposed_m": 2.24,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.46,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        },
+        {
+          "id": "PK011",
+          "wall": "SouthHighWall",
+          "side": "N",
+          "home": [
+            0.0,
+            -1.08
+          ],
+          "out": [
+            0.3,
+            -1.08
+          ],
+          "expected_threat": [
+            2.7354547984885578,
+            -4.40968889533346
+          ],
+          "observed_at": 3.68,
+          "created_at": 3.68,
+          "approach_m": 8.48,
+          "approach_exposed_m": 2.24,
+          "predicted_burst_seconds": 1.08,
+          "predicted_exposure_seconds": 0.5,
+          "assumption": "Static last-observed/initial target; not a safety guarantee for a moving hidden opponent."
+        }
+      ],
+      "recent_skill_events": [
+        {
+          "time": 0.0,
+          "type": "plan_accepted",
+          "decision": 0,
+          "nodes": 1,
+          "horizon": 6
+        },
+        {
+          "time": 0.0,
+          "type": "peek_selected",
+          "candidate": "PK000",
+          "home": [
+            -7.53,
+            -4.65
+          ],
+          "out": [
+            -7.53,
+            -4.95
+          ]
+        },
+        {
+          "time": 3.66,
+          "type": "peek_rejected",
+          "reason": "home_exposed_to_latest_legal_track",
+          "candidate": "PK000"
+        },
+        {
+          "time": 3.66,
+          "type": "node_completed",
+          "node": 0,
+          "skill": "PEEK_BURST",
+          "reason": "unsafe_home"
+        }
+      ],
+      "recent_bursts": [],
+      "model_call_behind_known_cover": false,
+      "cover_assessment_observation_age": 0.0,
+      "execution_repairs": {
+        "peek_approach_guard": true,
+        "blocked_recovery": true,
+        "humanoid_exact_path": true
+      },
+      "route_candidates": [
+        {
+          "id": "R01_00",
+          "description": "沿 direct",
+          "via": [
+            "GOAL"
+          ],
+          "length_m": 9.33,
+          "nominal_motion_seconds": 4.06,
+          "static_reference_exposure_seconds": 2.56,
+          "static_reference_longest_exposure_seconds": 2.56,
+          "static_reference_min_distance_m": 0.98,
+          "map_motion_valid": true,
+          "cover_checkpoints": [],
+          "enemy_movement_radius_at_finish_m": 3.96,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 8.78,
+            "static_reference_exposure_seconds": 6.16,
+            "static_reference_longest_exposure_seconds": 6.16,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "current",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R01_01",
+          "description": "沿 via WEST_HIDE → CENTRAL_NORTH",
+          "via": [
+            "WEST_HIDE",
+            "CENTRAL_NORTH",
+            "GOAL"
+          ],
+          "length_m": 19.42,
+          "nominal_motion_seconds": 10.64,
+          "static_reference_exposure_seconds": 2.44,
+          "static_reference_longest_exposure_seconds": 2.04,
+          "static_reference_min_distance_m": 0.98,
+          "map_motion_valid": true,
+          "cover_checkpoints": [
+            {
+              "xy": [
+                -2.08,
+                -2.68
+              ],
+              "eta_s": 3.0
+            },
+            {
+              "xy": [
+                -1.27,
+                1.32
+              ],
+              "eta_s": 5.0
+            },
+            {
+              "xy": [
+                -1.2,
+                2.01
+              ],
+              "eta_s": 7.0
+            }
+          ],
+          "enemy_movement_radius_at_finish_m": 10.37,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 19.32,
+            "static_reference_exposure_seconds": 5.18,
+            "static_reference_longest_exposure_seconds": 4.08,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "current",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R01_02",
+          "description": "沿 via WEST_HIDE",
+          "via": [
+            "WEST_HIDE",
+            "GOAL"
+          ],
+          "length_m": 9.82,
+          "nominal_motion_seconds": 4.52,
+          "static_reference_exposure_seconds": 2.6,
+          "static_reference_longest_exposure_seconds": 2.6,
+          "static_reference_min_distance_m": 0.98,
+          "map_motion_valid": true,
+          "cover_checkpoints": [],
+          "enemy_movement_radius_at_finish_m": 4.41,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 9.5,
+            "static_reference_exposure_seconds": 6.24,
+            "static_reference_longest_exposure_seconds": 6.24,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "current",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R01_03",
+          "description": "沿 via WEST_HIDE → CENTRAL_SOUTH",
+          "via": [
+            "WEST_HIDE",
+            "CENTRAL_SOUTH",
+            "GOAL"
+          ],
+          "length_m": 9.85,
+          "nominal_motion_seconds": 4.58,
+          "static_reference_exposure_seconds": 2.62,
+          "static_reference_longest_exposure_seconds": 2.62,
+          "static_reference_min_distance_m": 0.98,
+          "map_motion_valid": true,
+          "cover_checkpoints": [],
+          "enemy_movement_radius_at_finish_m": 4.47,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 9.54,
+            "static_reference_exposure_seconds": 6.28,
+            "static_reference_longest_exposure_seconds": 6.28,
+            "map_motion_valid": true
+          },
+          "smoke_location": null,
+          "smoke_active_after_s": null,
+          "smoke_expires_after_s": null,
+          "observation_source": "current",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        },
+        {
+          "id": "R01_04",
+          "description": "沿 direct；先投烟再推进",
+          "via": [
+            "GOAL"
+          ],
+          "length_m": 9.33,
+          "nominal_motion_seconds": 4.84,
+          "static_reference_exposure_seconds": 1.08,
+          "static_reference_longest_exposure_seconds": 1.08,
+          "static_reference_min_distance_m": 0.98,
+          "map_motion_valid": true,
+          "cover_checkpoints": [],
+          "enemy_movement_radius_at_finish_m": 4.72,
+          "low_posture_estimate": {
+            "nominal_motion_seconds": 9.56,
+            "static_reference_exposure_seconds": 3.8,
+            "static_reference_longest_exposure_seconds": 3.8,
+            "map_motion_valid": true
+          },
+          "smoke_location": [
+            -2.531,
+            -4.533
+          ],
+          "smoke_active_after_s": 0.78,
+          "smoke_expires_after_s": 5.78,
+          "observation_source": "current",
+          "observation_age_s": 0.0,
+          "resume_previous": false,
+          "limitations": "完整路径可通行；风险仅按合法敌位静止估计，不保证安全。忽略对手未来转身/移动；无敌情时风险未知。烟的时间估计按停稳起投。主字段是直立估计，low_posture_estimate是低姿态估计；切姿态最多另加0.4s。"
+        }
+      ],
+      "route_generation": {
+        "elapsed_seconds": 2.2113701960770413,
+        "raw_count": 62,
+        "returned_count": 5,
+        "source": "current",
+        "observation_age_s": 0.0,
+        "assumption": "Static last legal position; map-only alternatives and identical reference mover."
+      },
+      "active_route": null
+    }
+  }
+]

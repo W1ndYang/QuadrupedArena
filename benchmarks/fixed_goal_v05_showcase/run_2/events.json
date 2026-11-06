@@ -1,0 +1,339 @@
+[
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 2.24,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 2.4,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 2.9,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 2.94,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 3.44,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 3.46,
+    "type": "mode",
+    "actor": 0,
+    "mode": "CANDIDATE_PATH"
+  },
+  {
+    "time": 7.28,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 7.28,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 7.3,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 7.4,
+    "type": "smoke_cast_started",
+    "center": [
+      7.0,
+      -2.6
+    ]
+  },
+  {
+    "time": 7.4,
+    "type": "mode",
+    "actor": 0,
+    "mode": "THROW"
+  },
+  {
+    "time": 7.78,
+    "type": "smoke_released",
+    "center": [
+      7.0,
+      -2.6
+    ],
+    "radius": 2.0,
+    "height": 2.5,
+    "active_at": 8.18,
+    "expires_at": 13.18
+  },
+  {
+    "time": 7.8,
+    "type": "mode",
+    "actor": 0,
+    "mode": "CANDIDATE_PATH"
+  },
+  {
+    "time": 8.04,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 8.04,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 8.18,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 10.62,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 11.1,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 11.6,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 11.64,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 12.14,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 12.16,
+    "type": "mode",
+    "actor": 0,
+    "mode": "CANDIDATE_PATH"
+  },
+  {
+    "time": 17.56,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 17.56,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 17.58,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 17.62,
+    "type": "mode",
+    "actor": 0,
+    "mode": "CANDIDATE_PATH"
+  },
+  {
+    "time": 17.84,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 17.84,
+    "type": "detected",
+    "actor": 1
+  },
+  {
+    "time": 17.84,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 17.86,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 17.86,
+    "type": "lost",
+    "actor": 1
+  },
+  {
+    "time": 17.86,
+    "type": "guard_memory",
+    "state": "WATCH_LAST_SEEN",
+    "last_seen": 17.84,
+    "known_position": [
+      4.728619637831689,
+      2.8296814548842364
+    ]
+  },
+  {
+    "time": 17.86,
+    "type": "mode",
+    "actor": 1,
+    "mode": "WATCH"
+  },
+  {
+    "time": 18.02,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 18.12,
+    "type": "mode",
+    "actor": 0,
+    "mode": "CANDIDATE_PATH"
+  },
+  {
+    "time": 18.38,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 18.38,
+    "type": "detected",
+    "actor": 1
+  },
+  {
+    "time": 18.38,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 18.38,
+    "type": "mode",
+    "actor": 1,
+    "mode": "AIM"
+  },
+  {
+    "time": 18.4,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 18.4,
+    "type": "lost",
+    "actor": 1
+  },
+  {
+    "time": 18.4,
+    "type": "mode",
+    "actor": 1,
+    "mode": "WATCH"
+  },
+  {
+    "time": 19.6,
+    "type": "guard_memory",
+    "state": "INVESTIGATE_LAST_SEEN",
+    "last_seen": 18.38,
+    "known_position": [
+      4.707572788004685,
+      2.8248244895395436
+    ]
+  },
+  {
+    "time": 19.6,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 20.46,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 21.2,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 21.38,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 21.38,
+    "type": "detected",
+    "actor": 1
+  },
+  {
+    "time": 21.38,
+    "type": "mode",
+    "actor": 1,
+    "mode": "AIM"
+  },
+  {
+    "time": 21.62,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_BRAKE"
+  },
+  {
+    "time": 21.66,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 22.16,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 22.84,
+    "type": "tag",
+    "actors": [
+      1
+    ]
+  },
+  {
+    "time": 22.84,
+    "type": "finish",
+    "winner": "defender",
+    "reason": "tag"
+  }
+]

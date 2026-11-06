@@ -1,0 +1,161 @@
+[
+  {
+    "time": 0.0,
+    "type": "plan_accepted",
+    "decision": 0,
+    "nodes": 1,
+    "horizon": 8
+  },
+  {
+    "time": 0.0,
+    "type": "peek_selected",
+    "candidate": "PK000",
+    "home": [
+      -7.53,
+      -4.65
+    ],
+    "out": [
+      -7.53,
+      -4.95
+    ]
+  },
+  {
+    "time": 3.66,
+    "type": "peek_rejected",
+    "reason": "home_exposed_to_latest_legal_track",
+    "candidate": "PK000"
+  },
+  {
+    "time": 3.66,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "PEEK_BURST",
+    "reason": "unsafe_home"
+  },
+  {
+    "time": 3.68,
+    "type": "plan_accepted",
+    "decision": 1,
+    "nodes": 1,
+    "horizon": 6.0
+  },
+  {
+    "time": 9.68,
+    "type": "interrupt",
+    "reason": "horizon_in_exposed_position",
+    "retreat_found": true,
+    "target": [
+      0.4,
+      -1.0
+    ]
+  },
+  {
+    "time": 10.92,
+    "type": "plan_accepted",
+    "decision": 2,
+    "nodes": 1,
+    "horizon": 6
+  },
+  {
+    "time": 10.92,
+    "type": "peek_selected",
+    "candidate": "PK012",
+    "home": [
+      0.3,
+      -1.08
+    ],
+    "out": [
+      0.6,
+      -1.08
+    ]
+  },
+  {
+    "time": 12.5,
+    "type": "peek_burst_started",
+    "cycle": 1,
+    "source": "memory",
+    "assumption_age": 2.76,
+    "predicted_exposure": 0.44
+  },
+  {
+    "time": 13.54,
+    "type": "peek_burst_completed",
+    "cycle": 1,
+    "candidate": "PK012",
+    "max_estimated_exposure": 0.54,
+    "samples": 28,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": {
+      "time": 12.72,
+      "position": [
+        1.0,
+        -3.5270837529329864
+      ],
+      "yaw": 8.043760593502556
+    },
+    "last_sample": {
+      "time": 13.26,
+      "position": [
+        1.0,
+        -3.272743752932987
+      ],
+      "yaw": 8.091994308537542
+    }
+  },
+  {
+    "time": 13.74,
+    "type": "peek_burst_started",
+    "cycle": 2,
+    "source": "memory",
+    "assumption_age": 0.4800000000000004,
+    "predicted_exposure": 0.6
+  },
+  {
+    "time": 14.78,
+    "type": "peek_burst_completed",
+    "cycle": 2,
+    "candidate": "PK012",
+    "max_estimated_exposure": 0.56,
+    "samples": 29,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": {
+      "time": 13.94,
+      "position": [
+        1.0,
+        -3.272743752932987
+      ],
+      "yaw": 8.1032095920756
+    },
+    "last_sample": {
+      "time": 14.5,
+      "position": [
+        1.0,
+        -3.272743752932987
+      ],
+      "yaw": 8.092000578060727
+    }
+  },
+  {
+    "time": 14.78,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "PEEK_BURST",
+    "reason": "observation_complete"
+  },
+  {
+    "time": 14.8,
+    "type": "plan_accepted",
+    "decision": 3,
+    "nodes": 2,
+    "horizon": 6
+  },
+  {
+    "time": 18.28,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "SMOKE_AND_MOVE",
+    "reason": "target_reached"
+  }
+]

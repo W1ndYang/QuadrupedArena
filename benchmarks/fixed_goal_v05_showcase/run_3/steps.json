@@ -1,0 +1,219 @@
+[
+  {
+    "index": 0,
+    "start": 0.0,
+    "end": 5.76,
+    "api_seconds": 14.077146008028649,
+    "usage": {
+      "prompt_tokens": 6173,
+      "completion_tokens": 1965,
+      "total_tokens": 8138,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1748
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 4253
+    },
+    "api_started_utc": "2026-11-05T07:18:18.716849+00:00",
+    "api_finished_utc": "2026-11-05T07:18:32.793969+00:00",
+    "start_goal_m": 15.945218719101973,
+    "end_goal_m": 12.151743609299038,
+    "traveled_m": 8.006300438422318,
+    "max_human_lock": 0.0,
+    "events": [
+      {
+        "time": 0.0,
+        "type": "plan_accepted",
+        "decision": 0,
+        "nodes": 1,
+        "horizon": 6
+      },
+      {
+        "time": 0.0,
+        "type": "peek_selected",
+        "candidate": "PK001",
+        "home": [
+          1.02,
+          -3.8
+        ],
+        "out": [
+          1.02,
+          -4.1
+        ]
+      },
+      {
+        "time": 4.7,
+        "type": "peek_burst_started",
+        "cycle": 1,
+        "source": "stale_plan_hypothesis",
+        "assumption_age": 4.7,
+        "predicted_exposure": 0.5
+      },
+      {
+        "time": 5.74,
+        "type": "peek_burst_completed",
+        "cycle": 1,
+        "candidate": "PK001",
+        "max_estimated_exposure": 0.46,
+        "samples": 0,
+        "returned_home": true,
+        "home_safe_for_latest_legal_track": true,
+        "first_sample": null,
+        "last_sample": null
+      },
+      {
+        "time": 5.74,
+        "type": "node_completed",
+        "node": 0,
+        "skill": "PEEK_BURST",
+        "reason": "observation_complete"
+      }
+    ],
+    "image": "run_3/steps/000.jpg",
+    "routeplot": "run_3/routes/000.jpg"
+  },
+  {
+    "index": 1,
+    "start": 5.76,
+    "end": 8.82,
+    "api_seconds": 25.153106080018915,
+    "usage": {
+      "prompt_tokens": 5286,
+      "completion_tokens": 3751,
+      "total_tokens": 9037,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 3536
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 2726
+    },
+    "api_started_utc": "2026-11-05T07:18:35.462034+00:00",
+    "api_finished_utc": "2026-11-05T07:19:00.615127+00:00",
+    "start_goal_m": 12.151743609299038,
+    "end_goal_m": 10.321952563381469,
+    "traveled_m": 2.88683256668162,
+    "max_human_lock": 0.0,
+    "events": [
+      {
+        "time": 5.76,
+        "type": "plan_accepted",
+        "decision": 1,
+        "nodes": 1,
+        "horizon": 4
+      },
+      {
+        "time": 8.8,
+        "type": "node_completed",
+        "node": 0,
+        "skill": "MOVE",
+        "reason": "target_reached"
+      }
+    ],
+    "image": "run_3/steps/001.jpg",
+    "routeplot": "run_3/routes/001.jpg"
+  },
+  {
+    "index": 2,
+    "start": 8.82,
+    "end": 10.38,
+    "api_seconds": 50.28062779305037,
+    "usage": {
+      "prompt_tokens": 5368,
+      "completion_tokens": 7992,
+      "total_tokens": 13360,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7782
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 2808
+    },
+    "api_started_utc": "2026-11-05T07:19:02.353770+00:00",
+    "api_finished_utc": "2026-11-05T07:19:52.634389+00:00",
+    "start_goal_m": 10.321952563381469,
+    "end_goal_m": 10.400429253389222,
+    "traveled_m": 0.14879802870469047,
+    "max_human_lock": 0.7400000000000003,
+    "events": [
+      {
+        "time": 8.82,
+        "type": "plan_accepted",
+        "decision": 2,
+        "nodes": 1,
+        "horizon": 8
+      },
+      {
+        "time": 8.82,
+        "type": "route_selected",
+        "route_id": "R02_00",
+        "description": "沿 direct",
+        "length_m": 10.71,
+        "resume": false
+      },
+      {
+        "time": 9.08,
+        "type": "interrupt",
+        "reason": "contact_guard",
+        "retreat_found": true,
+        "target": [
+          -1.4000000000000001,
+          -4.6000000000000005
+        ]
+      }
+    ],
+    "image": "run_3/steps/002.jpg",
+    "routeplot": "run_3/routes/002.jpg"
+  },
+  {
+    "index": 3,
+    "start": 10.38,
+    "end": 10.64,
+    "api_seconds": 29.552496663993225,
+    "usage": {
+      "prompt_tokens": 8073,
+      "completion_tokens": 3939,
+      "total_tokens": 12012,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 3677
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 5513
+    },
+    "api_started_utc": "2026-11-05T07:19:57.346086+00:00",
+    "api_finished_utc": "2026-11-05T07:20:26.898541+00:00",
+    "start_goal_m": 10.400429253389222,
+    "end_goal_m": 10.400429253389222,
+    "traveled_m": 0.0,
+    "max_human_lock": 1.0000000000000004,
+    "events": [
+      {
+        "time": 10.38,
+        "type": "plan_accepted",
+        "decision": 3,
+        "nodes": 1,
+        "horizon": 8
+      },
+      {
+        "time": 10.38,
+        "type": "route_selected",
+        "route_id": "R03_01",
+        "description": "沿 via CENTRAL_NORTH → WEST_LOW_NORTH",
+        "length_m": 15.57,
+        "resume": false
+      }
+    ],
+    "image": "run_3/steps/003.jpg",
+    "routeplot": "run_3/routes/003.jpg"
+  }
+]

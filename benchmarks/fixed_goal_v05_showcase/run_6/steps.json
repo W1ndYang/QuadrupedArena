@@ -1,0 +1,118 @@
+[
+  {
+    "index": 0,
+    "start": 0.0,
+    "end": 3.68,
+    "api_seconds": 7.903232848038897,
+    "usage": {
+      "prompt_tokens": 5896,
+      "completion_tokens": 941,
+      "total_tokens": 6837,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 765
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 3976
+    },
+    "api_started_utc": "2026-11-05T07:24:24.350952+00:00",
+    "api_finished_utc": "2026-11-05T07:24:32.254166+00:00",
+    "start_goal_m": 13.152946437965907,
+    "end_goal_m": 9.330133660999648,
+    "traveled_m": 6.679645388421658,
+    "max_human_lock": 0.0,
+    "events": [
+      {
+        "time": 0.0,
+        "type": "plan_accepted",
+        "decision": 0,
+        "nodes": 1,
+        "horizon": 6
+      },
+      {
+        "time": 0.0,
+        "type": "peek_selected",
+        "candidate": "PK000",
+        "home": [
+          -7.53,
+          -4.65
+        ],
+        "out": [
+          -7.53,
+          -4.95
+        ]
+      },
+      {
+        "time": 3.66,
+        "type": "peek_rejected",
+        "reason": "home_exposed_to_latest_legal_track",
+        "candidate": "PK000"
+      },
+      {
+        "time": 3.66,
+        "type": "node_completed",
+        "node": 0,
+        "skill": "PEEK_BURST",
+        "reason": "unsafe_home"
+      }
+    ],
+    "image": "run_6/steps/000.jpg",
+    "routeplot": "run_6/routes/000.jpg"
+  },
+  {
+    "index": 1,
+    "start": 3.68,
+    "end": 8.32,
+    "api_seconds": 17.68593607703224,
+    "usage": {
+      "prompt_tokens": 6989,
+      "completion_tokens": 2272,
+      "total_tokens": 9261,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2002
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 4429
+    },
+    "api_started_utc": "2026-11-05T07:24:35.364662+00:00",
+    "api_finished_utc": "2026-11-05T07:24:53.050581+00:00",
+    "start_goal_m": 9.330133660999648,
+    "end_goal_m": 1.9817336609996614,
+    "traveled_m": 8.270799999999987,
+    "max_human_lock": 1.0000000000000004,
+    "events": [
+      {
+        "time": 3.68,
+        "type": "plan_accepted",
+        "decision": 1,
+        "nodes": 1,
+        "horizon": 6
+      },
+      {
+        "time": 3.68,
+        "type": "route_selected",
+        "route_id": "R01_04",
+        "description": "沿 direct；先投烟再推进",
+        "length_m": 9.33,
+        "resume": false
+      },
+      {
+        "time": 7.62,
+        "type": "blocked_recovery_started",
+        "target": [
+          -0.4797009238563846,
+          -4.687782681830073
+        ],
+        "source": "own_traveled_path_and_collision_feedback",
+        "collision_count": 8
+      }
+    ],
+    "image": "run_6/steps/001.jpg",
+    "routeplot": "run_6/routes/001.jpg"
+  }
+]

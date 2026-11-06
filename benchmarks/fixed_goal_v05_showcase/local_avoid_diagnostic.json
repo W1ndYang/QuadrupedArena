@@ -1,0 +1,235 @@
+{
+  "status": "terminal",
+  "summary": {
+    "id": "mechanical_wc_direct_with_existing_local_avoid",
+    "winner": "defender",
+    "reason": "tag",
+    "seconds": 10.86,
+    "first_detection": [
+      2.48,
+      2.48
+    ],
+    "smoke_used": 1,
+    "minimum_separation_m": 1.5418630186055635,
+    "minimum_wall_clearance_m": 0.42498466355655473,
+    "collision_stop_ticks": [
+      0,
+      0
+    ],
+    "distance_m": [
+      19.55459348047483,
+      5.488119732143566
+    ],
+    "attacker_policy": "deepseek_flash_low",
+    "defender_policy": "patrol",
+    "yaw": 3.141592653589793,
+    "posture": "upright",
+    "condition": "peek_sequences_v04",
+    "layout": "WC",
+    "model_decisions": 2,
+    "route_build_seconds": 0.6086944640846923,
+    "human_tags": 0,
+    "peek_bursts": 0,
+    "skill_event_count": 6
+  },
+  "events": [
+    {
+      "time": 0.0,
+      "type": "mode",
+      "actor": 0,
+      "mode": "ADVANCE"
+    },
+    {
+      "time": 0.0,
+      "type": "mode",
+      "actor": 1,
+      "mode": "PATROL"
+    },
+    {
+      "time": 2.48,
+      "type": "detected",
+      "actor": 0
+    },
+    {
+      "time": 2.48,
+      "type": "detected",
+      "actor": 1
+    },
+    {
+      "time": 3.54,
+      "type": "mode",
+      "actor": 0,
+      "mode": "WAIT"
+    },
+    {
+      "time": 3.68,
+      "type": "smoke_cast_started",
+      "center": [
+        -2.531,
+        -4.533
+      ]
+    },
+    {
+      "time": 3.68,
+      "type": "mode",
+      "actor": 0,
+      "mode": "THROW"
+    },
+    {
+      "time": 4.06,
+      "type": "smoke_released",
+      "center": [
+        -2.531,
+        -4.533
+      ],
+      "radius": 2.0,
+      "height": 2.5,
+      "active_at": 4.46,
+      "expires_at": 9.46
+    },
+    {
+      "time": 4.08,
+      "type": "mode",
+      "actor": 0,
+      "mode": "ADVANCE"
+    },
+    {
+      "time": 4.46,
+      "type": "lost",
+      "actor": 0
+    },
+    {
+      "time": 4.46,
+      "type": "lost",
+      "actor": 1
+    },
+    {
+      "time": 4.46,
+      "type": "guard_memory",
+      "state": "WATCH_LAST_SEEN",
+      "last_seen": 4.44,
+      "known_position": [
+        -7.529999679593103,
+        -4.649998890899202
+      ]
+    },
+    {
+      "time": 4.46,
+      "type": "mode",
+      "actor": 1,
+      "mode": "WATCH"
+    },
+    {
+      "time": 5.66,
+      "type": "guard_memory",
+      "state": "INVESTIGATE_LAST_SEEN",
+      "last_seen": 4.44,
+      "known_position": [
+        -7.529999679593103,
+        -4.649998890899202
+      ]
+    },
+    {
+      "time": 5.66,
+      "type": "mode",
+      "actor": 1,
+      "mode": "PATROL"
+    },
+    {
+      "time": 7.08,
+      "type": "detected",
+      "actor": 0
+    },
+    {
+      "time": 7.08,
+      "type": "detected",
+      "actor": 1
+    },
+    {
+      "time": 7.08,
+      "type": "mode",
+      "actor": 1,
+      "mode": "AIM"
+    },
+    {
+      "time": 8.1,
+      "type": "lost",
+      "actor": 0
+    },
+    {
+      "time": 8.1,
+      "type": "lost",
+      "actor": 1
+    },
+    {
+      "time": 8.1,
+      "type": "guard_memory",
+      "state": "WATCH_LAST_SEEN",
+      "last_seen": 8.08,
+      "known_position": [
+        -0.4458491570167452,
+        -3.208104086406386
+      ]
+    },
+    {
+      "time": 8.1,
+      "type": "mode",
+      "actor": 1,
+      "mode": "WATCH"
+    },
+    {
+      "time": 9.3,
+      "type": "guard_memory",
+      "state": "INVESTIGATE_LAST_SEEN",
+      "last_seen": 8.08,
+      "known_position": [
+        -0.4458491570167452,
+        -3.208104086406386
+      ]
+    },
+    {
+      "time": 9.3,
+      "type": "mode",
+      "actor": 1,
+      "mode": "PATROL"
+    },
+    {
+      "time": 9.64,
+      "type": "detected",
+      "actor": 0
+    },
+    {
+      "time": 9.64,
+      "type": "detected",
+      "actor": 1
+    },
+    {
+      "time": 9.64,
+      "type": "mode",
+      "actor": 1,
+      "mode": "AIM"
+    },
+    {
+      "time": 10.86,
+      "type": "tag",
+      "actors": [
+        1
+      ]
+    },
+    {
+      "time": 10.86,
+      "type": "finish",
+      "winner": "defender",
+      "reason": "tag"
+    }
+  ],
+  "model_calls": 0,
+  "matched_saved_decisions": [
+    0,
+    1
+  ],
+  "interpretation": "Mechanical diagnostic, not a fresh model result and not part of the six-game outcome count.",
+  "input_comparison": "All saved model observation fields match except externally measured route_generation.elapsed_seconds; stored actions held fixed. No new model query.",
+  "publication_note": "Summary and events retained; 50Hz diagnostic states omitted to limit size.",
+  "source_sha256": "174141b1d77a29cfeb395bd827c3fd3f32d2717202fc8dfc4fa42e9630d1222d"
+}

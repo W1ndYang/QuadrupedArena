@@ -1,0 +1,50 @@
+{
+  "id": "ds_low_EW_waypoints_v05",
+  "winner": "defender",
+  "reason": "tag",
+  "seconds": 10.64,
+  "first_detection": [
+    9.14,
+    9.14
+  ],
+  "smoke_used": 0,
+  "minimum_separation_m": 1.656551636107661,
+  "minimum_wall_clearance_m": 0.42709102618147615,
+  "collision_stop_ticks": [
+    0,
+    0
+  ],
+  "distance_m": [
+    19.346590558120546,
+    8.177314320154645
+  ],
+  "attacker_policy": "deepseek_flash_low",
+  "defender_policy": "patrol",
+  "yaw": 1.5707963267948966,
+  "posture": "upright",
+  "condition": "peek_sequences_v04",
+  "layout": "EW",
+  "model_decisions": 3,
+  "route_build_seconds": 0.54294525005389,
+  "human_tags": 0,
+  "peek_bursts": 2,
+  "skill_event_count": 10,
+  "status": "complete",
+  "thinking_mode": "low",
+  "run": 4,
+  "arm": "waypoints",
+  "usage": {
+    "prompt_tokens": 16143,
+    "completion_tokens": 16750,
+    "total_tokens": 32893,
+    "reasoning_tokens": 15935,
+    "calls": 3,
+    "usage_complete": true
+  },
+  "api_total_seconds": 112.56579670391511,
+  "api_median_seconds": 49.84030467295088,
+  "response_models": [
+    "deepseek-flash"
+  ],
+  "completion_mode": "unassisted"
+}

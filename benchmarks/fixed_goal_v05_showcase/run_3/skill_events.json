@@ -1,0 +1,103 @@
+[
+  {
+    "time": 0.0,
+    "type": "plan_accepted",
+    "decision": 0,
+    "nodes": 1,
+    "horizon": 6
+  },
+  {
+    "time": 0.0,
+    "type": "peek_selected",
+    "candidate": "PK001",
+    "home": [
+      1.02,
+      -3.8
+    ],
+    "out": [
+      1.02,
+      -4.1
+    ]
+  },
+  {
+    "time": 4.7,
+    "type": "peek_burst_started",
+    "cycle": 1,
+    "source": "stale_plan_hypothesis",
+    "assumption_age": 4.7,
+    "predicted_exposure": 0.5
+  },
+  {
+    "time": 5.74,
+    "type": "peek_burst_completed",
+    "cycle": 1,
+    "candidate": "PK001",
+    "max_estimated_exposure": 0.46,
+    "samples": 0,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": null,
+    "last_sample": null
+  },
+  {
+    "time": 5.74,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "PEEK_BURST",
+    "reason": "observation_complete"
+  },
+  {
+    "time": 5.76,
+    "type": "plan_accepted",
+    "decision": 1,
+    "nodes": 1,
+    "horizon": 4
+  },
+  {
+    "time": 8.8,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "MOVE",
+    "reason": "target_reached"
+  },
+  {
+    "time": 8.82,
+    "type": "plan_accepted",
+    "decision": 2,
+    "nodes": 1,
+    "horizon": 8
+  },
+  {
+    "time": 8.82,
+    "type": "route_selected",
+    "route_id": "R02_00",
+    "description": "沿 direct",
+    "length_m": 10.71,
+    "resume": false
+  },
+  {
+    "time": 9.08,
+    "type": "interrupt",
+    "reason": "contact_guard",
+    "retreat_found": true,
+    "target": [
+      -1.4000000000000001,
+      -4.6000000000000005
+    ]
+  },
+  {
+    "time": 10.38,
+    "type": "plan_accepted",
+    "decision": 3,
+    "nodes": 1,
+    "horizon": 8
+  },
+  {
+    "time": 10.38,
+    "type": "route_selected",
+    "route_id": "R03_01",
+    "description": "沿 via CENTRAL_NORTH → WEST_LOW_NORTH",
+    "length_m": 15.57,
+    "resume": false
+  }
+]

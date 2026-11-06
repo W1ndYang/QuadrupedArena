@@ -1,0 +1,93 @@
+[
+  {
+    "time": 0.0,
+    "type": "plan_accepted",
+    "decision": 0,
+    "nodes": 1,
+    "horizon": 6
+  },
+  {
+    "time": 0.0,
+    "type": "peek_selected",
+    "candidate": "PK000",
+    "home": [
+      7.53,
+      -4.85
+    ],
+    "out": [
+      7.53,
+      -5.15
+    ]
+  },
+  {
+    "time": 3.14,
+    "type": "peek_burst_started",
+    "cycle": 1,
+    "source": "stale_plan_hypothesis",
+    "assumption_age": 3.14,
+    "predicted_exposure": 0.48
+  },
+  {
+    "time": 4.18,
+    "type": "peek_burst_completed",
+    "cycle": 1,
+    "candidate": "PK000",
+    "max_estimated_exposure": 0.44,
+    "samples": 0,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": null,
+    "last_sample": null
+  },
+  {
+    "time": 4.38,
+    "type": "peek_burst_started",
+    "cycle": 2,
+    "source": "stale_plan_hypothesis",
+    "assumption_age": 4.38,
+    "predicted_exposure": 0.48
+  },
+  {
+    "time": 5.42,
+    "type": "peek_burst_completed",
+    "cycle": 2,
+    "candidate": "PK000",
+    "max_estimated_exposure": 0.44,
+    "samples": 0,
+    "returned_home": true,
+    "home_safe_for_latest_legal_track": true,
+    "first_sample": null,
+    "last_sample": null
+  },
+  {
+    "time": 5.42,
+    "type": "node_completed",
+    "node": 0,
+    "skill": "PEEK_BURST",
+    "reason": "observation_complete"
+  },
+  {
+    "time": 5.44,
+    "type": "plan_accepted",
+    "decision": 1,
+    "nodes": 1,
+    "horizon": 8
+  },
+  {
+    "time": 9.14,
+    "type": "interrupt",
+    "reason": "contact_guard",
+    "retreat_found": true,
+    "target": [
+      -1.4000000000000001,
+      -4.4
+    ]
+  },
+  {
+    "time": 9.2,
+    "type": "plan_accepted",
+    "decision": 2,
+    "nodes": 1,
+    "horizon": 7
+  }
+]

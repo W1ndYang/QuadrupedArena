@@ -1,0 +1,32 @@
+{
+  "frames": 129,
+  "fps": 12,
+  "duration_seconds": 10.75,
+  "width": 800,
+  "height": 718,
+  "source_gif_sha256": "cbce6dbe61606404457db07f292f25cf027f533eb6fc36d7197852c0202fb1d7",
+  "source_render": {
+    "status": "passed",
+    "renderer": "PathTracing",
+    "native_isaac": true,
+    "policy_rerun": false,
+    "full_match": true,
+    "fps": 12,
+    "frame_count": 129,
+    "gif_frames": 129,
+    "gif_duration_seconds": 10.75,
+    "match_seconds": 10.64,
+    "source_sha256": {
+      "timeline.json": "d7735ead1e7037dfa047c1b88f6c19152801df5c9442abe18ba8e92f1cc8cf4b",
+      "events.json": "3293a96d8274499638b3118353395209422b36c1218b07689a09f522263ec2ee",
+      "result.json": "d295a580ad618397ffea03c98818d45b74209eada440aba677f7c0b1fe0a6610",
+      "decisions.json": "627f044f5157d577ba74e521ed9c665095614c45ce0acdcb6429234bca3b49c7",
+      "trial_config.json": "17eac43dfdd2d0ea9778192bdb45adfa31ec0476fac010ed6ac131be38c9926a"
+    },
+    "decision_screenshots": 4,
+    "wall_seconds": 106.60160103009548,
+    "smoke_visual": "Native transparent cloud geometry and exact radius outline; spectator indication, not fluid simulation or model input."
+  },
+  "conversion": "One archived GIF frame per MP4 frame, H.264 CRF 25, yuv420p; no cuts or rerun.",
+  "note": "Last native frame is terminal; video may extend at most a few frames beyond match clock."
+}

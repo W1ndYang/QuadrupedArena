@@ -1,0 +1,110 @@
+[
+  {
+    "content": "{\"observation_id\":0,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":5,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK000\",\"max_cycles\":1},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"初始位于SPAWN，当前无合法检测，仅有对手初始位置记忆；目标位于东侧[10.1,-0.8]。\",\"state_evidence\":\"PK000接近路程3.89m、预测暴露约0.44s，低位墙线可先确认东向威胁；自身满烟、冷却0。\",\"decision_summary\":\"先执行一次低成本掩体探身，确认人形当前是否仍在东路及运动趋势，再规划绕行或突击路线。\",\"uncertainty\":\"对手可能已离开初始位置；探身预测基于静止假设，不保证绝对安全；探身后需重新评估路线。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 4788,
+      "completion_tokens": 1307,
+      "total_tokens": 6095,
+      "prompt_tokens_details": {
+        "cached_tokens": 1280
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1109
+      },
+      "prompt_cache_hit_tokens": 1280,
+      "prompt_cache_miss_tokens": 3508
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "1eb582d5-fec8-4cb7-b4cd-e74cfa0dce9d",
+    "finish_reason": "stop",
+    "api_wall_seconds": 10.247558281989768,
+    "time_to_first_output_seconds": 1.266331032034941,
+    "time_to_first_visible_content_seconds": 9.015131151070818,
+    "reasoning_characters_received": 2000,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:12:19.129354+00:00",
+    "api_finished_utc": "2026-11-05T07:12:29.376905+00:00"
+  },
+  {
+    "content": "{\"observation_id\":1,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":8,\"steps\":[{\"skill\":\"FOLLOW_ROUTE\",\"params\":{\"waypoints\":[\"CENTRAL_NORTH\",\"CENTRAL_EAST\",\"EAST_COURT_WEST\"],\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"retreat\"},{\"skill\":\"SMOKE_AND_MOVE\",\"params\":{\"location\":[10.1,-0.8],\"target\":\"GOAL\",\"posture\":\"upright\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"obs_id=1，t=3.46，PK000探身完成但有效样本0；当前无detection、无last_legal_memory，peek_candidates为空。\",\"state_evidence\":\"自位[-4.47,-4.65]直立静止，剩56.54s；绿目标[10.1,-0.8]半径1m；烟剩余1。\",\"decision_summary\":\"先经CENTRAL_NORTH、CENTRAL_EAST绕北侧接近EAST_COURT_WEST，途中遇8m内合法人形即撤回；到达后用烟覆盖公开目标中心并进入GOAL。\",\"uncertainty\":\"人形当前位置未知，初始[6.2,-2.7]仅为旧信息；中央/东侧仍可能暴露，投烟可行性与途中遮挡需实际执行确认。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 4733,
+      "completion_tokens": 7950,
+      "total_tokens": 12683,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7642
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 2173
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "9e98ab20-e8be-4a88-8657-a01f7d54773c",
+    "finish_reason": "stop",
+    "api_wall_seconds": 49.3954573830124,
+    "time_to_first_output_seconds": 0.8476288099773228,
+    "time_to_first_visible_content_seconds": 47.86998790805228,
+    "reasoning_characters_received": 24965,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:12:29.873095+00:00",
+    "api_finished_utc": "2026-11-05T07:13:19.268527+00:00"
+  },
+  {
+    "content": "{\"observation_id\":2,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":5,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK006\",\"max_cycles\":1},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"自机静止于[4.8,1.6]；最近合法记忆人形[6.096,-2.57]，9.66秒更新，当前无检测；PK006接近暴露0，预测探身暴露0.44秒。\",\"state_evidence\":\"剩余50.2秒，烟1枚，标记冷却0；到目标约5.8米，仍需先确认人形动态。\",\"decision_summary\":\"先利用EastStore北侧PK006进行低成本单次探身，确认人形当前位置与运动趋势；完成后重新规划进圈或烟突进路线。\",\"uncertainty\":\"人形可能已离开最后位置或正监视该区域；探身预测假设其暂时静止，不构成绝对安全保证。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 6107,
+      "completion_tokens": 3130,
+      "total_tokens": 9237,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 2907
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 3547
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "a85373cc-4f56-4e2f-8bb9-20f6dd59ead1",
+    "finish_reason": "stop",
+    "api_wall_seconds": 22.883561779977754,
+    "time_to_first_output_seconds": 1.4391861628973857,
+    "time_to_first_visible_content_seconds": 21.651711121900007,
+    "reasoning_characters_received": 4734,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:13:21.114782+00:00",
+    "api_finished_utc": "2026-11-05T07:13:43.998302+00:00"
+  },
+  {
+    "content": "{\"observation_id\":3,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":5,\"steps\":[{\"skill\":\"SMOKE_AND_MOVE\",\"params\":{\"location\":[6.1,0.1],\"target\":\"GOAL\",\"posture\":\"upright\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"12.08-12.38s合法样本显示人形在[5.60,-1.50]附近，yaw约31°，向北移动；当前无合法检测，仍处EastStore北侧遮挡，目标距6.03m。\",\"state_evidence\":\"自身在[4.75,1.47]停稳，冷却0，烟剩余1；剩余47.2s，烟建议含[6.1,0.1]且目标可投掷性被列出。\",\"decision_summary\":\"向[6.1,0.1]投烟以覆盖/阻断最后已知人形区域，随后直立快速冲GOAL；途中合法见敌也不中止，优先进圈。\",\"uncertainty\":\"人形真实位置与朝向未知，烟可能未完全遮住；若投掷被拒会保留烟并继续冲目标，存在暴露风险。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 6710,
+      "completion_tokens": 3918,
+      "total_tokens": 10628,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 3655
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 4150
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "e4e1296a-5b92-45bc-b789-1aa908c65584",
+    "finish_reason": "stop",
+    "api_wall_seconds": 27.60129316407256,
+    "time_to_first_output_seconds": 1.4273373450851068,
+    "time_to_first_visible_content_seconds": 26.197508863988332,
+    "reasoning_characters_received": 5641,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:13:44.884751+00:00",
+    "api_finished_utc": "2026-11-05T07:14:12.486022+00:00"
+  }
+]

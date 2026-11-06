@@ -1,0 +1,110 @@
+[
+  {
+    "content": "{\"observation_id\":0,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":6,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK001\",\"max_cycles\":1},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"当前无合法检测；仅有初始人形位置[-6.3,-2.8]，且明确不是当前真值。\",\"state_evidence\":\"自身位于[5.8,-0.1]，直立，速度0，烟1，冷却0，剩余60秒；PK001接近暴露预测0.0m、探身暴露约0.5s。\",\"decision_summary\":\"先前往SouthHighWall东侧PK001掩体做一次低成本探身，获取西/南方向信息后再规划通往GOAL的完整路线，避免依据旧敌位盲走。\",\"uncertainty\":\"人形可能已离开初始位置或在探身时移动；暴露预测基于静止旧敌位，不构成安全保证。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 6173,
+      "completion_tokens": 1965,
+      "total_tokens": 8138,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1748
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 4253
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "c9561d28-587f-4169-8dd7-f5f3e141b552",
+    "finish_reason": "stop",
+    "api_wall_seconds": 14.077146008028649,
+    "time_to_first_output_seconds": 1.13250030297786,
+    "time_to_first_visible_content_seconds": 12.85746868699789,
+    "reasoning_characters_received": 3161,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:18:18.716849+00:00",
+    "api_finished_utc": "2026-11-05T07:18:32.793969+00:00"
+  },
+  {
+    "content": "{\"observation_id\":1,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":4,\"steps\":[{\"skill\":\"MOVE\",\"params\":{\"target\":\"CENTRAL_SOUTH\",\"posture\":\"low\",\"fire\":\"off\"},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"PEEK_BURST完成，0个合法采样；当前无检测，last_legal_memory为空；peek_candidates为空。\",\"state_evidence\":\"自身位于[1.02,-3.8]，静止直立，烟剩余1，剩余54.24s；目标在[-10.1,1.1]。\",\"decision_summary\":\"无法再探身，先低姿态转移至CENTRAL_SOUTH掩体观察；途中若合法看到8m内人形则撤回，避免被标记。\",\"uncertainty\":\"人形当前位置未知，仅有初始先验[-6.3,-2.8]；移动路径暴露风险未知，CENTRAL_SOUTH不保证绝对安全。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 5286,
+      "completion_tokens": 3751,
+      "total_tokens": 9037,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 3536
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 2726
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "bc30c88d-ea09-46ec-a745-0c0065d00af1",
+    "finish_reason": "stop",
+    "api_wall_seconds": 25.153106080018915,
+    "time_to_first_output_seconds": 1.9313416939694434,
+    "time_to_first_visible_content_seconds": 24.20114931394346,
+    "reasoning_characters_received": 6098,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:18:35.462034+00:00",
+    "api_finished_utc": "2026-11-05T07:19:00.615127+00:00"
+  },
+  {
+    "content": "{\"observation_id\":2,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":8,\"steps\":[{\"skill\":\"FOLLOW_CANDIDATE\",\"params\":{\"route_id\":\"R02_00\",\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"当前无检测，最近合法记忆为空，153个采样均null，无探身候选；旧初始位置不能当当前真值。\",\"state_evidence\":\"四足在CENTRAL_SOUTH低姿态，速度0.176，烟1，剩余51.18s，当前无活动路线。\",\"decision_summary\":\"选R02_00直达GOAL，直立缩短暴露至约4.1s，fire off优先推进，遇8m内合法人形即retreat。\",\"uncertainty\":\"人形当前未知，距初始已8.82s，路线风险未计算；不假设安全，定时或接触后重评。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 5368,
+      "completion_tokens": 7992,
+      "total_tokens": 13360,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7782
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 2808
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "67edf3ae-de5c-457e-9110-a508b3d4f351",
+    "finish_reason": "stop",
+    "api_wall_seconds": 50.28062779305037,
+    "time_to_first_output_seconds": 1.208961062016897,
+    "time_to_first_visible_content_seconds": 49.41472274099942,
+    "reasoning_characters_received": 26112,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:19:02.353770+00:00",
+    "api_finished_utc": "2026-11-05T07:19:52.634389+00:00"
+  },
+  {
+    "content": "{\"observation_id\":3,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":8,\"steps\":[{\"skill\":\"FOLLOW_CANDIDATE\",\"params\":{\"route_id\":\"R03_01\",\"posture\":\"upright\",\"fire\":\"off\"},\"on_contact\":\"continue\"}]},\"assessment\":{\"observation_evidence\":\"10.38秒合法看到人形于(-5.80,-1.99)，与本机距约4.7m，其朝向约24.6°；当前已可见，故节点用continue避免立即因contact_guard撤回。\",\"state_evidence\":\"本机位于(-1.40,-4.60)，速度0.085m/s，烟1，剩余49.62s；R03_01直立预计6.62s、总暴露1.96s、最近敌距3.55m。\",\"decision_summary\":\"选择绕北R03_01直达GOAL，避开最近距离仅0.47m的直接路线；直立执行、不触发机会射击，保留烟雾给后续。\",\"uncertainty\":\"暴露与敌距仅按当前人形静止位置估计，不保证其不转向或移动；continue不代表免伤，若受阻或计划超时需重评。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 8073,
+      "completion_tokens": 3939,
+      "total_tokens": 12012,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 3677
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 5513
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "2bc3da09-75af-4925-9957-88e85fa40bfb",
+    "finish_reason": "stop",
+    "api_wall_seconds": 29.552496663993225,
+    "time_to_first_output_seconds": 1.1008002189919353,
+    "time_to_first_visible_content_seconds": 28.068870219984092,
+    "reasoning_characters_received": 5916,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:19:57.346086+00:00",
+    "api_finished_utc": "2026-11-05T07:20:26.898541+00:00"
+  }
+]

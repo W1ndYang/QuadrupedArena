@@ -1,0 +1,83 @@
+[
+  {
+    "content": "{\"observation_id\":0,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":6,\"steps\":[{\"skill\":\"PEEK_BURST\",\"params\":{\"candidate_id\":\"PK000\",\"max_cycles\":2},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"当前无检测，仅有初始敌位(-6.3,-2.8)与自位(5.8,-0.1)。PK000距已知敌约14m>8m，预测暴露0.48s，适合远距探身。\",\"state_evidence\":\"目标中心(-10.1,1.1)，剩余60s，烟1，四足upright且冷却0。地图西侧目标邻近初始敌位，直接接近风险高。\",\"decision_summary\":\"先到EastEquipment西侧掩体执行PK000探身，获取人形当前位置与动向；完成后停掩体并重新决策，避免在信息不足时直冲西侧目标。\",\"uncertainty\":\"旧敌位不等于当前真值；若人形已移动、墙/烟遮挡或视线无效，探身可能无有效样本。接近或探身中若合法发现8m内人形则立即撤退。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 4799,
+      "completion_tokens": 7351,
+      "total_tokens": 12150,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7090
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 2879
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "317b9e66-90de-4756-b345-c804995b91d9",
+    "finish_reason": "stop",
+    "api_wall_seconds": 49.84030467295088,
+    "time_to_first_output_seconds": 0.8311195219866931,
+    "time_to_first_visible_content_seconds": 48.53812821197789,
+    "reasoning_characters_received": 11641,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:20:30.801361+00:00",
+    "api_finished_utc": "2026-11-05T07:21:20.641641+00:00"
+  },
+  {
+    "content": "{\"observation_id\":1,\"skill\":\"PLAN\",\"params\":{\"horizon_seconds\":8,\"steps\":[{\"skill\":\"FOLLOW_ROUTE\",\"params\":{\"waypoints\":[\"SOUTH_ENTRY\",\"CENTRAL_SOUTH\",\"WEST_HIDE\",\"GOAL\"],\"posture\":\"upright\",\"fire\":\"opportunistic\"},\"on_contact\":\"retreat\"}]},\"assessment\":{\"observation_evidence\":\"刚完成两次PK000探身，累计有效样本0，当前检测为null，且本次无可用peek_candidates；旧敌位不能作为当前真值。\",\"state_evidence\":\"自身在[7.53,-4.85]停稳，剩余54.56s，烟雾剩余1；目标中心[-10.1,1.1]，公开路线到GOAL约19.66m。\",\"decision_summary\":\"沿南侧经SOUTH_ENTRY、CENTRAL_SOUTH、WEST_HIDE接近GOAL，直立快速推进并允许机会射击；一旦合法发现8m内人形则中止路线撤回。\",\"uncertainty\":\"人形当前位置与巡逻路径未知，可能已向中央或目标附近移动；所选路线仍需经过潜在暴露区，遇敌撤退点不保证绝对安全。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 5040,
+      "completion_tokens": 1457,
+      "total_tokens": 6497,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1193
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 2480
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "4a023842-6ca9-4d9c-8752-4744e2f0d8cf",
+    "finish_reason": "stop",
+    "api_wall_seconds": 10.660543443984352,
+    "time_to_first_output_seconds": 1.1646188229788095,
+    "time_to_first_visible_content_seconds": 9.299440357019193,
+    "reasoning_characters_received": 2280,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:21:21.272010+00:00",
+    "api_finished_utc": "2026-11-05T07:21:31.932514+00:00"
+  },
+  {
+    "content": "{\"observation_id\": 2, \"skill\": \"PLAN\", \"params\": {\"horizon_seconds\": 7, \"steps\": [{\"skill\": \"FOLLOW_ROUTE\", \"params\": {\"waypoints\": [\"WEST_HIDE\", \"WEST_LANE\", \"GOAL\"], \"posture\": \"upright\", \"fire\": \"off\"}, \"on_contact\": \"continue\"}]}, \"assessment\": {\"observation_evidence\": \"9.2s当前合法检测人形于[-5.81,-1.76]，距自身约5.1m，人形朝向约23.8°；自身停稳于[-1.4,-4.4]。\", \"state_evidence\": \"剩余50.8s，目标距10.8m，烟1，冷却0；经WEST_HIDE、WEST_LANE至GOAL约12.4m，直立约4s可达。\", \"decision_summary\": \"选择直立全速经WEST_HIDE、WEST_LANE到GOAL，fire=off避免停顿，on_contact=continue；该路线位于人形当前前180°视野边界之外。\", \"uncertainty\": \"人形可能转向搜索或移动；WEST_HIDE附近与其最近约1.5m，若其提前大幅转向仍可能暴露；受阻将重新决策。\"}}",
+    "tool_calls": [],
+    "usage": {
+      "prompt_tokens": 6304,
+      "completion_tokens": 7942,
+      "total_tokens": 14246,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7652
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 3744
+    },
+    "response_model": "deepseek-flash",
+    "response_id": "24c55789-76f5-4bf3-a91c-9093e44ed970",
+    "finish_reason": "stop",
+    "api_wall_seconds": 52.06494858697988,
+    "time_to_first_output_seconds": 1.263153163017705,
+    "time_to_first_visible_content_seconds": 50.832852654973976,
+    "reasoning_characters_received": 12850,
+    "reasoning_text_saved": false,
+    "api_started_utc": "2026-11-05T07:21:33.544959+00:00",
+    "api_finished_utc": "2026-11-05T07:22:25.609865+00:00"
+  }
+]

@@ -1,0 +1,640 @@
+{
+  "groups": [
+    {
+      "arm": "waypoints",
+      "trials": 3,
+      "wins": 2,
+      "decisions": 11,
+      "known_tokens": 111040,
+      "api_seconds": 325.81065617490094,
+      "generation_seconds": 0,
+      "interrupts": 3,
+      "recoveries": 0
+    },
+    {
+      "arm": "candidates",
+      "trials": 3,
+      "wins": 0,
+      "decisions": 14,
+      "known_tokens": 144917,
+      "api_seconds": 349.51689053035807,
+      "generation_seconds": 34.08353380090557,
+      "interrupts": 7,
+      "recoveries": 1
+    }
+  ],
+  "runs": [
+    {
+      "case": {
+        "run": 1,
+        "layout": "SE",
+        "arm": "waypoints",
+        "mode": "low",
+        "pair": 1,
+        "label": "SE / waypoints"
+      },
+      "result": {
+        "id": "ds_low_SE_waypoints_v05",
+        "winner": "attacker",
+        "reason": "goal",
+        "seconds": 15.36,
+        "first_detection": [
+          9.64,
+          13.42
+        ],
+        "smoke_used": 1,
+        "minimum_separation_m": 0.9962979757848601,
+        "minimum_wall_clearance_m": 0.4221867764202859,
+        "collision_stop_ticks": [
+          0,
+          0
+        ],
+        "distance_m": [
+          24.706761972219372,
+          8.481774027700515
+        ],
+        "attacker_policy": "deepseek_flash_low",
+        "defender_policy": "patrol",
+        "yaw": 1.5707963267948966,
+        "posture": "upright",
+        "condition": "peek_sequences_v04",
+        "layout": "SE",
+        "model_decisions": 4,
+        "route_build_seconds": 0.589988315012306,
+        "human_tags": 0,
+        "peek_bursts": 2,
+        "skill_event_count": 13,
+        "status": "complete",
+        "thinking_mode": "low",
+        "run": 1,
+        "arm": "waypoints",
+        "usage": {
+          "prompt_tokens": 22338,
+          "completion_tokens": 16305,
+          "total_tokens": 38643,
+          "reasoning_tokens": 15313,
+          "calls": 4,
+          "usage_complete": true
+        },
+        "api_total_seconds": 110.12787060905248,
+        "api_median_seconds": 25.242427472025156,
+        "response_models": [
+          "deepseek-flash"
+        ],
+        "completion_mode": "unassisted"
+      },
+      "actual_distance_m": 24.706324374834495,
+      "stationary_seconds": 3.78,
+      "candidate_choices": [],
+      "detour_choices": 0,
+      "resume_choices": 0,
+      "interrupts": 1,
+      "recoveries": 0,
+      "route_generation_seconds": [],
+      "generation_total_seconds": 0,
+      "generation_median_seconds": null,
+      "public_input_tokens": [
+        4788,
+        4733,
+        6107,
+        6710
+      ]
+    },
+    {
+      "case": {
+        "run": 2,
+        "layout": "SE",
+        "arm": "candidates",
+        "mode": "low",
+        "pair": 1,
+        "label": "SE / candidates"
+      },
+      "result": {
+        "id": "ds_low_SE_candidates_v05",
+        "winner": "defender",
+        "reason": "tag",
+        "seconds": 22.84,
+        "first_detection": [
+          7.28,
+          17.84
+        ],
+        "smoke_used": 1,
+        "minimum_separation_m": 1.5351157901085026,
+        "minimum_wall_clearance_m": 0.4221867764202859,
+        "collision_stop_ticks": [
+          0,
+          0
+        ],
+        "distance_m": [
+          28.13339570354661,
+          11.583468333806861
+        ],
+        "attacker_policy": "deepseek_flash_low",
+        "defender_policy": "patrol",
+        "yaw": 1.5707963267948966,
+        "posture": "upright",
+        "condition": "peek_sequences_v04",
+        "layout": "SE",
+        "model_decisions": 8,
+        "route_build_seconds": 3.0819908508565277,
+        "human_tags": 0,
+        "peek_bursts": 3,
+        "skill_event_count": 31,
+        "status": "complete",
+        "thinking_mode": "low",
+        "run": 2,
+        "arm": "candidates",
+        "usage": {
+          "prompt_tokens": 56495,
+          "completion_tokens": 29777,
+          "total_tokens": 86272,
+          "reasoning_tokens": 27742,
+          "calls": 8,
+          "usage_complete": true
+        },
+        "api_total_seconds": 204.86434506019577,
+        "api_median_seconds": 19.67041030304972,
+        "response_models": [
+          "deepseek-flash"
+        ],
+        "completion_mode": "unassisted"
+      },
+      "actual_distance_m": 28.133049795345283,
+      "stationary_seconds": 7.66,
+      "candidate_choices": [
+        {
+          "time": 3.46,
+          "id": "R01_02",
+          "length_m": 17.32,
+          "min_offered_length_m": 15.49,
+          "detour_ratio": 1.118140735958683,
+          "resume": false,
+          "via": [
+            "CENTRAL_SOUTH",
+            "EAST_COURT_WEST",
+            "GOAL"
+          ],
+          "smoke": null,
+          "enemy_age_s": null,
+          "on_contact": "retreat",
+          "description": "沿 via CENTRAL_SOUTH → EAST_COURT_WEST"
+        },
+        {
+          "time": 7.4,
+          "id": "R02_04",
+          "length_m": 6.21,
+          "min_offered_length_m": 6.21,
+          "detour_ratio": 1.0,
+          "resume": false,
+          "via": [
+            "GOAL"
+          ],
+          "smoke": [
+            7.0,
+            -2.6
+          ],
+          "enemy_age_s": 0.12,
+          "on_contact": "retreat",
+          "description": "沿 direct；先投烟再推进"
+        },
+        {
+          "time": 12.16,
+          "id": "R04_01",
+          "length_m": 17.5,
+          "min_offered_length_m": 6.34,
+          "detour_ratio": 2.7602523659305995,
+          "resume": false,
+          "via": [
+            "CENTRAL_EAST",
+            "NORTH_WINDOW",
+            "GOAL"
+          ],
+          "smoke": null,
+          "enemy_age_s": 4.0,
+          "on_contact": "retreat",
+          "description": "沿 via CENTRAL_EAST → NORTH_WINDOW"
+        },
+        {
+          "time": 17.62,
+          "id": "R05_01",
+          "length_m": 7.77,
+          "min_offered_length_m": 6.87,
+          "detour_ratio": 1.131004366812227,
+          "resume": false,
+          "via": [
+            "NORTH_WINDOW",
+            "GOAL"
+          ],
+          "smoke": null,
+          "enemy_age_s": 0.06,
+          "on_contact": "retreat",
+          "description": "沿 via NORTH_WINDOW"
+        },
+        {
+          "time": 18.12,
+          "id": "R06_04",
+          "length_m": 7.75,
+          "min_offered_length_m": 6.85,
+          "detour_ratio": 1.1313868613138687,
+          "resume": true,
+          "via": [
+            "NORTH_WINDOW",
+            "GOAL"
+          ],
+          "smoke": null,
+          "enemy_age_s": 0.28,
+          "on_contact": "retreat",
+          "description": "沿先前路线剩余部分继续"
+        }
+      ],
+      "detour_choices": 1,
+      "resume_choices": 1,
+      "interrupts": 6,
+      "recoveries": 0,
+      "route_generation_seconds": [
+        3.916234049014747,
+        1.9787878470961004,
+        2.578407688997686,
+        2.0529517999384552,
+        1.9598745940020308,
+        1.8542128449771553,
+        2.185275921947323,
+        2.0283830179832876
+      ],
+      "generation_total_seconds": 18.554127763956785,
+      "generation_median_seconds": 2.0406674089608714,
+      "public_input_tokens": [
+        6116,
+        5285,
+        7451,
+        7395,
+        7629,
+        7603,
+        7324,
+        7692
+      ]
+    },
+    {
+      "case": {
+        "run": 3,
+        "layout": "EW",
+        "arm": "candidates",
+        "mode": "low",
+        "pair": 2,
+        "label": "EW / candidates"
+      },
+      "result": {
+        "id": "ds_low_EW_candidates_v05",
+        "winner": "defender",
+        "reason": "tag",
+        "seconds": 10.64,
+        "first_detection": [
+          9.08,
+          9.08
+        ],
+        "smoke_used": 0,
+        "minimum_separation_m": 5.021822918674228,
+        "minimum_wall_clearance_m": 0.4240877757509798,
+        "collision_stop_ticks": [
+          0,
+          0
+        ],
+        "distance_m": [
+          11.042196331029007,
+          8.176240611800017
+        ],
+        "attacker_policy": "deepseek_flash_low",
+        "defender_policy": "patrol",
+        "yaw": 1.5707963267948966,
+        "posture": "upright",
+        "condition": "peek_sequences_v04",
+        "layout": "EW",
+        "model_decisions": 4,
+        "route_build_seconds": 0.5794161078520119,
+        "human_tags": 0,
+        "peek_bursts": 1,
+        "skill_event_count": 12,
+        "status": "complete",
+        "thinking_mode": "low",
+        "run": 3,
+        "arm": "candidates",
+        "usage": {
+          "prompt_tokens": 24900,
+          "completion_tokens": 17647,
+          "total_tokens": 42547,
+          "reasoning_tokens": 16743,
+          "calls": 4,
+          "usage_complete": true
+        },
+        "api_total_seconds": 119.06337654509116,
+        "api_median_seconds": 27.35280137200607,
+        "response_models": [
+          "deepseek-flash"
+        ],
+        "completion_mode": "unassisted"
+      },
+      "actual_distance_m": 11.041931033808634,
+      "stationary_seconds": 2.68,
+      "candidate_choices": [
+        {
+          "time": 8.82,
+          "id": "R02_00",
+          "length_m": 10.71,
+          "min_offered_length_m": 10.71,
+          "detour_ratio": 1.0,
+          "resume": false,
+          "via": [
+            "GOAL"
+          ],
+          "smoke": null,
+          "enemy_age_s": null,
+          "on_contact": "retreat",
+          "description": "沿 direct"
+        },
+        {
+          "time": 10.38,
+          "id": "R03_01",
+          "length_m": 15.57,
+          "min_offered_length_m": 10.8,
+          "detour_ratio": 1.4416666666666667,
+          "resume": false,
+          "via": [
+            "CENTRAL_NORTH",
+            "WEST_LOW_NORTH",
+            "GOAL"
+          ],
+          "smoke": null,
+          "enemy_age_s": 0.0,
+          "on_contact": "continue",
+          "description": "沿 via CENTRAL_NORTH → WEST_LOW_NORTH"
+        }
+      ],
+      "detour_choices": 1,
+      "resume_choices": 0,
+      "interrupts": 1,
+      "recoveries": 0,
+      "route_generation_seconds": [
+        3.9849952259100974,
+        1.9626121269538999,
+        1.3691190279787406,
+        3.3954966790042818
+      ],
+      "generation_total_seconds": 10.71222305984702,
+      "generation_median_seconds": 2.679054402979091,
+      "public_input_tokens": [
+        6173,
+        5286,
+        5368,
+        8073
+      ]
+    },
+    {
+      "case": {
+        "run": 4,
+        "layout": "EW",
+        "arm": "waypoints",
+        "mode": "low",
+        "pair": 2,
+        "label": "EW / waypoints"
+      },
+      "result": {
+        "id": "ds_low_EW_waypoints_v05",
+        "winner": "defender",
+        "reason": "tag",
+        "seconds": 10.64,
+        "first_detection": [
+          9.14,
+          9.14
+        ],
+        "smoke_used": 0,
+        "minimum_separation_m": 1.656551636107661,
+        "minimum_wall_clearance_m": 0.42709102618147615,
+        "collision_stop_ticks": [
+          0,
+          0
+        ],
+        "distance_m": [
+          19.346590558120546,
+          8.177314320154645
+        ],
+        "attacker_policy": "deepseek_flash_low",
+        "defender_policy": "patrol",
+        "yaw": 1.5707963267948966,
+        "posture": "upright",
+        "condition": "peek_sequences_v04",
+        "layout": "EW",
+        "model_decisions": 3,
+        "route_build_seconds": 0.54294525005389,
+        "human_tags": 0,
+        "peek_bursts": 2,
+        "skill_event_count": 10,
+        "status": "complete",
+        "thinking_mode": "low",
+        "run": 4,
+        "arm": "waypoints",
+        "usage": {
+          "prompt_tokens": 16143,
+          "completion_tokens": 16750,
+          "total_tokens": 32893,
+          "reasoning_tokens": 15935,
+          "calls": 3,
+          "usage_complete": true
+        },
+        "api_total_seconds": 112.56579670391511,
+        "api_median_seconds": 49.84030467295088,
+        "response_models": [
+          "deepseek-flash"
+        ],
+        "completion_mode": "unassisted"
+      },
+      "actual_distance_m": 19.346491377765187,
+      "stationary_seconds": 1.98,
+      "candidate_choices": [],
+      "detour_choices": 0,
+      "resume_choices": 0,
+      "interrupts": 1,
+      "recoveries": 0,
+      "route_generation_seconds": [],
+      "generation_total_seconds": 0,
+      "generation_median_seconds": null,
+      "public_input_tokens": [
+        4799,
+        5040,
+        6304
+      ]
+    },
+    {
+      "case": {
+        "run": 5,
+        "layout": "WC",
+        "arm": "waypoints",
+        "mode": "low",
+        "pair": 3,
+        "label": "WC / waypoints"
+      },
+      "result": {
+        "id": "ds_low_WC_waypoints_v05",
+        "winner": "attacker",
+        "reason": "goal",
+        "seconds": 20.06,
+        "first_detection": [
+          2.48,
+          2.48
+        ],
+        "smoke_used": 1,
+        "minimum_separation_m": 1.5418630186055635,
+        "minimum_wall_clearance_m": 0.42498466355655473,
+        "collision_stop_ticks": [
+          0,
+          0
+        ],
+        "distance_m": [
+          26.092551677740015,
+          9.531130940986085
+        ],
+        "attacker_policy": "deepseek_flash_low",
+        "defender_policy": "patrol",
+        "yaw": 3.141592653589793,
+        "posture": "upright",
+        "condition": "peek_sequences_v04",
+        "layout": "WC",
+        "model_decisions": 4,
+        "route_build_seconds": 1.1480000499868765,
+        "human_tags": 0,
+        "peek_bursts": 2,
+        "skill_event_count": 15,
+        "status": "complete",
+        "thinking_mode": "low",
+        "run": 5,
+        "arm": "waypoints",
+        "usage": {
+          "prompt_tokens": 24025,
+          "completion_tokens": 15479,
+          "total_tokens": 39504,
+          "reasoning_tokens": 14433,
+          "calls": 4,
+          "usage_complete": true
+        },
+        "api_total_seconds": 103.11698886193335,
+        "api_median_seconds": 25.09717158600688,
+        "response_models": [
+          "deepseek-flash"
+        ],
+        "completion_mode": "unassisted"
+      },
+      "actual_distance_m": 26.092221373707773,
+      "stationary_seconds": 5.98,
+      "candidate_choices": [],
+      "detour_choices": 0,
+      "resume_choices": 0,
+      "interrupts": 1,
+      "recoveries": 0,
+      "route_generation_seconds": [],
+      "generation_total_seconds": 0,
+      "generation_median_seconds": null,
+      "public_input_tokens": [
+        4778,
+        5994,
+        6173,
+        7080
+      ]
+    },
+    {
+      "case": {
+        "run": 6,
+        "layout": "WC",
+        "arm": "candidates",
+        "mode": "low",
+        "pair": 3,
+        "label": "WC / candidates"
+      },
+      "result": {
+        "id": "ds_low_WC_candidates_v05",
+        "winner": "defender",
+        "reason": "tag",
+        "seconds": 8.32,
+        "first_detection": [
+          2.48,
+          2.48
+        ],
+        "smoke_used": 1,
+        "minimum_separation_m": 0.701894021095755,
+        "minimum_wall_clearance_m": 0.42498466355655473,
+        "collision_stop_ticks": [
+          8,
+          8
+        ],
+        "distance_m": [
+          14.950533827258774,
+          5.238759732143565
+        ],
+        "attacker_policy": "deepseek_flash_low",
+        "defender_policy": "patrol",
+        "yaw": 3.141592653589793,
+        "posture": "upright",
+        "condition": "peek_sequences_v04",
+        "layout": "WC",
+        "model_decisions": 2,
+        "route_build_seconds": 0.05490665405523032,
+        "human_tags": 0,
+        "peek_bursts": 0,
+        "skill_event_count": 7,
+        "status": "complete",
+        "thinking_mode": "low",
+        "run": 6,
+        "arm": "candidates",
+        "usage": {
+          "prompt_tokens": 12885,
+          "completion_tokens": 3213,
+          "total_tokens": 16098,
+          "reasoning_tokens": 2767,
+          "calls": 2,
+          "usage_complete": true
+        },
+        "api_total_seconds": 25.589168925071135,
+        "api_median_seconds": 12.794584462535568,
+        "response_models": [
+          "deepseek-flash"
+        ],
+        "completion_mode": "unassisted"
+      },
+      "actual_distance_m": 14.950445388421663,
+      "stationary_seconds": 1.76,
+      "candidate_choices": [
+        {
+          "time": 3.68,
+          "id": "R01_04",
+          "length_m": 9.33,
+          "min_offered_length_m": 9.33,
+          "detour_ratio": 1.0,
+          "resume": false,
+          "via": [
+            "GOAL"
+          ],
+          "smoke": [
+            -2.531,
+            -4.533
+          ],
+          "enemy_age_s": 0.0,
+          "on_contact": "continue",
+          "description": "沿 direct；先投烟再推进"
+        }
+      ],
+      "detour_choices": 0,
+      "resume_choices": 0,
+      "interrupts": 0,
+      "recoveries": 1,
+      "route_generation_seconds": [
+        2.6058127810247242,
+        2.2113701960770413
+      ],
+      "generation_total_seconds": 4.817182977101766,
+      "generation_median_seconds": 2.408591488550883,
+      "public_input_tokens": [
+        5896,
+        6989
+      ]
+    }
+  ],
+  "interpretation": "Descriptive three-layout paired pilot; no significance or population win-rate claim."
+}

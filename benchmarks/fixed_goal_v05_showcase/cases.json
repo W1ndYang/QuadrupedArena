@@ -1,0 +1,50 @@
+[
+  {
+    "run": 1,
+    "layout": "SE",
+    "arm": "waypoints",
+    "mode": "low",
+    "pair": 1,
+    "label": "SE / waypoints"
+  },
+  {
+    "run": 2,
+    "layout": "SE",
+    "arm": "candidates",
+    "mode": "low",
+    "pair": 1,
+    "label": "SE / candidates"
+  },
+  {
+    "run": 3,
+    "layout": "EW",
+    "arm": "candidates",
+    "mode": "low",
+    "pair": 2,
+    "label": "EW / candidates"
+  },
+  {
+    "run": 4,
+    "layout": "EW",
+    "arm": "waypoints",
+    "mode": "low",
+    "pair": 2,
+    "label": "EW / waypoints"
+  },
+  {
+    "run": 5,
+    "layout": "WC",
+    "arm": "waypoints",
+    "mode": "low",
+    "pair": 3,
+    "label": "WC / waypoints"
+  },
+  {
+    "run": 6,
+    "layout": "WC",
+    "arm": "candidates",
+    "mode": "low",
+    "pair": 3,
+    "label": "WC / candidates"
+  }
+]

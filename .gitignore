@@ -39,3 +39,11 @@ site-packages/
 !benchmarks/fixed_goal_v041/run_3/demo.gif
 benchmarks/fixed_goal_v041/native_scene/
 benchmarks/fixed_goal_v041/viewer_checks/
+
+# Six curated, compressed full-match videos; raw movies remain ignored.
+!benchmarks/fixed_goal_v05_showcase/run_1/replay.mp4
+!benchmarks/fixed_goal_v05_showcase/run_2/replay.mp4
+!benchmarks/fixed_goal_v05_showcase/run_3/replay.mp4
+!benchmarks/fixed_goal_v05_showcase/run_4/replay.mp4
+!benchmarks/fixed_goal_v05_showcase/run_5/replay.mp4
+!benchmarks/fixed_goal_v05_showcase/run_6/replay.mp4

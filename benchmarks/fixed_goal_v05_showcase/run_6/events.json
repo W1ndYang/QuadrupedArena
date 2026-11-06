@@ -1,0 +1,139 @@
+[
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 2.48,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 2.48,
+    "type": "detected",
+    "actor": 1
+  },
+  {
+    "time": 3.54,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 3.68,
+    "type": "smoke_cast_started",
+    "center": [
+      -2.531,
+      -4.533
+    ]
+  },
+  {
+    "time": 3.68,
+    "type": "mode",
+    "actor": 0,
+    "mode": "THROW"
+  },
+  {
+    "time": 4.06,
+    "type": "smoke_released",
+    "center": [
+      -2.531,
+      -4.533
+    ],
+    "radius": 2.0,
+    "height": 2.5,
+    "active_at": 4.46,
+    "expires_at": 9.46
+  },
+  {
+    "time": 4.08,
+    "type": "mode",
+    "actor": 0,
+    "mode": "CANDIDATE_PATH"
+  },
+  {
+    "time": 4.46,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 4.46,
+    "type": "lost",
+    "actor": 1
+  },
+  {
+    "time": 4.46,
+    "type": "guard_memory",
+    "state": "WATCH_LAST_SEEN",
+    "last_seen": 4.44,
+    "known_position": [
+      -7.529999679593103,
+      -4.649998890899202
+    ]
+  },
+  {
+    "time": 4.46,
+    "type": "mode",
+    "actor": 1,
+    "mode": "WATCH"
+  },
+  {
+    "time": 5.66,
+    "type": "guard_memory",
+    "state": "INVESTIGATE_LAST_SEEN",
+    "last_seen": 4.44,
+    "known_position": [
+      -7.529999679593103,
+      -4.649998890899202
+    ]
+  },
+  {
+    "time": 5.66,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 7.08,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 7.08,
+    "type": "detected",
+    "actor": 1
+  },
+  {
+    "time": 7.08,
+    "type": "mode",
+    "actor": 1,
+    "mode": "AIM"
+  },
+  {
+    "time": 7.62,
+    "type": "mode",
+    "actor": 0,
+    "mode": "RECOVERY_LOCAL"
+  },
+  {
+    "time": 8.32,
+    "type": "tag",
+    "actors": [
+      1
+    ]
+  },
+  {
+    "time": 8.32,
+    "type": "finish",
+    "winner": "defender",
+    "reason": "tag"
+  }
+]

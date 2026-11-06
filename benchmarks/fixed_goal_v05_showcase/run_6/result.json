@@ -1,0 +1,50 @@
+{
+  "id": "ds_low_WC_candidates_v05",
+  "winner": "defender",
+  "reason": "tag",
+  "seconds": 8.32,
+  "first_detection": [
+    2.48,
+    2.48
+  ],
+  "smoke_used": 1,
+  "minimum_separation_m": 0.701894021095755,
+  "minimum_wall_clearance_m": 0.42498466355655473,
+  "collision_stop_ticks": [
+    8,
+    8
+  ],
+  "distance_m": [
+    14.950533827258774,
+    5.238759732143565
+  ],
+  "attacker_policy": "deepseek_flash_low",
+  "defender_policy": "patrol",
+  "yaw": 3.141592653589793,
+  "posture": "upright",
+  "condition": "peek_sequences_v04",
+  "layout": "WC",
+  "model_decisions": 2,
+  "route_build_seconds": 0.05490665405523032,
+  "human_tags": 0,
+  "peek_bursts": 0,
+  "skill_event_count": 7,
+  "status": "complete",
+  "thinking_mode": "low",
+  "run": 6,
+  "arm": "candidates",
+  "usage": {
+    "prompt_tokens": 12885,
+    "completion_tokens": 3213,
+    "total_tokens": 16098,
+    "reasoning_tokens": 2767,
+    "calls": 2,
+    "usage_complete": true
+  },
+  "api_total_seconds": 25.589168925071135,
+  "api_median_seconds": 12.794584462535568,
+  "response_models": [
+    "deepseek-flash"
+  ],
+  "completion_mode": "unassisted"
+}

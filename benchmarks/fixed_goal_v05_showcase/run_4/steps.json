@@ -1,0 +1,180 @@
+[
+  {
+    "index": 0,
+    "start": 0.0,
+    "end": 5.44,
+    "api_seconds": 49.84030467295088,
+    "usage": {
+      "prompt_tokens": 4799,
+      "completion_tokens": 7351,
+      "total_tokens": 12150,
+      "prompt_tokens_details": {
+        "cached_tokens": 1920
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7090
+      },
+      "prompt_cache_hit_tokens": 1920,
+      "prompt_cache_miss_tokens": 2879
+    },
+    "api_started_utc": "2026-11-05T07:20:30.801361+00:00",
+    "api_finished_utc": "2026-11-05T07:21:20.641641+00:00",
+    "start_goal_m": 15.945218719101973,
+    "end_goal_m": 18.606965032293047,
+    "traveled_m": 6.482648481955869,
+    "max_human_lock": 0.0,
+    "events": [
+      {
+        "time": 0.0,
+        "type": "plan_accepted",
+        "decision": 0,
+        "nodes": 1,
+        "horizon": 6
+      },
+      {
+        "time": 0.0,
+        "type": "peek_selected",
+        "candidate": "PK000",
+        "home": [
+          7.53,
+          -4.85
+        ],
+        "out": [
+          7.53,
+          -5.15
+        ]
+      },
+      {
+        "time": 3.14,
+        "type": "peek_burst_started",
+        "cycle": 1,
+        "source": "stale_plan_hypothesis",
+        "assumption_age": 3.14,
+        "predicted_exposure": 0.48
+      },
+      {
+        "time": 4.18,
+        "type": "peek_burst_completed",
+        "cycle": 1,
+        "candidate": "PK000",
+        "max_estimated_exposure": 0.44,
+        "samples": 0,
+        "returned_home": true,
+        "home_safe_for_latest_legal_track": true,
+        "first_sample": null,
+        "last_sample": null
+      },
+      {
+        "time": 4.38,
+        "type": "peek_burst_started",
+        "cycle": 2,
+        "source": "stale_plan_hypothesis",
+        "assumption_age": 4.38,
+        "predicted_exposure": 0.48
+      },
+      {
+        "time": 5.42,
+        "type": "peek_burst_completed",
+        "cycle": 2,
+        "candidate": "PK000",
+        "max_estimated_exposure": 0.44,
+        "samples": 0,
+        "returned_home": true,
+        "home_safe_for_latest_legal_track": true,
+        "first_sample": null,
+        "last_sample": null
+      },
+      {
+        "time": 5.42,
+        "type": "node_completed",
+        "node": 0,
+        "skill": "PEEK_BURST",
+        "reason": "observation_complete"
+      }
+    ],
+    "image": "run_4/steps/000.jpg",
+    "routeplot": null
+  },
+  {
+    "index": 1,
+    "start": 5.44,
+    "end": 9.2,
+    "api_seconds": 10.660543443984352,
+    "usage": {
+      "prompt_tokens": 5040,
+      "completion_tokens": 1457,
+      "total_tokens": 6497,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 1193
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 2480
+    },
+    "api_started_utc": "2026-11-05T07:21:21.272010+00:00",
+    "api_finished_utc": "2026-11-05T07:21:31.932514+00:00",
+    "start_goal_m": 18.606965032293047,
+    "end_goal_m": 10.29271587094485,
+    "traveled_m": 9.077442895809314,
+    "max_human_lock": 0.0,
+    "events": [
+      {
+        "time": 5.44,
+        "type": "plan_accepted",
+        "decision": 1,
+        "nodes": 1,
+        "horizon": 8
+      },
+      {
+        "time": 9.14,
+        "type": "interrupt",
+        "reason": "contact_guard",
+        "retreat_found": true,
+        "target": [
+          -1.4000000000000001,
+          -4.4
+        ]
+      }
+    ],
+    "image": "run_4/steps/001.jpg",
+    "routeplot": null
+  },
+  {
+    "index": 2,
+    "start": 9.2,
+    "end": 10.64,
+    "api_seconds": 52.06494858697988,
+    "usage": {
+      "prompt_tokens": 6304,
+      "completion_tokens": 7942,
+      "total_tokens": 14246,
+      "prompt_tokens_details": {
+        "cached_tokens": 2560
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 7652
+      },
+      "prompt_cache_hit_tokens": 2560,
+      "prompt_cache_miss_tokens": 3744
+    },
+    "api_started_utc": "2026-11-05T07:21:33.544959+00:00",
+    "api_finished_utc": "2026-11-05T07:22:25.609865+00:00",
+    "start_goal_m": 10.29271587094485,
+    "end_goal_m": 6.80138747422992,
+    "traveled_m": 3.7864000000000035,
+    "max_human_lock": 1.0000000000000004,
+    "events": [
+      {
+        "time": 9.2,
+        "type": "plan_accepted",
+        "decision": 2,
+        "nodes": 1,
+        "horizon": 7
+      }
+    ],
+    "image": "run_4/steps/002.jpg",
+    "routeplot": null
+  }
+]

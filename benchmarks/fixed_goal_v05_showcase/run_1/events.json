@@ -1,0 +1,196 @@
+[
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 2.24,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 2.4,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 2.9,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 2.94,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 3.44,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 3.46,
+    "type": "mode",
+    "actor": 0,
+    "mode": "FOLLOW_PATH"
+  },
+  {
+    "time": 9.64,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 9.64,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 9.68,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 10.96,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 11.74,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 12.08,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 12.24,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 12.28,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 12.4,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 12.78,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 12.8,
+    "type": "smoke_cast_started",
+    "center": [
+      6.1,
+      0.1
+    ]
+  },
+  {
+    "time": 12.8,
+    "type": "mode",
+    "actor": 0,
+    "mode": "THROW"
+  },
+  {
+    "time": 13.18,
+    "type": "smoke_released",
+    "center": [
+      6.1,
+      0.1
+    ],
+    "radius": 2.0,
+    "height": 2.5,
+    "active_at": 13.58,
+    "expires_at": 18.58
+  },
+  {
+    "time": 13.2,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 13.42,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 13.42,
+    "type": "detected",
+    "actor": 1
+  },
+  {
+    "time": 13.58,
+    "type": "lost",
+    "actor": 0
+  },
+  {
+    "time": 13.58,
+    "type": "lost",
+    "actor": 1
+  },
+  {
+    "time": 13.58,
+    "type": "guard_memory",
+    "state": "WATCH_LAST_SEEN",
+    "last_seen": 13.56,
+    "known_position": [
+      5.159016230371874,
+      1.4363176134974307
+    ]
+  },
+  {
+    "time": 13.58,
+    "type": "mode",
+    "actor": 1,
+    "mode": "WATCH"
+  },
+  {
+    "time": 14.78,
+    "type": "guard_memory",
+    "state": "INVESTIGATE_LAST_SEEN",
+    "last_seen": 13.56,
+    "known_position": [
+      5.159016230371874,
+      1.4363176134974307
+    ]
+  },
+  {
+    "time": 14.78,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 15.36,
+    "type": "finish",
+    "winner": "attacker",
+    "reason": "goal"
+  }
+]

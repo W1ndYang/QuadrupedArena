@@ -1,0 +1,115 @@
+[
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 0.0,
+    "type": "mode",
+    "actor": 1,
+    "mode": "PATROL"
+  },
+  {
+    "time": 2.92,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 3.14,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 3.64,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 3.68,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 4.18,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 4.38,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 4.88,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_HOLD"
+  },
+  {
+    "time": 4.92,
+    "type": "mode",
+    "actor": 0,
+    "mode": "PEEK_LOCAL"
+  },
+  {
+    "time": 5.42,
+    "type": "mode",
+    "actor": 0,
+    "mode": "WAIT"
+  },
+  {
+    "time": 5.44,
+    "type": "mode",
+    "actor": 0,
+    "mode": "FOLLOW_PATH"
+  },
+  {
+    "time": 9.14,
+    "type": "detected",
+    "actor": 0
+  },
+  {
+    "time": 9.14,
+    "type": "detected",
+    "actor": 1
+  },
+  {
+    "time": 9.14,
+    "type": "mode",
+    "actor": 0,
+    "mode": "ADVANCE"
+  },
+  {
+    "time": 9.2,
+    "type": "mode",
+    "actor": 0,
+    "mode": "FOLLOW_PATH"
+  },
+  {
+    "time": 9.34,
+    "type": "mode",
+    "actor": 1,
+    "mode": "AIM"
+  },
+  {
+    "time": 10.64,
+    "type": "tag",
+    "actors": [
+      1
+    ]
+  },
+  {
+    "time": 10.64,
+    "type": "finish",
+    "winner": "defender",
+    "reason": "tag"
+  }
+]
