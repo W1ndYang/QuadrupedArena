@@ -27,3 +27,10 @@ jobs:
         run: python benchmarks/fixed_goal_v041/benchmark.py replay --output .arena-workspace/ci-fixed-goal
       - name: Verify six-game lightweight showcase integrity (no API / Isaac)
         run: python benchmarks/fixed_goal_v05_showcase/verify.py
+
+      - name: Breach Arena tests (isolated module; no API / Isaac / pygame)
+        run: python -m unittest discover -s breach_arena/tests -t . -v
+      - name: Breach Arena play / counter-play matrix (deterministic)
+        run: |
+          python -m breach_arena matrix --map BA-1
+          python -m breach_arena matrix --map BA-2
