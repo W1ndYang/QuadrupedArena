@@ -1,0 +1,10 @@
+{
+  "provider": "deepseek",
+  "base_url": "https://api.deepseek.com",
+  "model": "deepseek-chat",
+  "api_key_env": "DEEPSEEK_API_KEY",
+  "timeout_s": 60,
+  "temperature": 0.2,
+  "max_tokens": 1200,
+  "note": "Example only. Model names, pricing and options change; check the provider before a paid run."
+}

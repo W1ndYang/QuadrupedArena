@@ -1,0 +1,762 @@
+{
+ "schema": "breach-map-v1",
+ "id": "BA-2",
+ "title": "低墙广场",
+ "summary": "目标外只有一圈 0.7 m 低墙，四角开口；外侧高墙块遮挡。视线开阔、受 8 m 射程限制，读人站位和烟落点更关键。",
+ "arena": {
+  "size": [
+   24,
+   16
+  ],
+  "covers": [
+   {
+    "name": "RingN",
+    "center": [
+     4.0,
+     4.3
+    ],
+    "size": [
+     6.0,
+     0.4,
+     0.7
+    ]
+   },
+   {
+    "name": "RingS",
+    "center": [
+     4.0,
+     -4.3
+    ],
+    "size": [
+     6.0,
+     0.4,
+     0.7
+    ]
+   },
+   {
+    "name": "RingW",
+    "center": [
+     -0.3,
+     0.0
+    ],
+    "size": [
+     0.4,
+     4.4,
+     0.7
+    ]
+   },
+   {
+    "name": "RingE",
+    "center": [
+     8.3,
+     0.0
+    ],
+    "size": [
+     0.4,
+     4.4,
+     0.7
+    ]
+   },
+   {
+    "name": "WestScreen",
+    "center": [
+     -4.0,
+     0.0
+    ],
+    "size": [
+     2.0,
+     4.0,
+     2.4
+    ]
+   },
+   {
+    "name": "NWBlock",
+    "center": [
+     -2.0,
+     6.8
+    ],
+    "size": [
+     2.0,
+     2.4,
+     2.4
+    ]
+   },
+   {
+    "name": "SWBlock",
+    "center": [
+     -2.0,
+     -6.8
+    ],
+    "size": [
+     2.0,
+     2.4,
+     2.4
+    ]
+   },
+   {
+    "name": "NEBlock",
+    "center": [
+     10.0,
+     6.5
+    ],
+    "size": [
+     2.0,
+     3.0,
+     2.4
+    ]
+   },
+   {
+    "name": "SEBlock",
+    "center": [
+     10.0,
+     -6.5
+    ],
+    "size": [
+     2.0,
+     3.0,
+     2.4
+    ]
+   },
+   {
+    "name": "EastLow",
+    "center": [
+     10.8,
+     0.0
+    ],
+    "size": [
+     0.4,
+     3.0,
+     0.7
+    ]
+   },
+   {
+    "name": "PlazaLowNW",
+    "center": [
+     -7.0,
+     3.2
+    ],
+    "size": [
+     2.0,
+     0.4,
+     0.7
+    ]
+   },
+   {
+    "name": "PlazaLowSW",
+    "center": [
+     -7.0,
+     -3.2
+    ],
+    "size": [
+     2.0,
+     0.4,
+     0.7
+    ]
+   }
+  ]
+ },
+ "goal": {
+  "center": [
+   4.0,
+   0.0
+  ],
+  "radius": 1.0
+ },
+ "spawns": {
+  "quadruped": {
+   "xy": [
+    -10.0,
+    0.0
+   ],
+   "yaw_degrees": 0
+  },
+  "human": {
+   "xy": [
+    5.5,
+    0.5
+   ],
+   "yaw_degrees": 180
+  }
+ },
+ "points": {
+  "NW_GAP": {
+   "xy": [
+    0.3,
+    3.2
+   ],
+   "kind": "door",
+   "label": "西北口"
+  },
+  "SW_GAP": {
+   "xy": [
+    0.3,
+    -3.2
+   ],
+   "kind": "door",
+   "label": "西南口"
+  },
+  "NE_GAP": {
+   "xy": [
+    7.7,
+    3.2
+   ],
+   "kind": "door",
+   "label": "东北口"
+  },
+  "SE_GAP": {
+   "xy": [
+    7.7,
+    -3.2
+   ],
+   "kind": "door",
+   "label": "东南口"
+  },
+  "T_W": {
+   "xy": [
+    -0.95,
+    0.0
+   ],
+   "kind": "throw",
+   "label": "西低墙后"
+  },
+  "T_N": {
+   "xy": [
+    4.0,
+    4.95
+   ],
+   "kind": "throw",
+   "label": "北低墙后"
+  },
+  "T_S": {
+   "xy": [
+    4.0,
+    -4.95
+   ],
+   "kind": "throw",
+   "label": "南低墙后"
+  },
+  "T_E": {
+   "xy": [
+    8.95,
+    0.0
+   ],
+   "kind": "throw",
+   "label": "东低墙后"
+  },
+  "P_NE": {
+   "xy": [
+    8.95,
+    1.6
+   ],
+   "kind": "staging",
+   "label": "东低墙北段后"
+  },
+  "P_SE": {
+   "xy": [
+    8.95,
+    -1.6
+   ],
+   "kind": "staging",
+   "label": "东低墙南段后"
+  },
+  "S_NW": {
+   "xy": [
+    1.4,
+    2.4
+   ],
+   "kind": "standoff",
+   "label": "西北远守位"
+  },
+  "S_SE": {
+   "xy": [
+    6.6,
+    -2.4
+   ],
+   "kind": "standoff",
+   "label": "东南远守位"
+  },
+  "F_NW": {
+   "xy": [
+    -6.0,
+    4.6
+   ],
+   "kind": "feint",
+   "label": "西北佯动点（11 m）"
+  },
+  "F_SW": {
+   "xy": [
+    -6.0,
+    -4.6
+   ],
+   "kind": "feint",
+   "label": "西南佯动点（11 m）"
+  },
+  "T_W_N": {
+   "xy": [
+    -0.95,
+    2.8
+   ],
+   "kind": "lane",
+   "label": "西低墙北端外"
+  },
+  "N_RING_W": {
+   "xy": [
+    0.4,
+    4.95
+   ],
+   "kind": "lane",
+   "label": "北低墙西端外"
+  },
+  "S_RING_E": {
+   "xy": [
+    7.6,
+    -4.95
+   ],
+   "kind": "lane",
+   "label": "南低墙东端外"
+  },
+  "E_RING_N": {
+   "xy": [
+    8.95,
+    2.8
+   ],
+   "kind": "lane",
+   "label": "东低墙北端外"
+  },
+  "E_RING_S": {
+   "xy": [
+    8.95,
+    -2.8
+   ],
+   "kind": "lane",
+   "label": "东低墙南端外"
+  },
+  "W_SCREEN_W": {
+   "xy": [
+    -5.5,
+    0.0
+   ],
+   "kind": "lane",
+   "label": "西屏风西侧"
+  },
+  "NW_FIELD": {
+   "xy": [
+    -3.0,
+    4.6
+   ],
+   "kind": "lane",
+   "label": "西北空地"
+  },
+  "SW_FIELD": {
+   "xy": [
+    -3.0,
+    -4.6
+   ],
+   "kind": "lane",
+   "label": "西南空地"
+  },
+  "N_LANE": {
+   "xy": [
+    1.0,
+    6.4
+   ],
+   "kind": "lane",
+   "label": "北侧通道"
+  },
+  "S_LANE": {
+   "xy": [
+    1.0,
+    -6.4
+   ],
+   "kind": "lane",
+   "label": "南侧通道"
+  },
+  "NE_PASS": {
+   "xy": [
+    8.0,
+    5.6
+   ],
+   "kind": "lane",
+   "label": "东北通道"
+  },
+  "SE_PASS": {
+   "xy": [
+    8.0,
+    -5.6
+   ],
+   "kind": "lane",
+   "label": "东南通道"
+  },
+  "E_RING_N2": {
+   "xy": [
+    9.0,
+    3.0
+   ],
+   "kind": "lane",
+   "label": "东北口外"
+  },
+  "E_RING_S2": {
+   "xy": [
+    9.0,
+    -3.0
+   ],
+   "kind": "lane",
+   "label": "东南口外"
+  },
+  "SPAWN_COVER": {
+   "xy": [
+    -6.0,
+    0.0
+   ],
+   "kind": "cover",
+   "label": "西屏风后"
+  }
+ },
+ "plays": {
+  "throws": {
+   "T_W": {
+    "run_via": [
+     "T_W_N",
+     "NW_GAP"
+    ],
+    "smoke_hints": {
+     "goal": [
+      4.0,
+      0.0
+     ],
+     "path": [
+      1.5,
+      0.8
+     ]
+    }
+   },
+   "T_N": {
+    "run_via": [
+     "N_RING_W",
+     "NW_GAP"
+    ],
+    "smoke_hints": {
+     "goal": [
+      4.0,
+      0.0
+     ],
+     "path": [
+      1.6,
+      0.5
+     ]
+    }
+   },
+   "T_S": {
+    "run_via": [
+     "S_RING_E",
+     "SE_GAP"
+    ],
+    "smoke_hints": {
+     "goal": [
+      4.0,
+      0.0
+     ],
+     "path": [
+      4.8,
+      -2.5
+     ]
+    }
+   },
+   "T_E": {
+    "run_via": [
+     "E_RING_N",
+     "NE_GAP"
+    ],
+    "smoke_hints": {
+     "goal": [
+      4.0,
+      0.0
+     ],
+     "path": [
+      5.7,
+      1.2
+     ]
+    }
+   }
+  },
+  "approaches": {
+   "T_W": [
+    "W_SCREEN_W"
+   ],
+   "T_N": [
+    "NW_FIELD",
+    "N_LANE"
+   ],
+   "T_S": [
+    "SW_FIELD",
+    "S_LANE"
+   ],
+   "T_E": [
+    "NW_FIELD",
+    "N_LANE",
+    "NE_PASS",
+    "E_RING_N2"
+   ],
+   "P_NE": [
+    "W_SCREEN_W",
+    "NW_FIELD",
+    "N_LANE",
+    "NE_PASS",
+    "E_RING_N2"
+   ],
+   "P_SE": [
+    "W_SCREEN_W",
+    "SW_FIELD",
+    "S_LANE",
+    "SE_PASS",
+    "E_RING_S2"
+   ],
+   "F_NW": [
+    "W_SCREEN_W"
+   ],
+   "F_SW": [
+    "W_SCREEN_W"
+   ]
+  },
+  "stagings": {
+   "P_NE": {
+    "dash_via": [
+     "E_RING_N",
+     "NE_GAP"
+    ]
+   },
+   "P_SE": {
+    "dash_via": [
+     "E_RING_S",
+     "SE_GAP"
+    ]
+   }
+  },
+  "lures": {
+   "F_NW>P_SE": {
+    "feint": "F_NW",
+    "relocate_via": [
+     "W_SCREEN_W",
+     "SW_FIELD",
+     "S_LANE",
+     "SE_PASS",
+     "E_RING_S2"
+    ],
+    "staging": "P_SE",
+    "commit_m": 5.0,
+    "chase": [
+     "NW_GAP",
+     [
+      -3.0,
+      4.4
+     ]
+    ]
+   },
+   "F_SW>P_NE": {
+    "feint": "F_SW",
+    "relocate_via": [
+     "W_SCREEN_W",
+     "NW_FIELD",
+     "N_LANE",
+     "NE_PASS",
+     "E_RING_N2"
+    ],
+    "staging": "P_NE",
+    "commit_m": 5.0,
+    "chase": [
+     "SW_GAP",
+     [
+      -3.0,
+      -4.4
+     ]
+    ]
+   }
+  }
+ },
+ "human_bots": {
+  "hold": "GOAL",
+  "standoff": [
+   "S_NW",
+   "S_SE"
+  ],
+  "hunt_route": [
+   "NW_GAP",
+   "F_NW"
+  ],
+  "watch": [
+   "NW_GAP",
+   "SW_GAP",
+   "NE_GAP",
+   "SE_GAP"
+  ]
+ },
+ "rule_planner": {
+  "throw_preference": [
+   "T_W",
+   "T_S",
+   "T_N",
+   "T_E"
+  ],
+  "note": "Only used by the deterministic baseline; LLM prompts do not include it."
+ },
+ "cycle_checks": [
+  {
+   "id": "rule_vs_hold",
+   "human": "hold",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "西低墙后投烟遮住西北口到目标"
+  },
+  {
+   "id": "rule_vs_standoff_NW",
+   "human": "standoff:S_NW",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "按观察到的站位算烟落点，从南侧进"
+  },
+  {
+   "id": "rule_vs_standoff_SE",
+   "human": "standoff:S_SE",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "侦察点看不到 → 西侧封烟"
+  },
+  {
+   "id": "rule_vs_hunt",
+   "human": "hunt",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "出击者在开阔广场里仍有视线：基线放弃迂回，按其位置封烟从南侧进"
+  },
+  {
+   "id": "flank_without_smoke_vs_hold",
+   "human": "hold",
+   "quad": {
+    "script": [
+     {
+      "skill": "MOVE",
+      "params": {
+       "to": "P_NE",
+       "via": [
+        "W_SCREEN_W",
+        "NW_FIELD",
+        "N_LANE",
+        "NE_PASS",
+        "E_RING_N2"
+       ],
+       "on_contact": "retreat"
+      }
+     },
+     {
+      "skill": "DASH",
+      "params": {
+       "via": [
+        "E_RING_N",
+        "NE_GAP"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "开阔低墙：绕行途中就被看见"
+  },
+  {
+   "id": "goal_smoke_vs_hold",
+   "human": "hold",
+   "quad": {
+    "script": [
+     {
+      "skill": "SMOKE_RUSH",
+      "params": {
+       "throw_from": "T_W",
+       "smoke_at": "GOAL",
+       "approach_via": [
+        "W_SCREEN_W"
+       ],
+       "run_via": [
+        "T_W_N",
+        "NW_GAP"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "quadruped",
+   "why": "目标烟对贴点守有效"
+  },
+  {
+   "id": "goal_smoke_vs_standoff_NW",
+   "human": "standoff:S_NW",
+   "quad": {
+    "script": [
+     {
+      "skill": "SMOKE_RUSH",
+      "params": {
+       "throw_from": "T_W",
+       "smoke_at": "GOAL",
+       "approach_via": [
+        "W_SCREEN_W"
+       ],
+       "run_via": [
+        "T_W_N",
+        "NW_GAP"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "目标烟挡不住西北远守"
+  },
+  {
+   "id": "feint_flank_vs_hunt",
+   "human": "hunt",
+   "quad": {
+    "script": [
+     {
+      "skill": "MOVE",
+      "params": {
+       "to": "F_NW",
+       "via": [
+        "W_SCREEN_W"
+       ],
+       "on_contact": "retreat"
+      }
+     },
+     {
+      "skill": "HOLD",
+      "params": {
+       "seconds": 2.0
+      }
+     },
+     {
+      "skill": "MOVE",
+      "params": {
+       "to": "P_SE",
+       "via": [
+        "W_SCREEN_W",
+        "SW_FIELD",
+        "S_LANE",
+        "SE_PASS",
+        "E_RING_S2"
+       ],
+       "on_contact": "retreat"
+      }
+     },
+     {
+      "skill": "DASH",
+      "params": {
+       "via": [
+        "E_RING_S",
+        "SE_GAP"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "二号图的已知短板：开阔广场里固定的诱敌迂回会被看见（设计检查高估了迂回）"
+  }
+ ]
+}

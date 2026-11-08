@@ -1,0 +1,305 @@
+{
+ "id": "BA-2",
+ "title": "低墙广场",
+ "rules": "breach-v1.0",
+ "no_smoke": {
+  "P_NE": {
+   "hidden_from": [
+    "on_point",
+    "S_NW",
+    "S_SE"
+   ],
+   "exposure": {
+    "on_point": 1.68,
+    "S_NW": 1.84,
+    "S_SE": 1.44
+   }
+  },
+  "P_SE": {
+   "hidden_from": [
+    "on_point",
+    "S_NW",
+    "S_SE"
+   ],
+   "exposure": {
+    "on_point": 1.68,
+    "S_NW": 1.1,
+    "S_SE": 1.86
+   }
+  },
+  "T_W": {
+   "hidden_from": [
+    "on_point",
+    "S_NW",
+    "S_SE"
+   ],
+   "exposure": {
+    "on_point": 1.68,
+    "S_NW": 1.84,
+    "S_SE": 1.1
+   }
+  },
+  "T_N": {
+   "hidden_from": [
+    "on_point",
+    "S_NW",
+    "S_SE"
+   ],
+   "exposure": {
+    "on_point": 1.78,
+    "S_NW": 1.92,
+    "S_SE": 1.1
+   }
+  },
+  "T_S": {
+   "hidden_from": [
+    "on_point",
+    "S_NW",
+    "S_SE"
+   ],
+   "exposure": {
+    "on_point": 1.78,
+    "S_NW": 1.1,
+    "S_SE": 1.92
+   }
+  },
+  "T_E": {
+   "hidden_from": [
+    "on_point",
+    "S_NW",
+    "S_SE"
+   ],
+   "exposure": {
+    "on_point": 1.68,
+    "S_NW": 1.82,
+    "S_SE": 1.44
+   }
+  }
+ },
+ "smoke": {
+  "T_W": {
+   "goal_throw_ok": true,
+   "vs": {
+    "on_point": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      3.9,
+      0.0
+     ],
+     "best_smoke": 0.0
+    },
+    "S_NW": {
+     "goal_smoke": 1.52,
+     "best_smoke_at": [
+      2.7,
+      1.2
+     ],
+     "best_smoke": 0.0
+    },
+    "S_SE": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      3.9,
+      0.0
+     ],
+     "best_smoke": 0.0
+    }
+   },
+   "universal": {
+    "at": [
+     2.7,
+     1.2
+    ],
+    "worst": 0.0
+   }
+  },
+  "T_N": {
+   "goal_throw_ok": true,
+   "vs": {
+    "on_point": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      4.0,
+      0.1
+     ],
+     "best_smoke": 0.0
+    },
+    "S_NW": {
+     "goal_smoke": 1.58,
+     "best_smoke_at": [
+      2.8,
+      1.4
+     ],
+     "best_smoke": 0.0
+    },
+    "S_SE": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      4.0,
+      0.1
+     ],
+     "best_smoke": 0.0
+    }
+   },
+   "universal": {
+    "at": [
+     2.8,
+     1.4
+    ],
+    "worst": 0.0
+   }
+  },
+  "T_S": {
+   "goal_throw_ok": true,
+   "vs": {
+    "on_point": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      4.0,
+      -0.1
+     ],
+     "best_smoke": 0.0
+    },
+    "S_NW": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      4.0,
+      -0.1
+     ],
+     "best_smoke": 0.0
+    },
+    "S_SE": {
+     "goal_smoke": 1.58,
+     "best_smoke_at": [
+      5.2,
+      -1.4
+     ],
+     "best_smoke": 0.0
+    }
+   },
+   "universal": {
+    "at": [
+     5.2,
+     -1.4
+    ],
+    "worst": 0.0
+   }
+  },
+  "T_E": {
+   "goal_throw_ok": true,
+   "vs": {
+    "on_point": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      4.1,
+      0.0
+     ],
+     "best_smoke": 0.0
+    },
+    "S_NW": {
+     "goal_smoke": 1.3,
+     "best_smoke_at": [
+      4.1,
+      0.8
+     ],
+     "best_smoke": 0.0
+    },
+    "S_SE": {
+     "goal_smoke": 1.04,
+     "best_smoke_at": [
+      5.3,
+      0.0
+     ],
+     "best_smoke": 0.0
+    }
+   },
+   "universal": {
+    "at": [
+     5.7,
+     1.2
+    ],
+    "worst": 0.0
+   }
+  }
+ },
+ "lure": {
+  "F_NW>P_SE": {
+   "feint_dist_goal": 11.0,
+   "feint_seen_from_goal": true,
+   "dash_s": 2.26,
+   "chase_m": 8.4,
+   "commit_distance_m": 5.0,
+   "returning_hunter_sight_s": {
+    "1.0": 1.68,
+    "1.5": 1.66,
+    "2.0": 1.66,
+    "2.5": 1.62,
+    "3.0": 1.46,
+    "3.5": 1.28,
+    "4.0": 1.14,
+    "4.5": 1.02,
+    "5.0": 0.9,
+    "5.5": 0.8,
+    "6.0": 0.68,
+    "6.5": 0.56,
+    "7.0": 0.44,
+    "7.5": 0.34,
+    "8.0": 0.22
+   }
+  },
+  "F_SW>P_NE": {
+   "feint_dist_goal": 11.0,
+   "feint_seen_from_goal": true,
+   "dash_s": 2.26,
+   "chase_m": 8.4,
+   "commit_distance_m": 5.0,
+   "returning_hunter_sight_s": {
+    "1.0": 1.68,
+    "1.5": 1.66,
+    "2.0": 1.66,
+    "2.5": 1.62,
+    "3.0": 1.46,
+    "3.5": 1.28,
+    "4.0": 1.14,
+    "4.5": 1.02,
+    "5.0": 0.9,
+    "5.5": 0.8,
+    "6.0": 0.68,
+    "6.5": 0.56,
+    "7.0": 0.44,
+    "7.5": 0.34,
+    "8.0": 0.22
+   }
+  }
+ },
+ "summary": {
+  "guard_beats_no_smoke_rush": true,
+  "spots_hidden_from_guards": true,
+  "goal_smoke_beats_on_point": [
+   "T_W",
+   "T_N",
+   "T_S",
+   "T_E"
+  ],
+  "goal_smoke_fails_vs_standoff": {
+   "S_NW": [
+    "T_W",
+    "T_N",
+    "T_E"
+   ],
+   "S_SE": [
+    "T_S"
+   ]
+  },
+  "universal_smoke_from": [
+   "T_W",
+   "T_N",
+   "T_S",
+   "T_E"
+  ],
+  "lure_commit_m": {
+   "F_NW>P_SE": 5.0,
+   "F_SW>P_NE": 5.0
+  }
+ }
+}

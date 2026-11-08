@@ -54,3 +54,15 @@ git status --short
 `benchmarks/fixed_goal_v041/` 是本次明确纳入的三局可复核样例（约 30 MB），包括完整失败轨迹、九步决策及必要的 GIF/截图。它不等于默认允许提交后续所有实验目录。生成的新实验仍放在 `.arena-workspace/`；大型批量结果继续优先使用 Release 或数据集存储。
 
 新固定目标赛制从 `benchmark.py` 的 `audit`、`replay`、`prepare` 入口开始，不把该目录的独立裁判与根目录历史累计占点裁判交叉导入。改动行为后应新增样例和协议版本，不覆盖已发布三局。
+
+## Breach Arena（`breach_arena/`）
+
+这是一个独立游戏：有自己的规则版本、地图格式和决策协议，不与根目录或 `benchmarks/` 下的代码交叉导入（`breach_arena/tests/test_isolation.py` 会检查）。改动后至少运行：
+
+```bash
+python -m unittest discover -s breach_arena/tests -t .
+python -m breach_arena matrix --map BA-1
+python -m breach_arena matrix --map BA-2
+```
+
+改动规则时，同时更新 `rules.json` 的版本号和 `RULES.md`；改动地图时，同步更新 `cycle_checks`，并重新生成 `maps/checks/` 快照（`python -m breach_arena checks --out breach_arena/maps/checks`）。

@@ -1,0 +1,268 @@
+{
+ "id": "BA-1",
+ "title": "三门庭院",
+ "rules": "breach-v1.0",
+ "no_smoke": {
+  "P_N": {
+   "hidden_from": [
+    "on_point",
+    "S_SW",
+    "S_NE"
+   ],
+   "exposure": {
+    "on_point": 1.88,
+    "S_SW": 1.08,
+    "S_NE": 2.12
+   }
+  },
+  "P_S": {
+   "hidden_from": [
+    "on_point",
+    "S_SW",
+    "S_NE"
+   ],
+   "exposure": {
+    "on_point": 1.84,
+    "S_SW": 2.06,
+    "S_NE": 0.94
+   }
+  },
+  "P_W": {
+   "hidden_from": [
+    "on_point",
+    "S_SW",
+    "S_NE"
+   ],
+   "exposure": {
+    "on_point": 2.18,
+    "S_SW": 2.44,
+    "S_NE": 1.16
+   }
+  },
+  "T_W": {
+   "hidden_from": [
+    "on_point",
+    "S_SW",
+    "S_NE"
+   ],
+   "exposure": {
+    "on_point": 2.04,
+    "S_SW": 1.9,
+    "S_NE": 1.18
+   }
+  },
+  "T_N": {
+   "hidden_from": [
+    "on_point",
+    "S_SW",
+    "S_NE"
+   ],
+   "exposure": {
+    "on_point": 1.86,
+    "S_SW": 1.08,
+    "S_NE": 2.1
+   }
+  },
+  "T_S": {
+   "hidden_from": [
+    "on_point",
+    "S_SW",
+    "S_NE"
+   ],
+   "exposure": {
+    "on_point": 1.84,
+    "S_SW": 2.04,
+    "S_NE": 0.94
+   }
+  }
+ },
+ "smoke": {
+  "T_W": {
+   "goal_throw_ok": false,
+   "vs": {
+    "on_point": {
+     "goal_smoke": null,
+     "best_smoke_at": [
+      6.2,
+      0.0
+     ],
+     "best_smoke": 0.0
+    },
+    "S_SW": {
+     "goal_smoke": null,
+     "best_smoke_at": [
+      5.4,
+      -0.8
+     ],
+     "best_smoke": 0.0
+    },
+    "S_NE": {
+     "goal_smoke": null,
+     "best_smoke_at": [
+      6.2,
+      0.0
+     ],
+     "best_smoke": 0.0
+    }
+   },
+   "universal": {
+    "at": [
+     4.6,
+     0.0
+    ],
+    "worst": 0.0
+   }
+  },
+  "T_N": {
+   "goal_throw_ok": true,
+   "vs": {
+    "on_point": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      7.0,
+      -0.2
+     ],
+     "best_smoke": 0.0
+    },
+    "S_SW": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      7.0,
+      -0.2
+     ],
+     "best_smoke": 0.0
+    },
+    "S_NE": {
+     "goal_smoke": 1.78,
+     "best_smoke_at": [
+      9.0,
+      1.0
+     ],
+     "best_smoke": 0.0
+    }
+   },
+   "universal": {
+    "at": [
+     9.0,
+     1.0
+    ],
+    "worst": 0.0
+   }
+  },
+  "T_S": {
+   "goal_throw_ok": true,
+   "vs": {
+    "on_point": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      7.0,
+      0.2
+     ],
+     "best_smoke": 0.0
+    },
+    "S_SW": {
+     "goal_smoke": 1.72,
+     "best_smoke_at": [
+      5.8,
+      -1.5
+     ],
+     "best_smoke": 0.0
+    },
+    "S_NE": {
+     "goal_smoke": 0.0,
+     "best_smoke_at": [
+      7.0,
+      0.2
+     ],
+     "best_smoke": 0.0
+    }
+   },
+   "universal": {
+    "at": [
+     5.8,
+     -1.5
+    ],
+    "worst": 0.0
+   }
+  }
+ },
+ "lure": {
+  "F_W>P_N": {
+   "feint_dist_goal": 10.7,
+   "feint_seen_from_goal": true,
+   "dash_s": 2.48,
+   "chase_m": 9.3,
+   "commit_distance_m": 7.0,
+   "returning_hunter_sight_s": {
+    "1.0": 1.8,
+    "1.5": 1.76,
+    "2.0": 1.72,
+    "2.5": 1.68,
+    "3.0": 1.66,
+    "3.5": 1.64,
+    "4.0": 1.62,
+    "4.5": 1.58,
+    "5.0": 1.46,
+    "5.5": 1.36,
+    "6.0": 1.24,
+    "6.5": 1.1,
+    "7.0": 0.98,
+    "7.5": 0.84,
+    "8.0": 0.68,
+    "8.5": 0.52,
+    "9.0": 0.32
+   }
+  },
+  "F_W>P_S": {
+   "feint_dist_goal": 10.7,
+   "feint_seen_from_goal": true,
+   "dash_s": 2.44,
+   "chase_m": 9.3,
+   "commit_distance_m": 9.0,
+   "returning_hunter_sight_s": {
+    "1.0": 1.92,
+    "1.5": 1.94,
+    "2.0": 1.98,
+    "2.5": 2.0,
+    "3.0": 2.02,
+    "3.5": 2.04,
+    "4.0": 2.06,
+    "4.5": 2.06,
+    "5.0": 2.08,
+    "5.5": 2.0,
+    "6.0": 1.76,
+    "6.5": 1.66,
+    "7.0": 1.56,
+    "7.5": 1.42,
+    "8.0": 1.24,
+    "8.5": 1.04,
+    "9.0": 0.8
+   }
+  }
+ },
+ "summary": {
+  "guard_beats_no_smoke_rush": true,
+  "spots_hidden_from_guards": true,
+  "goal_smoke_beats_on_point": [
+   "T_N",
+   "T_S"
+  ],
+  "goal_smoke_fails_vs_standoff": {
+   "S_SW": [
+    "T_S"
+   ],
+   "S_NE": [
+    "T_N"
+   ]
+  },
+  "universal_smoke_from": [
+   "T_W",
+   "T_N",
+   "T_S"
+  ],
+  "lure_commit_m": {
+   "F_W>P_N": 7.0,
+   "F_W>P_S": 9.0
+  }
+ }
+}
