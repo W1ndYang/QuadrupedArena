@@ -1,0 +1,10 @@
+{
+  "provider": "qwen",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "model": "qwen-plus",
+  "api_key_env": "DASHSCOPE_API_KEY",
+  "timeout_s": 60,
+  "temperature": 0.2,
+  "max_tokens": 1200,
+  "note": "Example only. Model names, pricing and options change; check the provider before a paid run."
+}

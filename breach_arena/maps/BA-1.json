@@ -1,0 +1,828 @@
+{
+ "schema": "breach-map-v1",
+ "id": "BA-1",
+ "title": "三门庭院",
+ "summary": "东侧围合大院，西/北/南三门，每门旁一段 0.7 m 低墙窗可隐蔽投烟；西侧广场为四足出生和佯动区，北/南走廊为迂回通道。",
+ "arena": {
+  "size": [
+   24,
+   16
+  ],
+  "covers": [
+   {
+    "name": "YardW_S",
+    "center": [
+     0.8,
+     -3.0
+    ],
+    "size": [
+     0.4,
+     4.0,
+     2.4
+    ]
+   },
+   {
+    "name": "YardW_Win",
+    "center": [
+     0.8,
+     0.0
+    ],
+    "size": [
+     0.4,
+     2.0,
+     0.7
+    ]
+   },
+   {
+    "name": "YardW_M",
+    "center": [
+     0.8,
+     1.3
+    ],
+    "size": [
+     0.4,
+     0.6,
+     2.4
+    ]
+   },
+   {
+    "name": "YardW_N",
+    "center": [
+     0.8,
+     4.1
+    ],
+    "size": [
+     0.4,
+     1.8,
+     2.4
+    ]
+   },
+   {
+    "name": "YardN_W",
+    "center": [
+     3.5,
+     4.8
+    ],
+    "size": [
+     5.0,
+     0.4,
+     2.4
+    ]
+   },
+   {
+    "name": "YardN_Win",
+    "center": [
+     7.0,
+     4.8
+    ],
+    "size": [
+     2.0,
+     0.4,
+     0.7
+    ]
+   },
+   {
+    "name": "YardN_M",
+    "center": [
+     8.8,
+     4.8
+    ],
+    "size": [
+     1.6,
+     0.4,
+     2.4
+    ]
+   },
+   {
+    "name": "YardN_E",
+    "center": [
+     11.6,
+     4.8
+    ],
+    "size": [
+     0.8,
+     0.4,
+     2.4
+    ]
+   },
+   {
+    "name": "YardS_W",
+    "center": [
+     2.0,
+     -4.8
+    ],
+    "size": [
+     2.0,
+     0.4,
+     2.4
+    ]
+   },
+   {
+    "name": "YardS_M",
+    "center": [
+     5.3,
+     -4.8
+    ],
+    "size": [
+     1.4,
+     0.4,
+     2.4
+    ]
+   },
+   {
+    "name": "YardS_Win",
+    "center": [
+     7.0,
+     -4.8
+    ],
+    "size": [
+     2.0,
+     0.4,
+     0.7
+    ]
+   },
+   {
+    "name": "YardS_E",
+    "center": [
+     10.0,
+     -4.8
+    ],
+    "size": [
+     4.0,
+     0.4,
+     2.4
+    ]
+   },
+   {
+    "name": "SpawnScreen",
+    "center": [
+     -5.0,
+     0.0
+    ],
+    "size": [
+     2.0,
+     3.0,
+     2.4
+    ]
+   },
+   {
+    "name": "PlazaLowN",
+    "center": [
+     -2.0,
+     2.8
+    ],
+    "size": [
+     2.0,
+     0.4,
+     0.7
+    ]
+   },
+   {
+    "name": "PlazaLowS",
+    "center": [
+     -2.0,
+     -2.8
+    ],
+    "size": [
+     2.0,
+     0.4,
+     0.7
+    ]
+   },
+   {
+    "name": "CorrN_Pillar",
+    "center": [
+     3.5,
+     7.1
+    ],
+    "size": [
+     1.0,
+     1.8,
+     2.4
+    ]
+   },
+   {
+    "name": "CorrS_Pillar",
+    "center": [
+     9.0,
+     -7.1
+    ],
+    "size": [
+     1.0,
+     1.8,
+     2.4
+    ]
+   }
+  ]
+ },
+ "goal": {
+  "center": [
+   7.0,
+   0.0
+  ],
+  "radius": 1.0
+ },
+ "spawns": {
+  "quadruped": {
+   "xy": [
+    -10.0,
+    0.0
+   ],
+   "yaw_degrees": 0
+  },
+  "human": {
+   "xy": [
+    8.5,
+    1.0
+   ],
+   "yaw_degrees": 180
+  }
+ },
+ "points": {
+  "W_DOOR": {
+   "xy": [
+    0.8,
+    2.4
+   ],
+   "kind": "door",
+   "label": "西门"
+  },
+  "N_DOOR": {
+   "xy": [
+    10.4,
+    4.8
+   ],
+   "kind": "door",
+   "label": "北门"
+  },
+  "S_DOOR": {
+   "xy": [
+    3.8,
+    -4.8
+   ],
+   "kind": "door",
+   "label": "南门"
+  },
+  "T_W": {
+   "xy": [
+    0.15,
+    0.0
+   ],
+   "kind": "throw",
+   "label": "西窗投烟点"
+  },
+  "T_N": {
+   "xy": [
+    7.0,
+    5.45
+   ],
+   "kind": "throw",
+   "label": "北窗投烟点"
+  },
+  "T_S": {
+   "xy": [
+    7.0,
+    -5.45
+   ],
+   "kind": "throw",
+   "label": "南窗投烟点"
+  },
+  "P_N": {
+   "xy": [
+    9.0,
+    5.5
+   ],
+   "kind": "staging",
+   "label": "北门外埋伏点"
+  },
+  "P_S": {
+   "xy": [
+    5.2,
+    -5.5
+   ],
+   "kind": "staging",
+   "label": "南门外埋伏点"
+  },
+  "P_W": {
+   "xy": [
+    0.15,
+    4.0
+   ],
+   "kind": "staging",
+   "label": "西门外埋伏点"
+  },
+  "S_SW": {
+   "xy": [
+    4.0,
+    -2.2
+   ],
+   "kind": "standoff",
+   "label": "西南远守位"
+  },
+  "S_NE": {
+   "xy": [
+    10.6,
+    2.2
+   ],
+   "kind": "standoff",
+   "label": "东北远守位"
+  },
+  "F_W": {
+   "xy": [
+    -3.0,
+    3.9
+   ],
+   "kind": "feint",
+   "label": "西广场佯动/侦察点（能穿过西门看到目标，10.7 m）"
+  },
+  "N_LANE_W": {
+   "xy": [
+    -1.5,
+    6.5
+   ],
+   "kind": "lane",
+   "label": "北走廊西口"
+  },
+  "N_LANE_E": {
+   "xy": [
+    6.0,
+    6.5
+   ],
+   "kind": "lane",
+   "label": "北走廊东段"
+  },
+  "N_DOOR_OUT": {
+   "xy": [
+    10.4,
+    5.6
+   ],
+   "kind": "lane",
+   "label": "北门外"
+  },
+  "S_LANE_W": {
+   "xy": [
+    -1.5,
+    -6.5
+   ],
+   "kind": "lane",
+   "label": "南走廊西口"
+  },
+  "S_LANE_E": {
+   "xy": [
+    1.0,
+    -6.5
+   ],
+   "kind": "lane",
+   "label": "南走廊东段"
+  },
+  "S_DOOR_OUT": {
+   "xy": [
+    3.8,
+    -5.6
+   ],
+   "kind": "lane",
+   "label": "南门外"
+  },
+  "W_PLAZA_N": {
+   "xy": [
+    -3.5,
+    1.9
+   ],
+   "kind": "lane",
+   "label": "广场北侧"
+  },
+  "W_PLAZA_S": {
+   "xy": [
+    -3.5,
+    -3.6
+   ],
+   "kind": "lane",
+   "label": "广场南侧"
+  },
+  "SPAWN_COVER": {
+   "xy": [
+    -7.0,
+    0.0
+   ],
+   "kind": "cover",
+   "label": "出生掩体后"
+  },
+  "PLAZA_N_COVER": {
+   "xy": [
+    -2.0,
+    3.45
+   ],
+   "kind": "cover",
+   "label": "广场北低墙后"
+  },
+  "PLAZA_S_COVER": {
+   "xy": [
+    -2.0,
+    -3.45
+   ],
+   "kind": "cover",
+   "label": "广场南低墙后"
+  }
+ },
+ "plays": {
+  "throws": {
+   "T_W": {
+    "run_via": [
+     "W_DOOR"
+    ],
+    "smoke_hints": {
+     "path": [
+      4.2,
+      0.0
+     ]
+    },
+    "note": "离目标 6.85 m，目标点超出 6 m 投掷距离"
+   },
+   "T_N": {
+    "run_via": [
+     "N_DOOR_OUT",
+     "N_DOOR"
+    ],
+    "smoke_hints": {
+     "goal": [
+      7.0,
+      0.0
+     ],
+     "path": [
+      8.6,
+      2.2
+     ]
+    }
+   },
+   "T_S": {
+    "run_via": [
+     "S_DOOR_OUT",
+     "S_DOOR"
+    ],
+    "smoke_hints": {
+     "goal": [
+      7.0,
+      0.0
+     ],
+     "path": [
+      4.6,
+      -1.5
+     ]
+    }
+   }
+  },
+  "approaches": {
+   "T_W": [
+    "W_PLAZA_N"
+   ],
+   "T_N": [
+    "N_LANE_W",
+    "N_LANE_E"
+   ],
+   "T_S": [
+    "S_LANE_W",
+    "S_LANE_E"
+   ],
+   "P_N": [
+    "N_LANE_W",
+    "N_LANE_E"
+   ],
+   "P_S": [
+    "S_LANE_W",
+    "S_LANE_E"
+   ],
+   "P_W": [
+    "W_PLAZA_N"
+   ],
+   "F_W": [
+    "W_PLAZA_N"
+   ]
+  },
+  "stagings": {
+   "P_N": {
+    "dash_via": [
+     "N_DOOR_OUT",
+     "N_DOOR"
+    ]
+   },
+   "P_S": {
+    "dash_via": [
+     "S_DOOR_OUT",
+     "S_DOOR"
+    ]
+   },
+   "P_W": {
+    "dash_via": [
+     "W_DOOR"
+    ]
+   }
+  },
+  "lures": {
+   "F_W>P_N": {
+    "feint": "F_W",
+    "relocate_via": [
+     "N_LANE_W",
+     "N_LANE_E"
+    ],
+    "staging": "P_N",
+    "commit_m": 7.0,
+    "chase": [
+     "W_DOOR",
+     [
+      -1.5,
+      3.6
+     ]
+    ]
+   },
+   "F_W>P_S": {
+    "feint": "F_W",
+    "relocate_via": [
+     "W_PLAZA_N",
+     "W_PLAZA_S",
+     "S_LANE_E"
+    ],
+    "staging": "P_S",
+    "commit_m": 9.0,
+    "chase": [
+     "W_DOOR",
+     [
+      -1.5,
+      3.6
+     ]
+    ]
+   }
+  }
+ },
+ "human_bots": {
+  "hold": "GOAL",
+  "standoff": [
+   "S_SW",
+   "S_NE"
+  ],
+  "hunt_route": [
+   "W_DOOR",
+   "F_W"
+  ],
+  "watch": [
+   "W_DOOR",
+   "N_DOOR",
+   "S_DOOR"
+  ]
+ },
+ "rule_planner": {
+  "throw_preference": [
+   "T_N",
+   "T_S",
+   "T_W"
+  ],
+  "note": "Only used by the deterministic baseline; LLM prompts do not include it."
+ },
+ "cycle_checks": [
+  {
+   "id": "rule_vs_hold",
+   "human": "hold",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "守在点上 → 规则基线读出守点，北窗投烟遮住最后一段，强冲到点"
+  },
+  {
+   "id": "rule_vs_standoff_NE",
+   "human": "standoff:S_NE",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "远守东北 → 路径烟同时挡住远守位和目标"
+  },
+  {
+   "id": "rule_vs_standoff_SW",
+   "human": "standoff:S_SW",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "远守西南（侦察点看不到）→ 按未知处理，同样封烟"
+  },
+  {
+   "id": "rule_vs_hunt",
+   "human": "hunt",
+   "quad": "rule",
+   "expect": "quadruped",
+   "why": "出击 → 西广场露面诱敌，北走廊转移，人出西门后从北门突袭"
+  },
+  {
+   "id": "rule_vs_cautious_hunt",
+   "human": "hunt:4",
+   "quad": "rule",
+   "expect": "human",
+   "why": "谨慎出击（丢失 4 s 即回防）→ 回到院内看见北门突袭；迂回的代价"
+  },
+  {
+   "id": "flank_without_smoke_vs_hold",
+   "human": "hold",
+   "quad": {
+    "script": [
+     {
+      "skill": "MOVE",
+      "params": {
+       "to": "P_N",
+       "via": [
+        "N_LANE_W",
+        "N_LANE_E"
+       ],
+       "on_contact": "retreat"
+      }
+     },
+     {
+      "skill": "DASH",
+      "params": {
+       "via": [
+        "N_DOOR_OUT",
+        "N_DOOR"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "守点克制不放烟的绕门"
+  },
+  {
+   "id": "feint_flank_vs_hold",
+   "human": "hold",
+   "quad": {
+    "script": [
+     {
+      "skill": "MOVE",
+      "params": {
+       "to": "F_W",
+       "via": [
+        "W_PLAZA_N"
+       ],
+       "on_contact": "retreat"
+      }
+     },
+     {
+      "skill": "HOLD",
+      "params": {
+       "seconds": 2.5
+      }
+     },
+     {
+      "skill": "MOVE",
+      "params": {
+       "to": "P_N",
+       "via": [
+        "N_LANE_W",
+        "N_LANE_E"
+       ],
+       "on_contact": "retreat"
+      }
+     },
+     {
+      "skill": "HOLD",
+      "params": {
+       "seconds": 1.4
+      }
+     },
+     {
+      "skill": "DASH",
+      "params": {
+       "via": [
+        "N_DOOR_OUT",
+        "N_DOOR"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "人不追出去，诱敌迂回就失效"
+  },
+  {
+   "id": "smoke_on_hunter_side_vs_hunt",
+   "human": "hunt",
+   "quad": {
+    "script": [
+     {
+      "skill": "SMOKE_RUSH",
+      "params": {
+       "throw_from": "T_W",
+       "smoke_at": [
+        4.2,
+        0.0
+       ],
+       "approach_via": [
+        "W_PLAZA_N"
+       ],
+       "run_via": [
+        "W_DOOR"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "出击克制同侧封烟：西窗投烟点就在出击路线上"
+  },
+  {
+   "id": "goal_smoke_vs_standoff_NE",
+   "human": "standoff:S_NE",
+   "quad": {
+    "script": [
+     {
+      "skill": "SMOKE_RUSH",
+      "params": {
+       "throw_from": "T_N",
+       "smoke_at": "GOAL",
+       "approach_via": [
+        "N_LANE_W",
+        "N_LANE_E"
+       ],
+       "run_via": [
+        "N_DOOR_OUT",
+        "N_DOOR"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "烟扔在目标上挡不住盯着北门的远守"
+  },
+  {
+   "id": "path_smoke_vs_standoff_NE",
+   "human": "standoff:S_NE",
+   "quad": {
+    "script": [
+     {
+      "skill": "SMOKE_RUSH",
+      "params": {
+       "throw_from": "T_N",
+       "smoke_at": [
+        8.6,
+        2.2
+       ],
+       "approach_via": [
+        "N_LANE_W",
+        "N_LANE_E"
+       ],
+       "run_via": [
+        "N_DOOR_OUT",
+        "N_DOOR"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "quadruped",
+   "why": "同一投烟点，烟落在冲点路线上就能过"
+  },
+  {
+   "id": "goal_smoke_vs_standoff_SW",
+   "human": "standoff:S_SW",
+   "quad": {
+    "script": [
+     {
+      "skill": "SMOKE_RUSH",
+      "params": {
+       "throw_from": "T_S",
+       "smoke_at": "GOAL",
+       "approach_via": [
+        "S_LANE_W",
+        "S_LANE_E"
+       ],
+       "run_via": [
+        "S_DOOR_OUT",
+        "S_DOOR"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "human",
+   "why": "南侧同理：目标烟挡不住西南远守"
+  },
+  {
+   "id": "goal_smoke_vs_hold",
+   "human": "hold",
+   "quad": {
+    "script": [
+     {
+      "skill": "SMOKE_RUSH",
+      "params": {
+       "throw_from": "T_S",
+       "smoke_at": "GOAL",
+       "approach_via": [
+        "S_LANE_W",
+        "S_LANE_E"
+       ],
+       "run_via": [
+        "S_DOOR_OUT",
+        "S_DOOR"
+       ]
+      }
+     }
+    ]
+   },
+   "expect": "quadruped",
+   "why": "目标烟对贴点守有效"
+  }
+ ]
+}

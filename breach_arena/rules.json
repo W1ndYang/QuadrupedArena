@@ -1,0 +1,49 @@
+{
+  "version": "breach-v1.0",
+  "note": "Breach Arena rules. Independent of fixed-goal v0.4.1/v0.5 and the historical scoring trial; do not mix configs.",
+  "duration_s": 60.0,
+  "dt": 0.02,
+  "goal_radius_m": 1.0,
+  "min_separation_m": 0.7,
+  "tag": {
+    "seconds": 1.0,
+    "range_m": 8.0,
+    "acquire_half_angle_deg": 30.0,
+    "tracking_error_deg": 5.0,
+    "max_shooter_speed_mps": 0.15
+  },
+  "human": {
+    "speed": 0.975,
+    "accel": 1.8,
+    "yaw_rate": 4.5,
+    "eye_height_m": 1.05,
+    "detect_half_fov_deg": 180.0,
+    "memory_s": 12.0,
+    "aim_assist_deg": 20.0,
+    "stun_s": 1.0,
+    "bot_reaction_s": 0.2
+  },
+  "quadruped": {
+    "postures": {
+      "upright": {"height_m": 0.40, "speed": 3.2, "accel": 6.0},
+      "low": {"height_m": 0.24, "speed": 1.2, "accel": 3.0}
+    },
+    "posture_switch_s": 0.4,
+    "yaw_rate": 2.5,
+    "detect_half_fov_deg": 180.0,
+    "memory_s": 4.0,
+    "can_tag": true,
+    "tag_cooldown_s": 4.0
+  },
+  "smoke": {
+    "count": 1,
+    "throw_range_m": 6.0,
+    "throw_height_m": 1.0,
+    "radius_m": 2.0,
+    "height_m": 2.5,
+    "cast_s": 0.35,
+    "fuse_s": 0.4,
+    "duration_s": 5.0
+  },
+  "planner": {"grid_m": 0.1, "clearance_m": 0.42, "motion_slack_m": 0.05}
+}
