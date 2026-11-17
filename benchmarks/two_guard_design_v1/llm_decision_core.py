@@ -144,6 +144,7 @@ class EpisodeContext:
         self.comparisons=[]
         self.plans=[]
         self.llm_messages={}
+        self.llm_attempts={}
         self.responses={}
         self.last_time=-1.
         self.stage=0
@@ -310,6 +311,7 @@ class DecisionOrchestrator:
         context.llm_messages[req_id]=messages
         wall_start=time.perf_counter()
         inferred=self.reasoner.infer(messages)
+        context.llm_attempts[req_id]=inferred
         parsed=json.loads(inferred['text'])
         validate_motion(parsed,self.map,track['id'],track['region'],horizon)
         llm_seconds=time.perf_counter()-wall_start

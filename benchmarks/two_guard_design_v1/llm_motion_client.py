@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 import deepseek_client  # noqa: E402
 import qwen_client  # noqa: E402
 
-PROMPT_VERSION = 'guard-motion-reasoner-20261117-v1'
+PROMPT_VERSION = 'guard-motion-reasoner-20261117-v2'
 
 SYSTEM_PROMPT = """You infer a moving guard's possible future behavior from public observations.
 Return one JSON object only. You never choose the robot action and never output
@@ -32,6 +32,8 @@ must start within 2.25 m of the latest guard sighting. Reverse travel uses
 the separately listed reverse directed edge ID.
 For UNKNOWN use edge_ids=[] and events=[]. Supply 1 to 6 hypotheses.
 Do not invent map IDs or claim that a spatial edge is a known patrol route.
+Choose next_target_id from response_constraints.allowed_next_target_ids exactly;
+do not use coordinates, informal waypoint names, or edge IDs in that field.
 """
 
 
@@ -50,7 +52,10 @@ def messages_for(request, semantic_map, rules):
                       nodes={n: semantic_map['nodes'][n]['xy'] for n in node_ids},
                       edges=edge_rows,
                       obstacles=semantic_map['obstacles'])
-    payload = dict(map=public_map, rules=rules, decision=request)
+    payload = dict(map=public_map, rules=rules, decision=request,
+                   response_constraints=dict(
+                       allowed_next_target_ids=node_ids + [region],
+                       region_id_for_unknown=region))
     return [dict(role='system', content=SYSTEM_PROMPT),
             dict(role='user', content=json.dumps(payload, ensure_ascii=False,
                                                 allow_nan=False))]

@@ -155,8 +155,10 @@ def validate_motion(raw, semantic_map, track_id, region, horizon):
         if not isinstance(edges, list) or len(edges) > 12:
             raise ValueError('Invalid edge sequence')
         target = h.get('next_target_id')
-        if target not in semantic_map['nodes'] and target != region:
-            raise ValueError('Unknown target ID')
+        if not isinstance(target, str) or (target not in semantic_map['nodes']
+                                           and target != region):
+            raise ValueError(f"Unknown target ID in hypothesis {h['id']!r}: "
+                             f'{repr(target)[:120]}')
         if target in semantic_map['nodes'] and semantic_map['nodes'][target]['region'] != region:
             raise ValueError('Target in wrong region')
         events = h.get('events')

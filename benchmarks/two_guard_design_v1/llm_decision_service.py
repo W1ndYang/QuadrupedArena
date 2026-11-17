@@ -119,6 +119,10 @@ class ServiceState:
                              llm_request=(self.orchestrator.episodes.get(key[0])
                                  .llm_messages.get(key[1])
                                  if key[0] in self.orchestrator.episodes else None),
+                             llm_response=(self.orchestrator.episodes[key[0]]
+                                 .llm_attempts.get(key[1])
+                                 if response['status']=='error' and
+                                 key[0] in self.orchestrator.episodes else None),
                              service_wall_seconds=time.perf_counter()-started))
             return response
 

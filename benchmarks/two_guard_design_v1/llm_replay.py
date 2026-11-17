@@ -9,10 +9,15 @@ from llm_motion_client import APIReasoner
 
 class RecordedReasoner:
     def __init__(self,events):
-        self.responses={event['request']['request_id']:
-            event['response']['reasoning']['raw_response']
-            for event in events if event['kind']=='decision' and
-            'reasoning' in event['response']}
+        self.responses={}
+        for event in events:
+            if event['kind']!='decision':
+                continue
+            response=event['response']
+            recorded=(event.get('llm_response') or
+                      response.get('reasoning',{}).get('raw_response'))
+            if recorded is not None:
+                self.responses[event['request']['request_id']]=recorded
 
     def infer(self,messages):
         request=json.loads(messages[-1]['content'])['decision']
@@ -54,19 +59,40 @@ def replay(input_log,output,config,live_model=False):
             continue
         if event['kind']!='decision':continue
         request=event['request']
-        response=orchestrator.decide(request)
         original=event['response']
+        if (not live_model and event.get('llm_request') and
+                request['request_id'] not in reasoner.responses):
+            rows.append(dict(episode_id=request['episode_id'],
+                request_id=request['request_id'],time=request['time'],
+                original_status=original['status'],replayed_status='unreplayable',
+                same_decision=False,replayable=False,
+                reason='Original LLM response was not recorded'))
+            continue
+        try:
+            response=orchestrator.decide(request)
+        except Exception as exc:
+            response=dict(status='error',error_type=type(exc).__name__,
+                          error=str(exc))
+        same=(original['status']==response['status'])
+        if original['status']=='error':
+            same=(same and original.get('error_type')==response.get('error_type')
+                  and original.get('error')==response.get('error'))
+        else:
+            same=(same and original.get('action')==response.get('action')
+                  and original.get('plan')==response.get('plan'))
         rows.append(dict(episode_id=request['episode_id'],
             request_id=request['request_id'],time=request['time'],
             original_status=original['status'],replayed_status=response['status'],
             original_action=original.get('action'),replayed_action=response.get('action'),
             original_plan=original.get('plan'),replayed_plan=response.get('plan'),
-            same_decision=(original.get('action')==response.get('action') and
-                           original.get('plan')==response.get('plan') and
-                           original['status']==response['status'])))
+            original_error=original.get('error'),replayed_error=response.get('error'),
+            same_decision=same,replayable=True))
     report=dict(mode='live_model' if live_model else 'recorded_llm',
                 config_source=config_source,
                 count=len(rows),same_decisions=sum(x['same_decision'] for x in rows),
+                replayable_count=sum(x['replayable'] for x in rows),
+                unreplayable_request_ids=[x['request_id'] for x in rows
+                                          if not x['replayable']],
                 public_requests_only=True,rows=rows,finishes=finishes)
     output=Path(output);output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
