@@ -25,7 +25,7 @@ flowchart LR
   T --> L[LLM Motion Reasoner]
   L -->|event hypotheses and probabilities| N[Numerical Trajectory Model]
   N --> G[Observation Sufficiency Gate]
-  G --> O[Formal Counterfactual Optimizer]
+  G --> O[Online fast LOS proxy / offline formal counterfactual]
   O -->|route, wait, smoke plan| S
   S --> X[Call-and-Return Skill Executor]
   D --> J[JSONL decision log and replay]
@@ -41,7 +41,9 @@ LLM 收到当前守卫区域空间图、公开规则、最近 30 条原始测量
 
 主动观察门同时检查采样数、测量年龄、UNKNOWN 质量、假设熵、候选动作分歧和评分间隔。每节点探头次数与观察时长有上限。若观察仍不足，服务明确失败，不在无依据的轨迹上继续执行。门的阈值目前是工程初值，尚未用独立数据校准。
 
-`llm_formal_optimizer.optimize` 枚举南/北、等待 0/1/2 秒、有无烟雾（资源合法时）。每条权重轨迹转化为一个**假设守卫**，从当前观测估计状态开始，用正式 `CentralProbe`、正式 Skill 路径、守卫 AIM/发现/蓄时和烟雾机制运行局部反事实。假设守卫分支关闭探针内部的守卫目视烟雾定位，与在线执行器的烟雾落点规则一致。优化结果列出每个动作的正式裁判通过率估计、残余未覆盖概率、预计时间、资源成本、目标值和逐假设结果。真实私有守卫参数不进入评分。它仍是单节点局部反事实，不能声称已精确预测整个双节点回合。
+正式评分 `llm_formal_optimizer.optimize` 枚举南/北、等待 0/1/2 秒、有无烟雾（资源合法时）。每条权重轨迹转化为一个**假设守卫**，从当前观测估计状态开始，用正式 `CentralProbe`、正式 Skill 路径、守卫 AIM/发现/蓄时和烟雾机制运行局部反事实。假设守卫分支关闭探针内部的守卫目视烟雾定位，与在线执行器的烟雾落点规则一致。此模式保留给离线审核；一次 4 条轨迹的本地评分实测约 141 秒，无法用于在线决策。
+
+当前 Ubuntu 配置改用 `llm_fast_optimizer.optimize`。`llm_build_fast_templates.py` 预先从正式裁判生成 24 条机器人路线/等待/烟雾动作轨迹，并以地图 ID 校验模板。在线对 LLM 守卫轨迹进行 0.1 秒间隔的射程、3D 视线、烟雾遮挡、朝向起始发现和连续蓄时代理评分。输出明确标注 `fast_los_proxy_v1`；它**不是正式裁判通过率**，忽略守卫发现后转身、机器人与守卫接触后的动力学变化等细节。是否能选出有效动作仍须在独立种子和正式回合中检验。配置 `optimizer_mode=formal` 可复现原始高精度慢评分。
 
 跨节点 `EpisodeContext` 根据合法测量的空间区域、时间及最大速度进行 Track 关联，分配独立 `track-xxxx` ID；身份不唯一或运动不相容时保留不确定性，不使用仿真实体 ID。历史预测仅与**同一 Track 的全局时间**后续合法测量比较。评估保存位置误差、运动方向误差、80% 场景带覆盖、最近轨迹事件代理类别、Brier/Log Loss 代理指标和可靠性分箱；路线事件代理不等于真实私有巡逻目标。终局后另记录所选动作的预测风险与实际阶段结果。
 
@@ -62,7 +64,7 @@ export DEEPSEEK_API_KEY='你的 DeepSeek API Key'
 # 若改用千问：export QWEN_API_KEY='你的千问 API Key'
 ```
 
-环境变量名和模型参数的具体位置分别是 [DeepSeek 配置](config/llm_decision_deepseek.json) 的 `api_key_env` 与 [Qwen 配置](config/llm_decision_qwen.json) 的 `api_key_env`。也可在相应配置加入 `api_key_file`，指向**仓库外**权限为 `0600` 的私密文件。不要把 key 写入仓库、运行日志或发给 Codex。现有 DeepSeek 适配器要求 `deepseek-flash` 和所列 thinking 参数；若 Ubuntu 账号不支持该模型，先改用 Qwen 配置或单独调整提供者适配器并重新测试。Qwen 配置采用 `qwen3.6-27b` 的非思考模式，因为阿里云[结构化输出文档](https://help.aliyun.com/en/model-studio/qwen-structured-output)将 Qwen3.6 开源系列的 JSON Object 支持限定在该模式。
+环境变量名和模型参数的具体位置分别是 [DeepSeek 配置](config/llm_decision_deepseek.json) 的 `api_key_env` 与 [Qwen 配置](config/llm_decision_qwen.json) 的 `api_key_env`。也可在相应配置加入 `api_key_file`，指向**仓库外**权限为 `0600` 的私密文件。不要把 key 写入仓库、运行日志或发给 Codex。DeepSeek 默认改成 `deepseek-flash` 非思考模式、最多 3072 输出 token、10 秒网络/墙钟预算和在线快速评分；这只是延迟实验配置，真实 API 响应时间与预测质量尚待 Ubuntu 测量。Qwen 配置采用 `qwen3.6-27b` 的非思考模式，因为阿里云[结构化输出文档](https://help.aliyun.com/en/model-studio/qwen-structured-output)将 Qwen3.6 开源系列的 JSON Object 支持限定在该模式。
 
 同步代码后可以直接运行第一局；地图未批准时服务会给出暂定状态警告，不会再因这项审核而退出。想核对图时，执行下面命令。脚本会先自动核对清单与正式几何是否一致：
 
@@ -105,12 +107,13 @@ python3 benchmarks/two_guard_design_v1/llm_replay.py \
 
 ## 本地验证状态与限制
 
-- **已实现并通过测试**：地图与规则版本、可视化审核、待确认语义的暂定运行标记、严格运动 JSON 校验、公开 Track 关联、跨时间比较、数值多轨迹、正式局部裁判反事实、烟雾落点一致性、主动观察、Episode 隔离与幂等、HTTP 服务、Option 接入、JSONL 日志、记录响应重放、单包归档及 SHA-256 校验。开发工作区的完整 `test_*.py` 集合共 **53 项通过**。同步到 Ubuntu 的任务分支只包含 LLM 运行链路及其直接依赖，可用 `python3 -m unittest discover -s benchmarks/two_guard_design_v1 -p 'test_llm*.py' -q` 运行 **11 项针对性测试**。
+- **已实现并通过测试**：地图与规则版本、可视化审核、待确认语义的暂定运行标记、严格运动 JSON 校验、公开 Track 关联、跨时间比较、数值多轨迹、正式局部裁判反事实、快速 LOS 代理、烟雾落点一致性、主动观察、Episode 隔离与幂等、HTTP 服务、Option 接入、JSONL 日志、记录响应重放、单包归档及 SHA-256 校验。可用 `python3 -m unittest discover -s benchmarks/two_guard_design_v1 -p 'test_llm*.py' -q` 运行针对性测试。
 - **已运行工程端到端，但不代表真实 LLM 效果**：`--fixture-for-tests` 下，仿真与独立服务经本机 HTTP 完成两局，种子 `690000/700000` 与 `690017/700019` 分别在 `9.02 s`、`6.28 s` 被守卫标记；fixture 仅返回显式标记的假设，不是实际 DeepSeek 推理。记录在 `.arena-workspace/experiments/llm-motion/fixture-final/`，四次决策的记录响应重放 **4/4 一致**。另一次观察达到上限且旧目视过期的运行明确失败，未暗用隐藏状态。
 - **已实现但尚未充分验证**：跨节点重新看到同一守卫的 Track 机制只有合成观测测试；当前几何阶段交接后通常看到的是另一守卫。概率校准、数值/正式反事实一致性、烟雾预算收益和观察阈值需要真实 API 与独立种子验证。
-- **尚未验证**：DeepSeek/Qwen 的真实 API 连通性、结构化输出遵从率、token/延迟、模型运动推理质量和实际胜率。本地没有密钥，也不应将 fixture 胜负当作研究结果。
-- **工程替代与范围**：本阶段复用 CPU 双 actor 交接裁判，未实现 Isaac Sim 原始图像输入或三实体同时裁判；优化器使用正式单节点裁判机制和 LLM 假设守卫，未实现整局联合资源优化。地图语义尚待人工审核时，正式服务会保留待确认标记并允许暂定运行；几何不一致仍拒绝启动。
-- **计算成本**：本地测试中一次含烟雾候选、仅选 1 条假设轨迹的正式评分约 `45–46 s`；正式配置上限 4 条轨迹和真实 API 调用可能更慢，HTTP 客户端允许最多 900 秒等待，游戏逻辑时间保持暂停。该实现适合离线/暂停式仿真研究，未验证实时决策要求。
+- **真实 API 现状**：Ubuntu 的 DeepSeek 接口已成功返回一次，但其 `next_target_id` 不合法，回合在第一次运动预测后终止。原始响应未保存的旧日志无法分析具体输出。当前代码已补齐失败响应记录与延迟分解；Qwen 连通性、稳定的结构化输出、模型运动推理质量和实际胜率尚未验证。本地没有密钥，也不应将 fixture 胜负当作研究结果。
+- **工程替代与范围**：本阶段复用 CPU 双 actor 交接裁判，未实现 Isaac Sim 原始图像输入或三实体同时裁判；在线优化使用正式裁判生成的机器人路线模板和简化 LOS 风险代理，正式单节点裁判机制仍可用于离线对照。尚未实现整局联合资源优化。地图语义尚待人工审核时，服务会保留待确认标记并允许暂定运行；几何不一致仍拒绝启动。
+- **计算成本与延迟修订**：原始 Ubuntu 回传中，第一轮 DeepSeek 调用在约 `24.46 s` 后返回非法目标 ID；没有保存输出 token/首 token 时间，不能单凭它断定地图输入是主因。相同公开请求的本地 fixture 完整正式评分约 `141.3 s`，快速代理评分约 `0.007 s`、端到端服务决策约 `0.55 s`。因此默认在线模式改为非思考 API 与快速代理，正式评分只做离线审核。真实 API 总延迟、首输出时间、缓存命中、质量与实时性尚待新 Ubuntu 包验证。
+- **快速评分核对**：原始回传观测的 fixture 假设下，快速代理与正式评分均选南侧、立即行动、不用烟；另两个合成守卫位置和速度案例在只评最高权重粒子时，最优动作也一致。三例是工程一致性检查，不是独立种子上的策略效果证明。快速模式的 fixture 完整 HTTP 回合与记录响应回放通过，运行压缩包按原流程生成。
 - **终局预测评估回归**：`fixture-terminal-eval/fixture-terminal-001.json` 的末尾合法目视随 `/finish` 送达服务，同 Track 得到 6 个全局时间对齐的预测比较；修正概率分箱边界后，`fixture-terminal-eval/replay_corrected.json` 的 2 次决策完全一致、1 次终局评估重建成功，分箱计数总和为 6。该 fixture 的 80% 场景带覆盖为 0/6，清楚表明测试假设本身不能当作可用预测器。
 - **最终修正后端到端回归**：`fixture_final_verified/fixture-verified-001.json` 经独立 HTTP 服务完成一局，在 `9.02 s` 被守卫标记；`fixture_final_verified/replay.json` 的 2/2 次服务决策与 1/1 份终局预测评估完全重现。服务当时的 `maximum_formal_particles=1` 从日志恢复；若误用正式配置的 4 条上限，动作虽相同，风险评分会改变，故回放必须使用实际服务配置。此 fixture 的 80% 场景带覆盖仍为 0/6，不能证明 LLM 预测质量。
 - **自动归档回归**：`llm_run_ubuntu.py --fixture-for-tests --duration 1.5` 的短回合自动完成服务、回合、回放和压缩，生成 `bundle_smoke_20261117.tar.gz`，含 10 个运行文件及包内校验清单；服务因地图尚未人工批准而启动失败的回归也产生了 `bundle_failure_smoke_20261117.tar.gz`，记录明确失败原因。测试 fixture 不构成真实 API 效果评估。

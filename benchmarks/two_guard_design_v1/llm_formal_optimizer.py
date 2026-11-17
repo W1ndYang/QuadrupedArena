@@ -97,5 +97,6 @@ def optimize(trajectories, stage, smoke_available, unknown_probability,
                 score_seconds=time.perf_counter()-started,
                 trajectories_used=len(chosen),
                 represented_probability=represented,
+                scoring_method='formal_referee',
                 reason=('Lowest conservative formal-referee risk plus '
                         'waiting, time and smoke costs'))

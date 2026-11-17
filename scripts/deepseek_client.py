@@ -23,8 +23,13 @@ def endpoint(config):
 
 def payload(config,messages):
     endpoint(config)
-    if config['model']!='deepseek-flash' or config['thinking']!={'type':'enabled'} or config['reasoning_effort'] not in ('low','high','max'):
-        raise ValueError('This experiment requires deepseek-flash with thinking enabled and low/high/max effort')
+    thinking=config.get('thinking')
+    effort=config.get('reasoning_effort')
+    if (config['model']!='deepseek-flash' or thinking not in
+            ({'type':'enabled'},{'type':'disabled'}) or
+            (thinking['type']=='enabled' and effort not in ('low','high','max')) or
+            (thinking['type']=='disabled' and effort not in (None,'none'))):
+        raise ValueError('Expected deepseek-flash with matching thinking and reasoning effort')
     result=dict(model=config['model'],messages=messages,thinking=config['thinking'],reasoning_effort=config['reasoning_effort'],
         stream=True,stream_options=dict(include_usage=True),response_format=dict(type='json_object'))
     limit=config.get('max_tokens')

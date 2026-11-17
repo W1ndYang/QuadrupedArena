@@ -9,6 +9,7 @@ from unittest.mock import patch
 from formal_central_screen import CentralController, run as formal_run
 from llm_decision_core import EpisodeContext, _check_public_request
 from llm_decision_service import ServiceState, fixture_response
+from llm_fast_optimizer import _templates
 from llm_motion_client import messages_for
 from llm_map_visual import render as render_map_review
 from llm_replay import _effective_config, replay
@@ -191,6 +192,24 @@ class LLMDecisionTests(unittest.TestCase):
             old_report=replay(old_log,Path(directory)/'old_replay.json',state.config)
             self.assertEqual(old_report['unreplayable_request_ids'],['test:1'])
             self.assertEqual(old_report['same_decisions'],0)
+
+    def test_fast_proxy_uses_pregenerated_formal_robot_routes(self):
+        templates=_templates()
+        self.assertEqual(len(templates['rows']),24)
+        self.assertEqual(len({(row['stage'],row['side'],row['wait'],row['smoke'])
+                              for row in templates['rows']}),24)
+        with tempfile.TemporaryDirectory() as directory:
+            state=ServiceState(dict(provider='deepseek',optimizer_mode='fast_proxy',
+                                    maximum_formal_particles=4),directory,fixture=True)
+            self.assertEqual(templates['map_id'],state.orchestrator.map['map_id'])
+            request=public_request(time=3.3,peek=1,observations=[
+                sample(3.1,[-3.,0.]),sample(3.2,[-3.,.1])])
+            result=state.decide(request)
+            self.assertEqual(result['status'],'plan')
+            self.assertEqual(result['optimizer']['scoring_method'],
+                             'fast_los_proxy_v1')
+            self.assertEqual(len(result['optimizer']['candidates']),6)
+            self.assertLess(result['timing']['optimizer_seconds'],1.)
 
     def test_map_review_renders_readable_artifacts_without_approval(self):
         semantic_map=build_map()

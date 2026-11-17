@@ -2,13 +2,14 @@
   "provider": "deepseek",
   "base_url": "https://api.deepseek.com",
   "model": "deepseek-flash",
-  "thinking": {"type": "enabled"},
-  "reasoning_effort": "low",
-  "max_tokens": 8192,
-  "timeout_seconds": 180,
-  "wall_timeout_seconds": 240,
+  "thinking": {"type": "disabled"},
+  "reasoning_effort": "none",
+  "max_tokens": 3072,
+  "timeout_seconds": 10,
+  "wall_timeout_seconds": 10,
   "api_key_env": "DEEPSEEK_API_KEY",
   "max_peeks_per_stage": 3,
   "max_observation_seconds": 12.0,
-  "maximum_formal_particles": 4
+  "maximum_formal_particles": 4,
+  "optimizer_mode": "fast_proxy"
 }

@@ -11,5 +11,6 @@
   "api_key_env": "QWEN_API_KEY",
   "max_peeks_per_stage": 3,
   "max_observation_seconds": 12.0,
-  "maximum_formal_particles": 4
+  "maximum_formal_particles": 4,
+  "optimizer_mode": "fast_proxy"
 }

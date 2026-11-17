@@ -7,6 +7,7 @@ import time
 import numpy as np
 
 from llm_formal_optimizer import horizon_for, optimize
+from llm_fast_optimizer import optimize as fast_optimize
 from llm_motion_client import messages_for, prompt_digest, PROMPT_VERSION
 from llm_semantic import SCHEMA_VERSION, build_map, public_rules, validate_motion
 from llm_trajectory import generate, interpolate
@@ -336,9 +337,18 @@ class DecisionOrchestrator:
         context.predictions.append(prediction)
         track['hypothesis_history'].append(dict(time=request['time'],
                                                  hypotheses=parsed['hypotheses']))
-        plan=optimize(trajectories,request['stage'],
-            public['smoke_available'],unknown,horizon,
-            maximum_particles=self.config.get('maximum_formal_particles',6))
+        mode=self.config.get('optimizer_mode','formal')
+        if mode=='fast_proxy':
+            plan=fast_optimize(trajectories,request['stage'],
+                public['smoke_available'],unknown,horizon,self.map,
+                public['own_xy'],
+                maximum_particles=self.config.get('maximum_formal_particles',6))
+        elif mode=='formal':
+            plan=optimize(trajectories,request['stage'],
+                public['smoke_available'],unknown,horizon,
+                maximum_particles=self.config.get('maximum_formal_particles',6))
+        else:
+            raise ValueError(f'Unknown optimizer_mode: {mode}')
         sorted_actions=sorted(plan['candidates'],key=lambda row:row['objective'])
         margin=(sorted_actions[1]['objective']-sorted_actions[0]['objective']
                 if len(sorted_actions)>1 else 1.)
@@ -355,10 +365,13 @@ class DecisionOrchestrator:
                   unknown_probability=unknown,action_margin=margin,
                   hypothesis_action_disagreement=disagreement,
                   peek_count=public['peek_count'])
-        if self._can_repeek(request) and ((disagreement and margin<.12) or margin<.025):
+        if self._can_repeek(request) and (
+                (disagreement and margin<.12) or
+                (margin<.025 and plan['selected_risk']>.4)):
             result=self._observe_action(request,track,'action_disagreement_or_close_scores')
             result['gate'].update(gate,sufficient=False,
                                   reasons=['action_disagreement_or_close_scores'])
+            result['optimizer']=plan
         else:
             result=dict(status='plan',plan=plan['selected'],gate=gate,
                         optimizer=plan,track_id=track['id'],

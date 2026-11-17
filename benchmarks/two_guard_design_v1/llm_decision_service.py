@@ -16,7 +16,8 @@ from llm_map_review import check as check_map
 def code_version():
     root=Path(__file__).resolve().parent
     names=('llm_semantic.py','llm_map_review.py','llm_motion_client.py','llm_trajectory.py',
-           'llm_formal_optimizer.py','llm_decision_core.py',
+           'llm_formal_optimizer.py','llm_fast_optimizer.py',
+           'llm_fast_templates.json','llm_decision_core.py',
            'llm_decision_service.py','llm_option_policy.py',
            'formal_central_screen.py','option_env.py','online_env.py',
            'ppo_observation.py','varied_patrol.py','two_node_geometry.py')
@@ -33,7 +34,10 @@ def code_version():
 def fixture_response(payload):
     """Local engineering smoke only: this is not an LLM research result."""
     request=payload['decision']; region=request['region']
-    nodes=payload['map']['nodes']; edges=payload['map']['edges']
+    nodes=payload['map']['nodes']
+    edges=[dict(id=edge_id,start=edge_id.split('__',1)[0],
+                end=edge_id.split('__',1)[1])
+           for edge_id in payload['map']['edge_ids']]
     latest=request['recent_observations'][-1]['xy']
     start=min(nodes,key=lambda n:sum((a-b)**2 for a,b in zip(nodes[n],latest)))
     vy=request['estimated_guard_velocity'][1]

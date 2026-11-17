@@ -36,6 +36,10 @@ class DeepSeekTests(unittest.TestCase):
         p=payload(self.config,[]);self.assertEqual(p['thinking'],{'type':'enabled'});self.assertEqual(p['reasoning_effort'],self.config['reasoning_effort'])
         self.assertEqual(p['response_format'],{'type':'json_object'});self.assertNotIn('enable_thinking',p);self.assertNotIn('temperature',p);self.assertNotIn('tools',p)
         with self.assertRaises(ValueError):payload(dict(self.config,reasoning_effort='invalid'),[])
+        fast=payload(dict(self.config,thinking={'type':'disabled'},
+                          reasoning_effort='none'),[])
+        self.assertEqual(fast['thinking'],{'type':'disabled'})
+        self.assertEqual(fast['reasoning_effort'],'none')
     def test_redirect_blocked(self):
         with self.assertRaises(APIError):NoRedirect().redirect_request(None,None,302,'',{},'https://evil.test')
     def test_maximum_platform_limit_profile(self):

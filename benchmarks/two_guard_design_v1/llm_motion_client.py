@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 import deepseek_client  # noqa: E402
 import qwen_client  # noqa: E402
 
-PROMPT_VERSION = 'guard-motion-reasoner-20261117-v2'
+PROMPT_VERSION = 'guard-motion-reasoner-20261117-v5'
 
 SYSTEM_PROMPT = """You infer a moving guard's possible future behavior from public observations.
 Return one JSON object only. You never choose the robot action and never output
@@ -26,6 +26,8 @@ speed_range_mps,dwell_range_seconds,reason,uncertainty}].
 state is MOVE, TURN, DWELL, REVERSE or UNKNOWN. Each event is
 {type: MOVE|TURN|DWELL|REVERSE, at_id: existing Node or Edge ID}.
 edge_ids form a connected directed path in the current guard region.
+An edge ID has the exact form start_node_id__end_node_id; copy it from
+map.edge_ids rather than constructing a new ID.
 The edge sequence and explicit DWELL events must cover the supplied prediction
 horizon. Do not end a path early and assume the guard stops. The first edge
 must start within 2.25 m of the latest guard sighting. Reverse travel uses
@@ -44,21 +46,21 @@ def prompt_digest():
 def messages_for(request, semantic_map, rules):
     region = request['region']
     node_ids = semantic_map['regions'][region]['node_ids']
-    edge_rows = [dict(id=e['id'], start=e['start'], end=e['end'],
-                      length_m=e['length_m'])
-                 for e in semantic_map['edges'].values()
-                 if 'guard' in e['traversable_by'] and e['start'] in node_ids]
+    edge_ids = [e['id'] for e in semantic_map['edges'].values()
+                if 'guard' in e['traversable_by'] and e['start'] in node_ids]
     public_map = dict(map_id=semantic_map['map_id'], region=semantic_map['regions'][region],
                       nodes={n: semantic_map['nodes'][n]['xy'] for n in node_ids},
-                      edges=edge_rows,
+                      edge_ids=edge_ids,
                       obstacles=semantic_map['obstacles'])
-    payload = dict(map=public_map, rules=rules, decision=request,
+    payload = dict(map=public_map, rules=rules,
                    response_constraints=dict(
                        allowed_next_target_ids=node_ids + [region],
-                       region_id_for_unknown=region))
+                       region_id_for_unknown=region),
+                   decision=request)
     return [dict(role='system', content=SYSTEM_PROMPT),
             dict(role='user', content=json.dumps(payload, ensure_ascii=False,
-                                                allow_nan=False))]
+                                                allow_nan=False,
+                                                separators=(',',':')))]
 
 
 def _key(config):
@@ -96,9 +98,13 @@ class APIReasoner:
                     model=result.get('response_model'),
                     response_id=result.get('response_id'),
                     wall_seconds=result.get('api_wall_seconds'),
+                    prompt_utf8_bytes=sum(len(row['content'].encode('utf-8'))
+                                          for row in messages),
                     raw_metadata={k: result.get(k) for k in
                                   ('finish_reason', 'api_started_utc',
-                                   'api_finished_utc', 'reasoning_characters_received')})
+                                   'api_finished_utc', 'reasoning_characters_received',
+                                   'time_to_first_output_seconds',
+                                   'time_to_first_visible_content_seconds')})
 
 
 class FixtureReasoner:
