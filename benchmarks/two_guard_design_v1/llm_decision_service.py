@@ -15,7 +15,7 @@ from llm_map_review import check as check_map
 
 def code_version():
     root=Path(__file__).resolve().parent
-    names=('llm_semantic.py','llm_motion_client.py','llm_trajectory.py',
+    names=('llm_semantic.py','llm_map_review.py','llm_motion_client.py','llm_trajectory.py',
            'llm_formal_optimizer.py','llm_decision_core.py',
            'llm_decision_service.py','llm_option_policy.py',
            'formal_central_screen.py','option_env.py','online_env.py',
@@ -72,6 +72,13 @@ class ServiceState:
     def __init__(self,config,log_dir,fixture=False):
         reasoner=(FixtureReasoner(fixture_response) if fixture else APIReasoner(config))
         self.orchestrator=DecisionOrchestrator(reasoner,config)
+        manifest=check_map()
+        if manifest['map_id']!=self.orchestrator.map['map_id']:
+            raise ValueError('Map ID differs from checked geometry')
+        self.map_review_status=manifest['review'].get('status')
+        if self.map_review_status not in (
+                'geometry_verified_manual_semantics_pending','human_approved'):
+            raise ValueError('Unknown or invalid map review status')
         self.log_dir=Path(log_dir)
         self.log_dir.mkdir(parents=True,exist_ok=True)
         self.log_path=self.log_dir/'decision_events.jsonl'
@@ -106,6 +113,7 @@ class ServiceState:
                     self.errors[key]=(request,response)
             self.append(dict(kind='decision',utc=datetime.now(timezone.utc).isoformat(),
                              code_version=self.version,config=self.config,
+                             map_review_status=self.map_review_status,
                              fixture_only=self.fixture,request=request,
                              response=response,
                              llm_request=(self.orchestrator.episodes.get(key[0])
@@ -129,7 +137,8 @@ class ServiceState:
             response=self.orchestrator.finish(payload['episode_id'],payload['summary'],
                                               payload['observations'])
             self.append(dict(kind='finish',utc=datetime.now(timezone.utc).isoformat(),
-                             code_version=self.version,payload=payload,
+                             code_version=self.version,
+                             map_review_status=self.map_review_status,payload=payload,
                              response=response))
             return response
 
@@ -151,7 +160,8 @@ def make_handler(state):
                 self._send(404,dict(status='not_found'));return
             self._send(200,dict(status='ready',map_id=state.orchestrator.map['map_id'],
                                 rules_version=state.orchestrator.rules['version'],
-                                code_version=state.version,fixture_only=state.fixture))
+                                code_version=state.version,fixture_only=state.fixture,
+                                map_review_status=state.map_review_status))
 
         def do_POST(self):
             if self.path not in ('/decide','/finish'):
@@ -180,16 +190,16 @@ def main():
     args=parser.parse_args()
     config=json.loads(args.config.read_text())
     state=ServiceState(config,args.log_dir,args.fixture_for_tests)
-    if not args.fixture_for_tests:
-        manifest=check_map()
-        if (manifest['map_id']!=state.orchestrator.map['map_id'] or
-                manifest['review'].get('status')!='human_approved'):
-            raise ValueError('Live service requires reviewed map semantics; '
-                             'run llm_map_review.py after human inspection')
     server=ThreadingHTTPServer((args.host,args.port),make_handler(state))
     print(json.dumps(dict(status='ready',host=args.host,port=args.port,
                           map_id=state.orchestrator.map['map_id'],
-                          fixture_only=args.fixture_for_tests)),flush=True)
+                          fixture_only=args.fixture_for_tests,
+                          map_review_status=state.map_review_status)),flush=True)
+    if state.map_review_status!='human_approved':
+        print(json.dumps(dict(status='warning',
+            message='Map geometry checked; semantic labels remain unreviewed. '
+                    'Treat episode results as provisional. Use llm_map_review.py '
+                    '--render-dir MAP_REVIEW_DIR to inspect the map.')),flush=True)
     try:server.serve_forever()
     except KeyboardInterrupt:pass
     finally:server.server_close()

@@ -100,6 +100,7 @@ def run(args):
                                    for name in ('llm_run_ubuntu.py', 'llm_bundle.py',
                                                 'llm_run_episode.py', 'llm_replay.py')},
                     python=platform.python_version(), service_health=None,
+                    map_review_status=None, results_provisional=None,
                     episode_exit_code=None, replay_exit_code=None,
                     replay_matches=None, error=None)
     service = None
@@ -114,6 +115,9 @@ def run(args):
             service = subprocess.Popen(command, cwd=PROJECT, stdout=output,
                                        stderr=subprocess.STDOUT)
             manifest['service_health'] = _wait_for_service(service, service_log, args.port)
+            manifest['map_review_status'] = manifest['service_health'].get('map_review_status')
+            manifest['results_provisional'] = (
+                manifest['map_review_status'] != 'human_approved')
             episode_command = [sys.executable, str(HERE / 'llm_run_episode.py'),
                                '--service-url', f'http://127.0.0.1:{args.port}',
                                '--first-seed', str(args.first_seed),

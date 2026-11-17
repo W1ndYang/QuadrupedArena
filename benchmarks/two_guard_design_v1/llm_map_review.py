@@ -23,8 +23,16 @@ def main():
     parser.add_argument('--manifest',type=Path,default=MANIFEST)
     parser.add_argument('--approve',action='store_true')
     parser.add_argument('--reviewer')
+    parser.add_argument('--render-dir',type=Path,
+                        help='Create a labeled map PNG/SVG and a short review checklist')
     args=parser.parse_args()
+    if args.approve and args.render_dir:
+        parser.error('Render and inspect the map before a separate --approve command')
     manifest=check(args.manifest)
+    rendered=None
+    if args.render_dir:
+        from llm_map_visual import render
+        rendered=render(manifest,args.render_dir)
     if args.approve:
         if not args.reviewer or len(args.reviewer.strip())<2:
             raise ValueError('Provide a real reviewer name after inspecting the manifest')
@@ -36,7 +44,7 @@ def main():
     print(json.dumps(dict(map_id=manifest['map_id'],
         nodes=len(manifest['nodes']),edges=len(manifest['edges']),
         regions=len(manifest['regions']),
-        review=manifest['review']),ensure_ascii=False,indent=2))
+        review=manifest['review'],rendered=rendered),ensure_ascii=False,indent=2))
 
 
 if __name__=='__main__':main()

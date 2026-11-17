@@ -47,7 +47,11 @@ LLM 收到当前守卫区域空间图、公开规则、最近 30 条原始测量
 
 ## 地图语义审核
 
-[地图清单](llm_map_manifest.json)包含 31 个 Node、124 条有向空间 Edge、两个开放巡逻 Region 及 15 个障碍。守卫路点可在开放区域连续采样，**这些 Node/Edge 只是可通行几何，不是预定义的完整巡逻路线**。生成时所有点和 Edge 用正式 `Planner` 检查；语义入口/出口目前标记为 `geometry_verified_manual_semantics_pending`。人工检查时尤其核对两处 Region 边界、入口/出口标签、墙高与低墙、南北缺口关系。`llm_map_review.py` 能检查清单是否与当前代码几何一致，并在人工审核后记录 reviewer、时间和状态。正式 API 服务要求 `human_approved`；fixture 测试模式不要求。
+[地图清单](llm_map_manifest.json)包含 31 个 Node、124 条有向空间 Edge、两个开放巡逻 Region 及 15 个障碍。守卫路点可在开放区域连续采样，**这些 Node/Edge 只是可通行几何，不是预定义的完整巡逻路线**。生成时所有点和 Edge 用正式 `Planner` 检查；语义入口/出口目前标记为 `geometry_verified_manual_semantics_pending`。人工审核无需阅读整份 JSON：先看[场地总览图](llm_map_review.png)，需要核对空间 Node/Edge 时再看[守卫区域拓扑图](llm_map_review_topology.png)。两张图直接从当前清单生成，分别展示墙高、南北路线、掩体、两块守卫活动区，以及每块活动区的 12 个空间节点；图中的轨迹线不是守卫的实际巡逻路线。
+
+![供人工审核的两守卫场地总览](llm_map_review.png)
+
+人工主要核对：起点掩体约 `(-8,0)`、第二掩体约 `(3,0)`、终点约 `(10,0)`；两处南北缺口分别在 `x=-5` 与 `x=6`；浅色守卫区域分别在 `x≈-3` 与 `x≈8`；深色是高墙，灰色是低墙。`llm_map_review.py --render-dir` 会重画最新图，并生成 `map_review_checklist.md`；批准命令会记录 reviewer、时间和状态。若图与期望场景不符，先反馈，不要批准。**几何一致性检查始终严格执行**；语义仍待人工确认时，真实 API 服务可以运行，但 `/health`、决策日志和压缩包中的运行记录都会标明 `geometry_verified_manual_semantics_pending`，结果只能作暂定工程观察，不能据此认定策略有效。
 
 ## Ubuntu 配置与运行
 
@@ -60,10 +64,16 @@ export DEEPSEEK_API_KEY='你的 DeepSeek API Key'
 
 环境变量名和模型参数的具体位置分别是 [DeepSeek 配置](config/llm_decision_deepseek.json) 的 `api_key_env` 与 [Qwen 配置](config/llm_decision_qwen.json) 的 `api_key_env`。也可在相应配置加入 `api_key_file`，指向**仓库外**权限为 `0600` 的私密文件。不要把 key 写入仓库、运行日志或发给 Codex。现有 DeepSeek 适配器要求 `deepseek-flash` 和所列 thinking 参数；若 Ubuntu 账号不支持该模型，先改用 Qwen 配置或单独调整提供者适配器并重新测试。Qwen 配置采用 `qwen3.6-27b` 的非思考模式，因为阿里云[结构化输出文档](https://help.aliyun.com/en/model-studio/qwen-structured-output)将 Qwen3.6 开源系列的 JSON Object 支持限定在该模式。
 
-同步代码后，先检查地图清单，再由人工审核者批准：
+同步代码后可以直接运行第一局；地图未批准时服务会给出暂定状态警告，不会再因这项审核而退出。想核对图时，执行下面命令。脚本会先自动核对清单与正式几何是否一致：
 
 ```bash
-python3 benchmarks/two_guard_design_v1/llm_map_review.py
+python3 benchmarks/two_guard_design_v1/llm_map_review.py --render-dir map_review
+xdg-open map_review/map_review.png
+```
+
+若你能确认关键布局正确，再看完 `map_review/map_review_checklist.md` 并执行可选的正式语义批准：
+
+```bash
 python3 benchmarks/two_guard_design_v1/llm_map_review.py --approve --reviewer '审核者姓名'
 ```
 
@@ -95,11 +105,11 @@ python3 benchmarks/two_guard_design_v1/llm_replay.py \
 
 ## 本地验证状态与限制
 
-- **已实现并通过测试**：地图与规则版本、严格运动 JSON 校验、公开 Track 关联、跨时间比较、数值多轨迹、正式局部裁判反事实、烟雾落点一致性、主动观察、Episode 隔离与幂等、HTTP 服务、Option 接入、JSONL 日志、记录响应重放、单包归档及 SHA-256 校验。开发工作区的完整 `test_*.py` 集合共 **51 项通过**。同步到 Ubuntu 的任务分支只包含 LLM 运行链路及其直接依赖，可用 `python3 -m unittest discover -s benchmarks/two_guard_design_v1 -p 'test_llm*.py' -q` 运行 **9 项针对性测试**。
+- **已实现并通过测试**：地图与规则版本、可视化审核、待确认语义的暂定运行标记、严格运动 JSON 校验、公开 Track 关联、跨时间比较、数值多轨迹、正式局部裁判反事实、烟雾落点一致性、主动观察、Episode 隔离与幂等、HTTP 服务、Option 接入、JSONL 日志、记录响应重放、单包归档及 SHA-256 校验。开发工作区的完整 `test_*.py` 集合共 **53 项通过**。同步到 Ubuntu 的任务分支只包含 LLM 运行链路及其直接依赖，可用 `python3 -m unittest discover -s benchmarks/two_guard_design_v1 -p 'test_llm*.py' -q` 运行 **11 项针对性测试**。
 - **已运行工程端到端，但不代表真实 LLM 效果**：`--fixture-for-tests` 下，仿真与独立服务经本机 HTTP 完成两局，种子 `690000/700000` 与 `690017/700019` 分别在 `9.02 s`、`6.28 s` 被守卫标记；fixture 仅返回显式标记的假设，不是实际 DeepSeek 推理。记录在 `.arena-workspace/experiments/llm-motion/fixture-final/`，四次决策的记录响应重放 **4/4 一致**。另一次观察达到上限且旧目视过期的运行明确失败，未暗用隐藏状态。
 - **已实现但尚未充分验证**：跨节点重新看到同一守卫的 Track 机制只有合成观测测试；当前几何阶段交接后通常看到的是另一守卫。概率校准、数值/正式反事实一致性、烟雾预算收益和观察阈值需要真实 API 与独立种子验证。
 - **尚未验证**：DeepSeek/Qwen 的真实 API 连通性、结构化输出遵从率、token/延迟、模型运动推理质量和实际胜率。本地没有密钥，也不应将 fixture 胜负当作研究结果。
-- **工程替代与范围**：本阶段复用 CPU 双 actor 交接裁判，未实现 Isaac Sim 原始图像输入或三实体同时裁判；优化器使用正式单节点裁判机制和 LLM 假设守卫，未实现整局联合资源优化。地图语义尚待人工审核，正式服务因此拒绝启动。
+- **工程替代与范围**：本阶段复用 CPU 双 actor 交接裁判，未实现 Isaac Sim 原始图像输入或三实体同时裁判；优化器使用正式单节点裁判机制和 LLM 假设守卫，未实现整局联合资源优化。地图语义尚待人工审核时，正式服务会保留待确认标记并允许暂定运行；几何不一致仍拒绝启动。
 - **计算成本**：本地测试中一次含烟雾候选、仅选 1 条假设轨迹的正式评分约 `45–46 s`；正式配置上限 4 条轨迹和真实 API 调用可能更慢，HTTP 客户端允许最多 900 秒等待，游戏逻辑时间保持暂停。该实现适合离线/暂停式仿真研究，未验证实时决策要求。
 - **终局预测评估回归**：`fixture-terminal-eval/fixture-terminal-001.json` 的末尾合法目视随 `/finish` 送达服务，同 Track 得到 6 个全局时间对齐的预测比较；修正概率分箱边界后，`fixture-terminal-eval/replay_corrected.json` 的 2 次决策完全一致、1 次终局评估重建成功，分箱计数总和为 6。该 fixture 的 80% 场景带覆盖为 0/6，清楚表明测试假设本身不能当作可用预测器。
 - **最终修正后端到端回归**：`fixture_final_verified/fixture-verified-001.json` 经独立 HTTP 服务完成一局，在 `9.02 s` 被守卫标记；`fixture_final_verified/replay.json` 的 2/2 次服务决策与 1/1 份终局预测评估完全重现。服务当时的 `maximum_formal_particles=1` 从日志恢复；若误用正式配置的 4 条上限，动作虽相同，风险评分会改变，故回放必须使用实际服务配置。此 fixture 的 80% 场景带覆盖仍为 0/6，不能证明 LLM 预测质量。

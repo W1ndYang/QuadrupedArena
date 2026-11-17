@@ -10,6 +10,7 @@ from formal_central_screen import CentralController, run as formal_run
 from llm_decision_core import EpisodeContext, _check_public_request
 from llm_decision_service import ServiceState, fixture_response
 from llm_motion_client import messages_for
+from llm_map_visual import render as render_map_review
 from llm_replay import _effective_config
 from llm_semantic import build_map, public_rules, validate_motion
 from llm_trajectory import generate
@@ -154,6 +155,29 @@ class LLMDecisionTests(unittest.TestCase):
         events[1]['config']={'maximum_formal_particles':2}
         with self.assertRaisesRegex(ValueError,'inconsistent'):
             _effective_config(events,supplied,False)
+
+    def test_map_review_renders_readable_artifacts_without_approval(self):
+        semantic_map=build_map()
+        with tempfile.TemporaryDirectory() as directory:
+            outputs=render_map_review(semantic_map,directory)
+            self.assertEqual(semantic_map['review']['status'],
+                             'geometry_verified_manual_semantics_pending')
+            self.assertTrue(all(Path(path).stat().st_size>0
+                                for path in outputs.values()))
+            self.assertGreater(Path(outputs['png']).stat().st_size,1000)
+            notes=Path(outputs['checklist']).read_text()
+            self.assertIn('Guard 1 region spans x=-3.9..-2.1',notes)
+            self.assertIn('actual guard waypoints and order remain unknown',notes)
+
+    def test_live_service_keeps_pending_semantics_explicit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state=ServiceState(dict(provider='deepseek'),directory,fixture=False)
+            self.assertEqual(state.map_review_status,
+                             'geometry_verified_manual_semantics_pending')
+            response=state.decide(public_request())
+            self.assertEqual(response['status'],'observe')
+            event=json.loads(state.log_path.read_text().splitlines()[0])
+            self.assertEqual(event['map_review_status'],state.map_review_status)
 
 
 if __name__=='__main__':unittest.main()
