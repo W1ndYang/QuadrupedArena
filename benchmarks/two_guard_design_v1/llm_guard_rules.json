@@ -1,0 +1,19 @@
+{
+  "version": "varied-guard-public-rules-v1",
+  "general_behavior": "A guard follows a cyclic sequence of four private waypoints. The four waypoints are sampled in distinct south-to-north bands inside its region, then randomly ordered. It starts on a random segment. At a waypoint it may change direction; at one extreme endpoint it may dwell. When it continuously sees the robot for the reaction delay and is within tag range, it stops and aims at the robot. When not aiming it patrols and turns its torso toward recent memory or scans.",
+  "public_kinematics": {
+    "speed_range_mps": [
+      0.8,
+      1.5
+    ],
+    "acceleration_mps2": 1.8,
+    "yaw_rate_radps": 4.5,
+    "reaction_seconds": 0.2,
+    "maximum_endpoint_dwell_seconds": 4.0,
+    "tag_range_m": 4.0,
+    "tag_seconds": 0.6,
+    "dt_seconds": 0.02
+  },
+  "hidden_per_episode": "Exact four waypoint coordinates and order, initial segment and fraction, exact speed and endpoint dwell are private. Do not infer them from an episode seed or simulator state.",
+  "observational_inference": "Position and movement are observed only at legal 10 Hz visual samples; facing and patrol phase are not directly available in the current structured sensor adapter. Infer turns, next target and dwell as uncertain events."
+}

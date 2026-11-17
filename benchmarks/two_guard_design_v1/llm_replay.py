@@ -1,0 +1,94 @@
+"""Re-run saved public requests without starting the simulation."""
+import argparse
+import json
+from pathlib import Path
+
+from llm_decision_core import DecisionOrchestrator
+from llm_motion_client import APIReasoner
+
+
+class RecordedReasoner:
+    def __init__(self,events):
+        self.responses={event['request']['request_id']:
+            event['response']['reasoning']['raw_response']
+            for event in events if event['kind']=='decision' and
+            'reasoning' in event['response']}
+
+    def infer(self,messages):
+        request=json.loads(messages[-1]['content'])['decision']
+        request_id=request['request_id']
+        if request_id not in self.responses:
+            raise ValueError(f'No recorded LLM response for {request_id}')
+        return self.responses[request_id]
+
+
+def _effective_config(events, supplied, live_model):
+    if live_model:
+        return supplied, 'supplied_live_model'
+    recorded=[event['config'] for event in events
+              if event.get('kind')=='decision' and 'config' in event]
+    if not recorded:
+        return supplied, 'supplied_legacy_log'
+    if any(row!=recorded[0] for row in recorded[1:]):
+        raise ValueError('Recorded decisions used inconsistent service configurations')
+    return recorded[0], 'recorded_service'
+
+
+def replay(input_log,output,config,live_model=False):
+    events=[json.loads(line) for line in Path(input_log).read_text().splitlines()
+            if line.strip()]
+    effective_config,config_source=_effective_config(events,config,live_model)
+    reasoner=(APIReasoner(effective_config) if live_model else RecordedReasoner(events))
+    orchestrator=DecisionOrchestrator(reasoner,effective_config)
+    rows=[];finishes=[]
+    for event in events:
+        if event['kind']=='finish':
+            payload=event['payload']
+            finished=orchestrator.finish(payload['episode_id'],payload['summary'],
+                                          payload.get('observations',[]))
+            finishes.append(dict(episode_id=payload['episode_id'],
+                replayed_evaluation=finished['evaluation'],
+                original_evaluation=event['response']['evaluation'],
+                same_evaluation=(finished['evaluation']==
+                                 event['response']['evaluation'])))
+            continue
+        if event['kind']!='decision':continue
+        request=event['request']
+        response=orchestrator.decide(request)
+        original=event['response']
+        rows.append(dict(episode_id=request['episode_id'],
+            request_id=request['request_id'],time=request['time'],
+            original_status=original['status'],replayed_status=response['status'],
+            original_action=original.get('action'),replayed_action=response.get('action'),
+            original_plan=original.get('plan'),replayed_plan=response.get('plan'),
+            same_decision=(original.get('action')==response.get('action') and
+                           original.get('plan')==response.get('plan') and
+                           original['status']==response['status'])))
+    report=dict(mode='live_model' if live_model else 'recorded_llm',
+                config_source=config_source,
+                count=len(rows),same_decisions=sum(x['same_decision'] for x in rows),
+                public_requests_only=True,rows=rows,finishes=finishes)
+    output=Path(output);output.parent.mkdir(parents=True,exist_ok=True)
+    output.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+    return report
+
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--input-log',type=Path,required=True)
+    parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--config',type=Path,required=True)
+    parser.add_argument('--live-model',action='store_true',
+                        help='Calls paid API using configured key; default reuses saved responses')
+    args=parser.parse_args()
+    result=replay(args.input_log,args.output,
+                  json.loads(args.config.read_text()),args.live_model)
+    print(json.dumps(dict(mode=result['mode'],count=result['count'],
+                          same_decisions=result['same_decisions'],
+                          finish_count=len(result['finishes']),
+                          matching_finishes=sum(x['same_evaluation'] for x in
+                                                result['finishes']),
+                          config_source=result['config_source'])))
+
+
+if __name__=='__main__':main()

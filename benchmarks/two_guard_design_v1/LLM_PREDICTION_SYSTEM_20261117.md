@@ -1,0 +1,106 @@
+# LLM 守卫运动推理、显式优化与 Option 执行：第一阶段实现
+
+日期：2026-11-17。该实现针对现有双守卫 CPU 正式 Skill 实验环境。仿真进程与决策 HTTP 服务分开运行；决策服务调用 DeepSeek 或 Qwen API。Codex 不在运行时决策通路中。
+
+## 工程核对与复用边界
+
+| 现有机制 | 调用链与复用方式 |
+| --- | --- |
+| Episode | `llm_run_episode.py` → `option_env.run_episode` → `online_env.run_episode` → `OnlineProbe`。当前正式候选是两 actor 裁判：第二守卫从全局 `t=0` 独立影子巡逻，第二掩体交接。它不是三实体同屏裁判。 |
+| 地图 | `two_node_geometry.add_two_node_geometry` 修改正式地图障碍；`trial_motion.Planner` 验证路径净空。`llm_semantic.build_map` 只生成空间 Node/Edge/Region，不读取某局巡逻路点。 |
+| 视觉 | `VisualHistoryEncoder.encode` 在 10 Hz 采样合法目视位置；不向策略提供裁判内部 yaw 或 memory。`LLMOptionPolicy.observe` 只把该结构化测量、机器人自身状态和时间送进服务。 |
+| 守卫 | `varied_patrol.sample/place` 每局生成四个随机私有路点、顺序、初始段、速度与停留；`PublicController` 与 `SouthDwellGuard` 按观测、反应计时切换巡逻、停留、AIM。公开规则整理于 `llm_guard_rules.json`。 |
+| Skill/Option | `OptionController.decide` 每 50 Hz 推进底层 Skill，只在 Option 返回或中断后的 10 Hz 边界调用高层；LLM 不直接给速度。计划等待可跨多个完整 WAIT Option；异常先走安全回掩体或明确失败。 |
+| 正式判定 | `CentralProbe` 及其底层 `Probe` 执行真实 Skill 导航、3D 遮挡、守卫反应、瞄准、`valid_lock`、`TagClock` 和烟雾规则。优化器仅以 LLM 假设创建的守卫路径替换私有巡逻生成器，没有读取测试局的私有参数。 |
+| API | 复用已有 `scripts/deepseek_client.py` 与 `scripts/qwen_client.py` 的受限 HTTPS、无重定向、无自动重试接口；新 `APIReasoner` 把提供者接口统一。当前 DeepSeek 适配器固定 `deepseek-flash` 配置，切换服务商使用独立 Qwen 配置。 |
+
+旧显式规划的训练巡逻库包含私有参数，**新系统的在线查询和轨迹生成不读取该库**。`llm_formal_optimizer` 的每个反事实守卫完全由当前合法观测估计与 LLM 假设生成。实验 seed 只交给仿真进程，服务请求没有 seed、真实路点、隐藏状态或未来轨迹。服务对意外的这些字段执行严格拒绝。
+
+## 架构与协议
+
+```mermaid
+flowchart LR
+  S[Simulation Runtime\n10 Hz public sensor] -->|Episode ID, Request ID, global time, public batch| D[Decision Service]
+  D --> T[Guard Track and Context]
+  T --> L[LLM Motion Reasoner]
+  L -->|event hypotheses and probabilities| N[Numerical Trajectory Model]
+  N --> G[Observation Sufficiency Gate]
+  G --> O[Formal Counterfactual Optimizer]
+  O -->|route, wait, smoke plan| S
+  S --> X[Call-and-Return Skill Executor]
+  D --> J[JSONL decision log and replay]
+```
+
+服务端 `POST /decide` 接受且只接受 `episode_id`、`request_id`、全局 `time`、`stage`、`decision_type`、`public`、`observations` 和 `skill_state`。公开测量含全局时间、守卫二维位置、观察者位置与方向、测量不确定性和帧有效标志。重复 `request_id` 返回原响应，不再调用模型或重复计划；API 错误也缓存为该请求的明确错误。`GET /health` 返回地图和代码版本；`POST /finish` 只在终局后传回结果，不能回流在线决策。
+
+LLM 收到当前守卫区域空间图、公开规则、最近 30 条原始测量、旧观测计数、速度估计、同 Track 的先前假设与偏差。服务本地保存完整原始请求，不依赖 API 对话记忆。Prompt 版本和摘要、地图 ID、规则版本、模型响应 ID、token 用量、API/轨迹/优化耗时均写入 JSONL。
+
+模型须返回 `guard-motion-hypotheses-v1` JSON：每个假设有数值概率、状态、合法有向 Edge 序列、下一 Node/Region、MOVE/TURN/DWELL/REVERSE 事件、速度和停留范围、依据与不确定性。可用 `UNKNOWN` 保留未覆盖概率。服务拒绝不存在的地图 ID、断开的 Edge、跨区域路径、不合法概率或超出公开能力的参数。LLM 不能输出底层控制。
+
+`llm_trajectory.generate` 从最近合法位置和估计速度出发，按每条事件路径生成低/中/高速度、停留样本，保留轨迹来源、权重和时间。路径结束后的未来标为未覆盖，优化器保守计作失败，不假定守卫停住。预测时域按当前机器人到出口的正式地图路程、2 秒最大等待和余量选取，通常为 6–16 秒。
+
+主动观察门同时检查采样数、测量年龄、UNKNOWN 质量、假设熵、候选动作分歧和评分间隔。每节点探头次数与观察时长有上限。若观察仍不足，服务明确失败，不在无依据的轨迹上继续执行。门的阈值目前是工程初值，尚未用独立数据校准。
+
+`llm_formal_optimizer.optimize` 枚举南/北、等待 0/1/2 秒、有无烟雾（资源合法时）。每条权重轨迹转化为一个**假设守卫**，从当前观测估计状态开始，用正式 `CentralProbe`、正式 Skill 路径、守卫 AIM/发现/蓄时和烟雾机制运行局部反事实。假设守卫分支关闭探针内部的守卫目视烟雾定位，与在线执行器的烟雾落点规则一致。优化结果列出每个动作的正式裁判通过率估计、残余未覆盖概率、预计时间、资源成本、目标值和逐假设结果。真实私有守卫参数不进入评分。它仍是单节点局部反事实，不能声称已精确预测整个双节点回合。
+
+跨节点 `EpisodeContext` 根据合法测量的空间区域、时间及最大速度进行 Track 关联，分配独立 `track-xxxx` ID；身份不唯一或运动不相容时保留不确定性，不使用仿真实体 ID。历史预测仅与**同一 Track 的全局时间**后续合法测量比较。评估保存位置误差、运动方向误差、80% 场景带覆盖、最近轨迹事件代理类别、Brier/Log Loss 代理指标和可靠性分箱；路线事件代理不等于真实私有巡逻目标。终局后另记录所选动作的预测风险与实际阶段结果。
+
+## 地图语义审核
+
+[地图清单](llm_map_manifest.json)包含 31 个 Node、124 条有向空间 Edge、两个开放巡逻 Region 及 15 个障碍。守卫路点可在开放区域连续采样，**这些 Node/Edge 只是可通行几何，不是预定义的完整巡逻路线**。生成时所有点和 Edge 用正式 `Planner` 检查；语义入口/出口目前标记为 `geometry_verified_manual_semantics_pending`。人工检查时尤其核对两处 Region 边界、入口/出口标签、墙高与低墙、南北缺口关系。`llm_map_review.py` 能检查清单是否与当前代码几何一致，并在人工审核后记录 reviewer、时间和状态。正式 API 服务要求 `human_approved`；fixture 测试模式不要求。
+
+## Ubuntu 配置与运行
+
+代码中**没有填 API key 的字符串常量**。首选在 Ubuntu 终端设置环境变量：
+
+```bash
+export DEEPSEEK_API_KEY='你的 DeepSeek API Key'
+# 若改用千问：export QWEN_API_KEY='你的千问 API Key'
+```
+
+环境变量名和模型参数的具体位置分别是 [DeepSeek 配置](config/llm_decision_deepseek.json) 的 `api_key_env` 与 [Qwen 配置](config/llm_decision_qwen.json) 的 `api_key_env`。也可在相应配置加入 `api_key_file`，指向**仓库外**权限为 `0600` 的私密文件。不要把 key 写入仓库、运行日志或发给 Codex。现有 DeepSeek 适配器要求 `deepseek-flash` 和所列 thinking 参数；若 Ubuntu 账号不支持该模型，先改用 Qwen 配置或单独调整提供者适配器并重新测试。Qwen 配置采用 `qwen3.6-27b` 的非思考模式，因为阿里云[结构化输出文档](https://help.aliyun.com/en/model-studio/qwen-structured-output)将 Qwen3.6 开源系列的 JSON Object 支持限定在该模式。
+
+同步代码后，先检查地图清单，再由人工审核者批准：
+
+```bash
+python3 benchmarks/two_guard_design_v1/llm_map_review.py
+python3 benchmarks/two_guard_design_v1/llm_map_review.py --approve --reviewer '审核者姓名'
+```
+
+推荐使用**一条命令运行并自动打包**。脚本启动独立决策服务进程，运行一局，停止服务，用保存的响应做离线回放，最后打印 `upload_this` 指向的 `.tar.gz`。成功和服务/回合失败时都会尽量打包；失败包内的 `run_manifest.json`、`service_stdout.log` 和 `episode_stdout.log` 供诊断。只需回传这个压缩包：
+
+```bash
+python3 benchmarks/two_guard_design_v1/llm_run_ubuntu.py \
+  --first-seed 810000 --second-seed 820000
+```
+
+该命令默认使用 [DeepSeek 配置](config/llm_decision_deepseek.json)。千问运行时加 `--config benchmarks/two_guard_design_v1/config/llm_decision_qwen.json` 并设置 `QWEN_API_KEY`。可通过 `--output-dir`、`--bundle-path` 和 `--port` 自定路径与端口；默认创建唯一运行目录及同级压缩包，避免不同实验混写。HTTP 等待时仿真逻辑时间暂停，API 墙钟延迟单独记录。包内含决策 JSONL、LLM 原始请求/响应、回合 JSON、服务与仿真标准输出、回放与结果、地图/规则快照、去掉密钥字段的有效配置、运行元数据及每个文件的 SHA-256 清单。打包器会检查当前环境变量或 `api_key_file` 的密钥值是否误入这些文件，检测到则拒绝生成包。收到压缩包后可不解压直接校验：
+
+```bash
+python3 benchmarks/two_guard_design_v1/llm_bundle.py --verify /path/to/returned.tar.gz
+```
+
+该配置只在回环地址收发，不要求 Codex CLI。独立评估可重复运行该命令，使用预先固定、互不重叠的种子序列；本阶段尚未开展真实 API 大样本评估。
+
+需要分别调试两个进程时，仍可在终端 A 手动运行 `llm_decision_service.py --config ... --log-dir ... --port 8765`，终端 B 运行 `llm_run_episode.py --service-url http://127.0.0.1:8765 --first-seed ... --second-seed ... --output-dir ...`。手动运行完可调用 `llm_bundle.py --run-dir 运行目录 --output 压缩包路径 --config 配置文件` 打包；推荐的一键命令会自动做完这些步骤。
+
+不调用 API 的离线重放读取日志里的**原始公开请求、保存的 LLM 响应及当时的服务配置**，逐项核对动作和终局评估；加 `--live-model` 会使用命令行配置，在同一公开请求上重新调用当前模型，用于 Prompt/模型比较，会产生 API 调用：
+
+```bash
+python3 benchmarks/two_guard_design_v1/llm_replay.py \
+  --input-log .arena-workspace/experiments/llm-motion/ubuntu-run/decision_events.jsonl \
+  --config benchmarks/two_guard_design_v1/config/llm_decision_deepseek.json \
+  --output .arena-workspace/experiments/llm-motion/ubuntu-run/replay.json
+```
+
+## 本地验证状态与限制
+
+- **已实现并通过测试**：地图与规则版本、严格运动 JSON 校验、公开 Track 关联、跨时间比较、数值多轨迹、正式局部裁判反事实、烟雾落点一致性、主动观察、Episode 隔离与幂等、HTTP 服务、Option 接入、JSONL 日志、记录响应重放、单包归档及 SHA-256 校验。开发工作区的完整 `test_*.py` 集合共 **51 项通过**。同步到 Ubuntu 的任务分支只包含 LLM 运行链路及其直接依赖，可用 `python3 -m unittest discover -s benchmarks/two_guard_design_v1 -p 'test_llm*.py' -q` 运行 **9 项针对性测试**。
+- **已运行工程端到端，但不代表真实 LLM 效果**：`--fixture-for-tests` 下，仿真与独立服务经本机 HTTP 完成两局，种子 `690000/700000` 与 `690017/700019` 分别在 `9.02 s`、`6.28 s` 被守卫标记；fixture 仅返回显式标记的假设，不是实际 DeepSeek 推理。记录在 `.arena-workspace/experiments/llm-motion/fixture-final/`，四次决策的记录响应重放 **4/4 一致**。另一次观察达到上限且旧目视过期的运行明确失败，未暗用隐藏状态。
+- **已实现但尚未充分验证**：跨节点重新看到同一守卫的 Track 机制只有合成观测测试；当前几何阶段交接后通常看到的是另一守卫。概率校准、数值/正式反事实一致性、烟雾预算收益和观察阈值需要真实 API 与独立种子验证。
+- **尚未验证**：DeepSeek/Qwen 的真实 API 连通性、结构化输出遵从率、token/延迟、模型运动推理质量和实际胜率。本地没有密钥，也不应将 fixture 胜负当作研究结果。
+- **工程替代与范围**：本阶段复用 CPU 双 actor 交接裁判，未实现 Isaac Sim 原始图像输入或三实体同时裁判；优化器使用正式单节点裁判机制和 LLM 假设守卫，未实现整局联合资源优化。地图语义尚待人工审核，正式服务因此拒绝启动。
+- **计算成本**：本地测试中一次含烟雾候选、仅选 1 条假设轨迹的正式评分约 `45–46 s`；正式配置上限 4 条轨迹和真实 API 调用可能更慢，HTTP 客户端允许最多 900 秒等待，游戏逻辑时间保持暂停。该实现适合离线/暂停式仿真研究，未验证实时决策要求。
+- **终局预测评估回归**：`fixture-terminal-eval/fixture-terminal-001.json` 的末尾合法目视随 `/finish` 送达服务，同 Track 得到 6 个全局时间对齐的预测比较；修正概率分箱边界后，`fixture-terminal-eval/replay_corrected.json` 的 2 次决策完全一致、1 次终局评估重建成功，分箱计数总和为 6。该 fixture 的 80% 场景带覆盖为 0/6，清楚表明测试假设本身不能当作可用预测器。
+- **最终修正后端到端回归**：`fixture_final_verified/fixture-verified-001.json` 经独立 HTTP 服务完成一局，在 `9.02 s` 被守卫标记；`fixture_final_verified/replay.json` 的 2/2 次服务决策与 1/1 份终局预测评估完全重现。服务当时的 `maximum_formal_particles=1` 从日志恢复；若误用正式配置的 4 条上限，动作虽相同，风险评分会改变，故回放必须使用实际服务配置。此 fixture 的 80% 场景带覆盖仍为 0/6，不能证明 LLM 预测质量。
+- **自动归档回归**：`llm_run_ubuntu.py --fixture-for-tests --duration 1.5` 的短回合自动完成服务、回合、回放和压缩，生成 `bundle_smoke_20261117.tar.gz`，含 10 个运行文件及包内校验清单；服务因地图尚未人工批准而启动失败的回归也产生了 `bundle_failure_smoke_20261117.tar.gz`，记录明确失败原因。测试 fixture 不构成真实 API 效果评估。

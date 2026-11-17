@@ -1,0 +1,159 @@
+"""Protocol, public identity, and formal-counterfactual boundary tests."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from formal_central_screen import CentralController, run as formal_run
+from llm_decision_core import EpisodeContext, _check_public_request
+from llm_decision_service import ServiceState, fixture_response
+from llm_motion_client import messages_for
+from llm_replay import _effective_config
+from llm_semantic import build_map, public_rules, validate_motion
+from llm_trajectory import generate
+
+
+def public_request(episode='test',request='test:1',time=0.,stage=0,peek=0,
+                   observations=None):
+    return dict(episode_id=episode,request_id=request,time=time,stage=stage,
+        decision_type='initial' if peek==0 else 'observation_complete',
+        public=dict(own_xy=[-8.,0.] if stage==0 else [3.,0.],
+            own_yaw=0.,own_speed=0.,smoke_available=False,
+            remaining_seconds=48.-time,
+            action_mask=[False,False,True,True,True,True,True,False,False,False],
+            peek_count=peek,stage_elapsed_seconds=time,
+            last_action=None,skill_feedback='initial'),
+        observations=observations or [],
+        skill_state=dict(current_option=None,plan_request_id=None,
+                         waits_done=0,recovery=False))
+
+
+def sample(t,xy,stage=0):
+    return dict(time=t,xy=list(xy),observer_xy=[-8.,-2.1] if stage==0
+                else [3.,-2.1],observer_yaw=0.,uncertainty_m=0.,
+                stage=stage,frame_valid=True)
+
+
+class LLMDecisionTests(unittest.TestCase):
+    def test_map_is_geometry_and_motion_protocol_rejects_invented_routes(self):
+        semantic_map=build_map()
+        self.assertEqual(semantic_map['map_id'],build_map()['map_id'])
+        self.assertEqual(semantic_map['review']['status'],
+                         'geometry_verified_manual_semantics_pending')
+        track=dict(id='track-0001',region='first',
+                   observations=[sample(3.1,[-3.,-.2]),sample(3.2,[-2.99,-.1])],
+                   estimated_velocity=[.1,1.])
+        decision=dict(schema='guard-motion-hypotheses-v1',request_id='req',
+            map_id=semantic_map['map_id'],track_id=track['id'],
+            region='first',game_time=3.3,horizon_seconds=8.,
+            recent_observations=track['observations'],
+            estimated_guard_velocity=track['estimated_velocity'])
+        payload=json.loads(messages_for(decision,semantic_map,public_rules())[-1]['content'])
+        response=fixture_response(payload)
+        validate_motion(response,semantic_map,track['id'],'first',8.)
+        trajectories=generate(semantic_map,response,track,3.3,8.,public_rules())
+        self.assertEqual(len(trajectories),3)
+        self.assertTrue(all(t['covered_until']>=8. for t in trajectories))
+        broken=copy.deepcopy(response)
+        broken['hypotheses'][0]['edge_ids'][0]='private_patrol_waypoint'
+        with self.assertRaisesRegex(ValueError,'Unknown or non-guard edge'):
+            validate_motion(broken,semantic_map,track['id'],'first',8.)
+
+    def test_track_association_uses_global_time_and_region(self):
+        context=EpisodeContext('e','map','rules')
+        context.add_samples([sample(1.,[-3.,-1.]),sample(1.1,[-3.,-.9])])
+        first=context.track_for(0)
+        self.assertIsNotNone(first)
+        context.add_samples([sample(20.,[7.8,1.],1),sample(20.1,[7.8,1.1],1)])
+        second=context.track_for(1)
+        self.assertNotEqual(first['id'],second['id'])
+        self.assertEqual(len(first['observations']),2)
+        self.assertEqual(len(second['observations']),2)
+        context.add_samples([sample(21.,[-3.,-.5])])
+        self.assertEqual(context.track_for(0)['id'],first['id'])
+
+    def test_hidden_request_rejected_and_duplicate_id_not_reexecuted(self):
+        invalid=public_request()
+        invalid['private_patrol']={'waypoints':[]}
+        with self.assertRaisesRegex(ValueError,'Unexpected decision request fields'):
+            _check_public_request(invalid)
+        with tempfile.TemporaryDirectory() as directory:
+            state=ServiceState(dict(provider='deepseek'),directory,fixture=True)
+            request=public_request()
+            one=state.decide(request)
+            two=state.decide(request)
+            self.assertEqual(one,two)
+            self.assertEqual(one['status'],'observe')
+            self.assertEqual(len(state.orchestrator.episodes['test'].requests),1)
+            changed=copy.deepcopy(request)
+            changed['public']['own_xy']=[-7.,0.]
+            result=state.decide(changed)
+            self.assertEqual(result['status'],'error')
+            self.assertIn('different public payload',result['error'])
+            self.assertEqual(state.decide(request),one)
+
+    def test_formal_hypothesis_rollout_ignores_episode_seed(self):
+        hypothesis=dict(start_xy=[-3.,0.],start_yaw=1.57,
+            speed_mps=1.,initial_speed=0.,
+            waypoints=[[-3.,3.2],[-3.,-3.2]],
+            dwell_node_indices=[0],dwell_seconds=.5)
+        def episode(seed):
+            return formal_run(seed,'north',0.,14.,4.,-3.9,4.,.6,True,
+                second_peek=False,skip_peek=True,route_y=1.6,
+                tag_seconds=.6,peek_if_unseen=False,stage2_local=False,
+                patrol_style='hypothesis',hypothesis_guard=hypothesis)
+        left,right=episode(0),episode(999999)
+        self.assertEqual((left['reason'],left['seconds'],left['local_survived']),
+                         (right['reason'],right['seconds'],right['local_survived']))
+
+    def test_terminal_visual_batch_scores_prior_forecast_same_track(self):
+        context=EpisodeContext('e','map','rules')
+        context.add_samples([sample(1.,[-3.,0.]),sample(1.1,[-3.,.1])])
+        track=context.track_for(0)
+        context.predictions.append(dict(forecast_id='f1',track_id=track['id'],
+            generated_at=1.1,horizon=1.,last_observed_xy=[-3.,.1],
+            trajectories=[dict(hypothesis_id='north',probability=1.,
+                covered_until=1.,states=[
+                    dict(dt=round(i*.1,2),xy=[-3.,.1+i*.1],yaw=1.57,speed=1.)
+                    for i in range(11)])]))
+        context.add_samples([sample(1.5,[-3.,.5])])
+        result=context.evaluation()
+        self.assertEqual(result['samples'],1)
+        self.assertLess(result['mean_position_error_m'],1e-6)
+        self.assertTrue(result['coverage80'])
+        self.assertEqual(sum(x['count'] for x in result['reliability_proxy']),1)
+
+    def test_hypothesis_smoke_uses_online_public_target_rule(self):
+        hypothesis=dict(start_xy=[-3.,0.],start_yaw=1.57,
+            speed_mps=1.,initial_speed=0.,waypoints=[[-3.,3.2]],
+            dwell_node_indices=[],dwell_seconds=0.)
+        observed=[]
+        original=CentralController.smoke_location_for
+        def checked(controller,packet,target):
+            observed.append(controller.smoke_uses_track)
+            return original(controller,packet,target)
+        with patch.object(CentralController,'smoke_location_for',checked):
+            formal_run(0,'north',0.,14.,4.,-3.9,4.,.6,True,
+                second_peek=False,skip_peek=True,route_y=1.6,
+                tag_seconds=.6,peek_if_unseen=False,stage2_local=False,
+                patrol_style='hypothesis',hypothesis_guard=hypothesis,
+                use_smoke=True)
+        self.assertTrue(observed)
+        self.assertEqual(set(observed),{False})
+
+    def test_recorded_replay_uses_service_configuration(self):
+        events=[dict(kind='decision',config=dict(maximum_formal_particles=1)),
+                dict(kind='decision',config=dict(maximum_formal_particles=1))]
+        supplied=dict(maximum_formal_particles=4)
+        self.assertEqual(_effective_config(events,supplied,False),
+                         (events[0]['config'],'recorded_service'))
+        self.assertEqual(_effective_config(events,supplied,True),
+                         (supplied,'supplied_live_model'))
+        events[1]['config']={'maximum_formal_particles':2}
+        with self.assertRaisesRegex(ValueError,'inconsistent'):
+            _effective_config(events,supplied,False)
+
+
+if __name__=='__main__':unittest.main()
