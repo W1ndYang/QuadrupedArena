@@ -16,7 +16,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from arena_paths import credential_path
+if __package__:
+    from .arena_paths import credential_path
+else:
+    from arena_paths import credential_path
 KEY_PATH=credential_path('dashscope.key')
 
 

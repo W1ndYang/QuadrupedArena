@@ -9,7 +9,7 @@ import threading
 import time
 
 from llm_decision_core import DecisionOrchestrator
-from llm_motion_client import APIReasoner, FixtureReasoner
+from llm_motion_client import APIReasoner, FixtureReasoner, adapter_sources
 from llm_map_review import check as check_map
 
 
@@ -27,6 +27,9 @@ def code_version():
         if path.exists():digest.update(name.encode()+path.read_bytes())
     for name in ('fixed_goal_probe.py','humanoid_motion.py','trial_motion.py'):
         path=root.parent/'fixed_goal_v041'/'source_snapshot'/'scripts'/name
+        digest.update(name.encode()+path.read_bytes())
+    for name in ('deepseek_client.py','qwen_client.py','arena_paths.py'):
+        path=root.parents[1]/'scripts'/name
         digest.update(name.encode()+path.read_bytes())
     return digest.hexdigest()[:16]
 
@@ -169,6 +172,7 @@ def make_handler(state):
             self._send(200,dict(status='ready',map_id=state.orchestrator.map['map_id'],
                                 rules_version=state.orchestrator.rules['version'],
                                 code_version=state.version,fixture_only=state.fixture,
+                                api_adapters=adapter_sources(),
                                 map_review_status=state.map_review_status))
 
         def do_POST(self):
@@ -202,6 +206,7 @@ def main():
     print(json.dumps(dict(status='ready',host=args.host,port=args.port,
                           map_id=state.orchestrator.map['map_id'],
                           fixture_only=args.fixture_for_tests,
+                          api_adapters=adapter_sources(),
                           map_review_status=state.map_review_status)),flush=True)
     if state.map_review_status!='human_approved':
         print(json.dumps(dict(status='warning',

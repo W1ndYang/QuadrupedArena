@@ -6,9 +6,12 @@ import socket
 import time
 import urllib.error
 import urllib.request
-from qwen_client import APIError,NoRedirect,parse_stream,save_key,load_key as read_private_key,usage_total
-
-from arena_paths import credential_path
+if __package__:
+    from .qwen_client import APIError,NoRedirect,parse_stream,save_key,load_key as read_private_key,usage_total
+    from .arena_paths import credential_path
+else:
+    from qwen_client import APIError,NoRedirect,parse_stream,save_key,load_key as read_private_key,usage_total
+    from arena_paths import credential_path
 KEY_PATH=credential_path('deepseek.key')
 
 

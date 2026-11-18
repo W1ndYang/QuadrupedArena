@@ -1,14 +1,30 @@
 """Provider-neutral motion reasoning; credentials never enter decision logs."""
 import hashlib
+import importlib
 import json
 import os
 from pathlib import Path
 import sys
+import types
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / 'scripts'))
-import deepseek_client  # noqa: E402
-import qwen_client  # noqa: E402
+# The frozen simulator imports modules with the same names into sys.modules.
+# A separate package binds this runtime to the current adapters and their
+# relative dependencies without replacing the frozen experiment's imports.
+_PACKAGE='_arena_llm_api_runtime'
+if _PACKAGE not in sys.modules:
+    package=types.ModuleType(_PACKAGE)
+    package.__path__=[str(ROOT/'scripts')]
+    sys.modules[_PACKAGE]=package
+deepseek_client=importlib.import_module(f'{_PACKAGE}.deepseek_client')
+qwen_client=importlib.import_module(f'{_PACKAGE}.qwen_client')
+
+
+def adapter_sources():
+    return {name:dict(path=str(Path(module.__file__).resolve().relative_to(ROOT)),
+                      sha256=hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest())
+            for name,module in (('deepseek',deepseek_client),('qwen',qwen_client))}
+
 
 PROMPT_VERSION = 'guard-motion-reasoner-20261117-v5'
 
@@ -82,6 +98,10 @@ class APIReasoner:
         self.provider = config['provider']
         if self.provider not in ('deepseek', 'qwen'):
             raise ValueError('Unsupported provider')
+        if self.provider=='deepseek':
+            deepseek_client.payload(self.config,[])
+        else:
+            qwen_client.endpoint(self.config)
 
     def infer(self, messages):
         key = _key(self.config)

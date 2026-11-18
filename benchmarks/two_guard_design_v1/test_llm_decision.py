@@ -2,6 +2,8 @@
 import copy
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -10,7 +12,7 @@ from formal_central_screen import CentralController, run as formal_run
 from llm_decision_core import EpisodeContext, _check_public_request
 from llm_decision_service import ServiceState, fixture_response
 from llm_fast_optimizer import _templates
-from llm_motion_client import messages_for
+from llm_motion_client import messages_for, APIReasoner, deepseek_client, qwen_client
 from llm_map_visual import render as render_map_review
 from llm_replay import _effective_config, replay
 from llm_semantic import build_map, public_rules, validate_motion
@@ -226,13 +228,54 @@ class LLMDecisionTests(unittest.TestCase):
 
     def test_live_service_keeps_pending_semantics_explicit(self):
         with tempfile.TemporaryDirectory() as directory:
-            state=ServiceState(dict(provider='deepseek'),directory,fixture=False)
+            config=json.loads((Path(__file__).parent/
+                'config/llm_decision_deepseek.json').read_text())
+            state=ServiceState(config,directory,fixture=False)
             self.assertEqual(state.map_review_status,
                              'geometry_verified_manual_semantics_pending')
             response=state.decide(public_request())
             self.assertEqual(response['status'],'observe')
             event=json.loads(state.log_path.read_text().splitlines()[0])
             self.assertEqual(event['map_review_status'],state.map_review_status)
+
+    def test_service_import_order_uses_current_api_adapters(self):
+        # A fresh process matters: fixture tests and earlier imports can hide
+        # the frozen simulator's same-name modules in sys.modules.
+        code="""
+import json, sys
+from pathlib import Path
+import llm_decision_service
+import llm_motion_client as client
+root=Path.cwd().parents[1]
+assert Path(sys.modules['deepseek_client'].__file__).resolve()!=root/'scripts/deepseek_client.py'
+assert Path(client.deepseek_client.__file__).resolve()==root/'scripts/deepseek_client.py'
+assert Path(client.qwen_client.__file__).resolve()==root/'scripts/qwen_client.py'
+assert client.deepseek_client.parse_stream is client.qwen_client.parse_stream
+config=json.loads(Path('config/llm_decision_deepseek.json').read_text())
+client.APIReasoner(config)
+assert client.deepseek_client.payload(config,[])['thinking']=={'type':'disabled'}
+"""
+        subprocess.run([sys.executable,'-c',code],
+                       cwd=Path(__file__).resolve().parent,check=True,
+                       capture_output=True,text=True)
+
+    def test_live_reasoner_reaches_current_adapter_with_thinking_disabled(self):
+        config=json.loads((Path(__file__).parent/
+            'config/llm_decision_deepseek.json').read_text())
+        reasoner=APIReasoner(config)
+        def fake_api(actual_config,key,messages):
+            self.assertEqual(deepseek_client.payload(actual_config,messages)
+                             ['thinking'],{'type':'disabled'})
+            return dict(content='{}',api_wall_seconds=.25,
+                        time_to_first_output_seconds=.1,
+                        time_to_first_visible_content_seconds=.1,
+                        usage={'completion_tokens':2})
+        with patch.dict('os.environ',DEEPSEEK_API_KEY='fake-unit-test-key'), \
+                patch.object(deepseek_client,'call_api',side_effect=fake_api) as call:
+            response=reasoner.infer([dict(role='user',content='test')])
+        self.assertEqual(call.call_count,1)
+        self.assertEqual(response['wall_seconds'],.25)
+        self.assertEqual(response['raw_metadata']['time_to_first_output_seconds'],.1)
 
 
 if __name__=='__main__':unittest.main()
