@@ -1,10 +1,23 @@
 """Re-run saved public requests without starting the simulation."""
 import argparse
 import json
+import math
 from pathlib import Path
 
 from llm_decision_core import DecisionOrchestrator
 from llm_motion_client import APIReasoner
+
+
+def evaluation_matches(left,right):
+    """Keep structure/counts exact; tolerate floating summation roundoff only."""
+    if type(left)!=type(right):return False
+    if isinstance(left,dict):
+        return (left.keys()==right.keys() and
+                all(evaluation_matches(left[key],right[key]) for key in left))
+    if isinstance(left,list):
+        return len(left)==len(right) and all(evaluation_matches(a,b) for a,b in zip(left,right))
+    if isinstance(left,float):return math.isclose(left,right,rel_tol=1e-12,abs_tol=1e-12)
+    return left==right
 
 
 class RecordedReasoner:
@@ -54,8 +67,10 @@ def replay(input_log,output,config,live_model=False):
             finishes.append(dict(episode_id=payload['episode_id'],
                 replayed_evaluation=finished['evaluation'],
                 original_evaluation=event['response']['evaluation'],
-                same_evaluation=(finished['evaluation']==
-                                 event['response']['evaluation'])))
+                exact_evaluation=(finished['evaluation']==event['response']['evaluation']),
+                same_evaluation=evaluation_matches(finished['evaluation'],
+                                                  event['response']['evaluation']),
+                float_tolerance=dict(relative=1e-12,absolute=1e-12)))
             continue
         if event['kind']!='decision':continue
         request=event['request']

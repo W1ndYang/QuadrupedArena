@@ -64,7 +64,10 @@ def _score_trace(trajectory, robot, smoke, smoke_xy, wait, walls, horizon):
 
 
 def optimize(trajectories, stage, smoke_available, unknown_probability,
-             horizon, semantic_map, own_xy, maximum_particles=6):
+             horizon, semantic_map, own_xy, maximum_particles=6, own_state=None):
+    if own_state is not None:
+        return optimize_aligned(trajectories,stage,unknown_probability,
+                                semantic_map,own_state,maximum_particles)
     if not trajectories:
         raise ValueError('No trajectories')
     if not 0.<=unknown_probability<1.:
@@ -122,3 +125,103 @@ def optimize(trajectories, stage, smoke_available, unknown_probability,
                 represented_probability=represented,
                 scoring_method='fast_los_proxy_v1',
                 reason='Bounded LOS and lock proxy over formal robot action templates')
+
+
+def _reactive_outcome(trajectory,robot,walls,rules):
+    """10 Hz interactive guard model with the runtime's reaction and lock rules.
+
+    Facing is unobserved. Detection uses omnidirectional LOS as a conservative
+    envelope; aiming still obeys turn, braking and tracking limits. This is
+    explicitly a risk model, not a calibrated failure probability.
+    """
+    from formal_central_screen import HypothesisGuardController
+    from humanoid_motion import HumanoidMover
+    from fixed_goal_probe import smoke_blocks,valid_lock,TagClock,memory_update
+    if not robot['complete'] or trajectory['covered_until']+1e-6<robot['seconds']:
+        return dict(survived=False,seconds=robot['seconds'],reason='uncovered_future',
+                    tag_time=None,exposure=1.)
+    states=robot['states'][::5]
+    if states[-1]['dt']!=robot['states'][-1]['dt']:states.append(robot['states'][-1])
+    base_state=trajectory['states'][0]
+    mover=HumanoidMover(base_state['xy'],base_state['yaw'],
+                       trajectory['speed_mps'],1.8,4.5)
+    mover.v=trajectory['initial_speed']
+    controller=HypothesisGuardController(rules,mover.xy.tolist(),
+        trajectory['waypoints'],[i for i,node in enumerate(trajectory['waypoint_ids'])
+                                if node in trajectory['dwell_node_ids']],
+        trajectory['dwell_seconds'])
+    if trajectory.get('initial_dwell_remaining',0.)>0.:
+        controller.dwell_until=trajectory['initial_dwell_remaining']
+    if trajectory.get('possible_reaction_elapsed_seconds',0.)>0.:
+        controller.first_visible=-trajectory['possible_reaction_elapsed_seconds']
+        # The torso is unobserved and could already be tracking the robot.
+        # Retain travel_yaw for feet, and include this adverse facing state
+        # instead of granting a fresh turn-away delay at every boundary.
+        mover.yaw=math.atan2(states[0]['xy'][1]-mover.xy[1],
+                             states[0]['xy'][0]-mover.xy[0])
+    clock=TagClock(.6);requested=False;memory=None;previous=0.;exposed=0
+    for state in states:
+        t=state['dt'];delta=t-previous;previous=t;own=state['xy']
+        visible=(clear_ray((*own,.4),(*mover.xy,1.05),walls) and
+                 not smoke_blocks((*own,.4),(*mover.xy,1.05),robot['smokes'],t))
+        distance=math.dist(own,mover.xy)
+        exposed+=int(visible and distance<=4.)
+        bearing=math.atan2(own[1]-mover.xy[1],own[0]-mover.xy[0])
+        error=(bearing-mover.yaw+math.pi)%(2*math.pi)-math.pi
+        valid=valid_lock(visible,distance,error,mover.v,mover.omega,requested,rules)
+        winner,_,_=clock.step(delta,[False,valid])
+        if winner is not None:
+            return dict(survived=False,seconds=t,tag_time=t,reason='reactive_proxy_tag',
+                        exposure=exposed/max(1,len(states)))
+        detection=dict(position=list(own),yaw=state['yaw']) if visible else None
+        memory=memory_update(memory,detection,t,rules['memory_seconds'][1])
+        packet=dict(time=t,self=dict(position=mover.xy.tolist(),yaw=mover.yaw,
+                                    speed=mover.v),visible=detection,memory=memory)
+        command=controller.decide(packet)
+        requested=command['mode']=='AIM'
+        if command['mode']=='PATROL':
+            target=command['target']
+            if not mover.route or math.dist(mover.route[-1],target)>1e-7:
+                mover.navigate([target])
+        else:mover.navigate([])
+        look=command.get('look')
+        look_yaw=(math.atan2(look[1]-mover.xy[1],look[0]-mover.xy[0])
+                  if look is not None else mover.yaw+2.4*.1)
+        mover.step(.1,look_yaw)
+    return dict(survived=True,seconds=robot['seconds'],tag_time=None,
+                reason='reactive_proxy_clear',exposure=exposed/max(1,len(states)))
+
+
+def optimize_aligned(trajectories,stage,unknown_probability,semantic_map,public,maximum_particles):
+    from llm_robot_rollout import candidates,geometry,selected_prediction
+    started=time.perf_counter()
+    chosen=sorted(trajectories,key=lambda row:row['probability'],reverse=True)[:maximum_particles]
+    represented=sum(row['probability'] for row in chosen)
+    walls=boxes(semantic_map['obstacles']);_,rules,_=geometry()
+    rows=[]
+    for robot in candidates(public,stage,min(20.,public['remaining_seconds'])):
+        outcomes=[];exposure=0.
+        for trajectory in chosen:
+            outcome=_reactive_outcome(trajectory,robot,walls,rules)
+            weight=trajectory['probability'];exposure+=weight*outcome.pop('exposure')
+            outcomes.append(dict(outcome,weight=weight,
+                hypothesis_id=trajectory['hypothesis_id'],variant=trajectory['variant']))
+        success=sum(row['weight']*row['survived'] for row in outcomes)
+        risk=max(0.,min(1.,1.-success));expected=sum(row['weight']*row['seconds'] for row in outcomes)
+        objective=(risk+.25*exposure+.015*robot['wait']+.08*robot['smoke']+
+                   .002*expected+.04*int(robot['maneuver']=='retreat'))
+        rows.append(dict(side=robot['side'],wait=robot['wait'],smoke=robot['smoke'],
+            risk=risk,expected_success=success,objective=objective,outcomes=outcomes,
+            resource_cost=int(robot['smoke']),time_cost_seconds=expected,
+            residual_uncertainty_mass=max(0.,1.-represented),proxy_exposure=exposure,
+            robot_seconds=robot['seconds'],robot_complete=robot['complete'],
+            maneuver=robot['maneuver'],
+            end_boundary=robot['end_boundary'],gate_seconds=robot['gate_seconds']))
+    best=min(rows,key=lambda row:(row['objective'],row['smoke'],row['wait'],row['side']!='north'))
+    return dict(selected={key:best[key] for key in ('side','wait','smoke','maneuver')},
+        candidates=rows,selected_risk=best['risk'],score_seconds=time.perf_counter()-started,
+        trajectories_used=len(chosen),represented_probability=represented,
+        robot_prediction=selected_prediction(public,stage,best),
+        scoring_method='aligned_skill_reactive_v2',
+        risk_interpretation='Conservative uncalibrated proxy with unknown guard facing',
+        reason='Own-state Skill rollout to next safe boundary with reactive guard scoring')

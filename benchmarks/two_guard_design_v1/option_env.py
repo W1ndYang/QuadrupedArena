@@ -122,6 +122,10 @@ class OptionController(OnlineController):
             if self.active_option is None or reason is not None:
                 if reason is not None:
                     self._finish_option(t, reason)
+                if reason=='cover_reached' and self.passed_gate:
+                    self.passed_gate=False
+                    self.chosen_gate=None
+                    mask=self.legal_actions(packet)
                 action, logp, value = self.session.act(observation, mask.copy())
                 action = int(action)
                 if not 0 <= action < len(mask) or not mask[action]:

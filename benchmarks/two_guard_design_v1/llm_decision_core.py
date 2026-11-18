@@ -10,7 +10,8 @@ from llm_formal_optimizer import horizon_for, optimize
 from llm_fast_optimizer import optimize as fast_optimize
 from llm_motion_client import messages_for, prompt_digest, PROMPT_VERSION
 from llm_semantic import SCHEMA_VERSION, build_map, public_rules, validate_motion, normalize_motion
-from llm_trajectory import generate, interpolate
+from llm_trajectory import generate, interpolate, local_motion_envelope
+from llm_robot_rollout import prediction_horizon,selected_prediction
 
 PUBLIC_FIELDS = {'own_xy','own_yaw','own_speed','smoke_available',
                  'remaining_seconds','action_mask','peek_count',
@@ -81,6 +82,29 @@ def _velocity(observations):
     return (v*min(1.,1.5/max(speed,1e-9))).tolist()
 
 
+def _recent_velocity(observations):
+    """Current velocity for precise 10 Hz samples, with bounded acceleration.
+
+    A long regression lags braking/turns. Noisy or gapped measurements retain
+    the smoother estimator instead of differentiating noisy positions twice.
+    """
+    if len(observations)<3:return _velocity(observations)
+    rows=observations[-3:]
+    if any(row['uncertainty_m']>.005 for row in rows):return _velocity(observations)
+    dt0=rows[1]['time']-rows[0]['time'];dt1=rows[2]['time']-rows[1]['time']
+    if not (.05<=dt0<=.15 and .05<=dt1<=.15):return _velocity(observations)
+    old=(np.asarray(rows[1]['xy'])-rows[0]['xy'])/dt0
+    latest=(np.asarray(rows[2]['xy'])-rows[1]['xy'])/dt1
+    if np.linalg.norm(latest)<.03:return [0.,0.]
+    acceleration=(latest-old)/(.5*(dt0+dt1))
+    norm=float(np.linalg.norm(acceleration))
+    acceleration*=min(1.,1.8/max(norm,1e-9))
+    velocity=latest+.5*dt1*acceleration
+    if velocity@latest<0.:return [0.,0.]
+    speed=float(np.linalg.norm(velocity))
+    return (velocity*min(1.,1.5/max(speed,1e-9))).tolist()
+
+
 def _compare_prediction(snapshot, sample):
     dt=sample['time']-snapshot['generated_at']
     if not 0.<dt<=snapshot['horizon']:
@@ -105,7 +129,7 @@ def _compare_prediction(snapshot, sample):
         probabilities[trace['hypothesis_id']]=(
             probabilities.get(trace['hypothesis_id'],0.)+trace['probability'])
     probabilities['OTHER']=max(0.,1.-sum(probabilities.values()))
-    classes=set(probabilities)|{realized}
+    classes=sorted(set(probabilities)|{realized})
     brier=sum((probabilities.get(k,0.)-int(k==realized))**2 for k in classes)
     log_loss=-math.log(max(1e-9,probabilities.get(realized,0.)))
     top_class=max(probabilities,key=probabilities.get)
@@ -134,10 +158,11 @@ def _compare_prediction(snapshot, sample):
 
 
 class EpisodeContext:
-    def __init__(self, episode_id, map_id, rules_version):
+    def __init__(self, episode_id, map_id, rules_version, velocity_mode='legacy'):
         self.episode_id=episode_id
         self.map_id=map_id
         self.rules_version=rules_version
+        self.velocity_mode=velocity_mode
         self.tracks={}
         self.track_counter=0
         self.requests=[]
@@ -180,7 +205,8 @@ class EpisodeContext:
                     item['association_uncertainty']=1.
                 continue
             track['observations'].append(sample)
-            track['estimated_velocity']=_velocity(track['observations'])
+            track['estimated_velocity']=(_recent_velocity(track['observations'])
+                if self.velocity_mode=='recent_acceleration_v2' else _velocity(track['observations']))
             for snapshot in self.predictions:
                 if snapshot['track_id']==track['id'] and sample['time']>snapshot['generated_at']:
                     comparison=_compare_prediction(snapshot,sample)
@@ -209,7 +235,7 @@ class EpisodeContext:
         if summary is not None:
             for request in self.requests:
                 response=self.responses.get(request['request_id'],{})
-                if response.get('status')!='plan':continue
+                if response.get('status') not in ('plan','boundary'):continue
                 risk=response['optimizer']['selected_risk']
                 failed=(summary['handoff_time'] is None if request['stage']==0
                         else summary['winner']!='attacker')
@@ -256,15 +282,47 @@ class DecisionOrchestrator:
     def _can_repeek(self, request):
         public=request['public']
         return (public['peek_count']<self.config.get('max_peeks_per_stage',3)
-                and public['stage_elapsed_seconds']<
+                and request['skill_state'].get('observation_window_elapsed',
+                                               public['stage_elapsed_seconds'])<
                     self.config.get('max_observation_seconds',12.)
                 and (public['action_mask'][2] or public['action_mask'][3]))
+
+    def _boundary_decision(self,request,context,track):
+        started=time.perf_counter()
+        public=dict(request['public'],retreat_allowed=request['skill_state'].get('retreats',0)<1)
+        if track is None or len(track['observations'])<2:
+            raise ValueError('Boundary reassessment has no public guard track')
+        horizon=prediction_horizon(public,request['stage'])
+        trajectories,unknown=local_motion_envelope(
+            self.map,track,request['time'],horizon,self.rules)
+        plan=fast_optimize(trajectories,request['stage'],public['smoke_available'],
+            unknown,horizon,self.map,public['own_xy'],
+            maximum_particles=self.config.get('maximum_fast_particles',18),own_state=public)
+        waited=request['skill_state'].get('boundary_waits',0)
+        eligible=[row for row in plan['candidates'] if row['wait']<=max(0.,2.-waited)]
+        best=min(eligible,key=lambda row:(row['objective'],row['wait']))
+        plan['selected']={key:best[key] for key in ('side','wait','smoke','maneuver')}
+        plan['selected_risk']=best['risk']
+        plan['robot_prediction']=selected_prediction(public,request['stage'],best)
+        prediction=dict(forecast_id=f"{request['episode_id']}:{request['request_id']}",
+            track_id=track['id'],generated_at=request['time'],horizon=horizon,
+            hypotheses=[],trajectories=trajectories,last_observed_xy=track['observations'][-1]['xy'],
+            forecast_source='local_motion_envelope_v1')
+        context.predictions.append(prediction)
+        return self._record(context,request['request_id'],dict(status='boundary',
+            action=1 if best['maneuver']=='retreat' else 4 if best['wait']>0. else 7,
+            optimizer=plan,forecast=prediction,
+            gate=dict(sufficient=True,reasons=['new_visual_boundary_reassessment']),
+            timing=dict(api_seconds=0.,optimizer_seconds=plan['score_seconds'],
+                        local_boundary_seconds=time.perf_counter()-started),
+            llm_called=False))
 
     def decide(self, request):
         _check_public_request(request)
         episode_id=request['episode_id']
         context=self.episodes.setdefault(episode_id,EpisodeContext(
-            episode_id,self.map['map_id'],self.rules['version']))
+            episode_id,self.map['map_id'],self.rules['version'],
+            velocity_mode=self.config.get('velocity_mode','legacy')))
         req_id=request['request_id']
         if req_id in context.responses:
             original=next(row for row in context.requests
@@ -279,9 +337,15 @@ class DecisionOrchestrator:
         context.requests.append(request)
         track=context.track_for(request['stage'])
         public=request['public']
+        if public['action_mask'][7] and self.config.get('boundary_recheck',False):
+            return self._boundary_decision(request,context,track)
         if public['peek_count']==0:
             result=self._observe_action(request,track,'initial_observation')
             return self._record(context,req_id,result)
+        if (public['peek_count']<self.config.get('minimum_peeks_per_stage',1)
+                and self._can_repeek(request)):
+            return self._record(context,req_id,
+                self._observe_action(request,track,'configured_observation_budget'))
         if track is None or len(track['observations'])<2:
             if self._can_repeek(request):
                 result=self._observe_action(request,track,'insufficient_legal_track')
@@ -291,8 +355,21 @@ class DecisionOrchestrator:
         if request['time']-last['time']>1.5 and self._can_repeek(request):
             result=self._observe_action(request,track,'stale_visual_track')
             return self._record(context,req_id,result)
-        horizon=horizon_for(request['stage'],public['own_xy'],
-                            public['remaining_seconds'])
+        budget=self.config.get('max_llm_calls_per_stage')
+        used=sum(row['request_id'] in context.llm_messages and row['stage']==request['stage']
+                 for row in context.requests)
+        local_update=(budget is not None and used>=budget)
+        if (local_update and math.hypot(*track['estimated_velocity'])<=.15
+                and self._can_repeek(request)):
+            result=self._observe_action(request,track,'stationary_local_motion_is_ambiguous')
+            result['llm_called']=False
+            result['timing']=dict(api_seconds=0.,preparation_seconds=0.,optimizer_seconds=0.)
+            return self._record(context,req_id,result)
+        prepared_at=time.perf_counter()
+        stateful=self.config.get('robot_rollout_mode')=='stateful_v2'
+        horizon=(prediction_horizon(public,request['stage']) if stateful else
+                 horizon_for(request['stage'],public['own_xy'],public['remaining_seconds']))
+        preparation_seconds=time.perf_counter()-prepared_at
         recent=track['observations'][-30:]
         prior=[dict(hypotheses=x['hypotheses'],generated_at=x['generated_at'])
                for x in context.predictions if x['track_id']==track['id']][-2:]
@@ -301,6 +378,9 @@ class DecisionOrchestrator:
             request_id=req_id,map_id=self.map['map_id'],
             track_id=track['id'],region=track['region'],
             game_time=request['time'],horizon_seconds=horizon,
+            latest_measurement_at=last['time'],
+            measurement_age_seconds=request['time']-last['time'],
+            path_coverage_seconds=horizon+request['time']-last['time'],
             current_robot_state=public,skill_state=request['skill_state'],
             recent_observations=recent,
             older_observation_count=max(0,len(track['observations'])-len(recent)),
@@ -308,16 +388,23 @@ class DecisionOrchestrator:
             observable_guard_facing=None,
             association_uncertainty=track['association_uncertainty'],
             previous_hypotheses=prior,prediction_comparisons=comparisons)
-        messages=messages_for(reasoning_request,self.map,self.rules)
-        context.llm_messages[req_id]=messages
-        wall_start=time.perf_counter()
-        inferred=self.reasoner.infer(messages)
-        context.llm_attempts[req_id]=inferred
-        parsed=normalize_motion(json.loads(inferred['text']),self.map,track['region'])
-        validate_motion(parsed,self.map,track['id'],track['region'],horizon)
-        llm_seconds=time.perf_counter()-wall_start
-        unknown=sum(h['probability'] for h in parsed['hypotheses']
-                    if h['state']=='UNKNOWN')
+        local_started=time.perf_counter();precomputed=None
+        if local_update:
+            precomputed,unknown=local_motion_envelope(
+                self.map,track,request['time'],horizon,self.rules)
+            parsed=dict(schema=SCHEMA_VERSION,hypotheses=[])
+            inferred=None;messages=None;llm_seconds=0.
+        else:
+            messages=messages_for(reasoning_request,self.map,self.rules)
+            context.llm_messages[req_id]=messages
+            wall_start=time.perf_counter()
+            inferred=self.reasoner.infer(messages)
+            context.llm_attempts[req_id]=inferred
+            parsed=normalize_motion(json.loads(inferred['text']),self.map,track['region'])
+            validate_motion(parsed,self.map,track['id'],track['region'],horizon)
+            llm_seconds=time.perf_counter()-wall_start
+            unknown=sum(h['probability'] for h in parsed['hypotheses']
+                        if h['state']=='UNKNOWN')
         probs=[h['probability'] for h in parsed['hypotheses'] if h['probability']>0]
         entropy=-sum(p*math.log(p) for p in probs)/max(1e-9,math.log(max(2,len(probs))))
         entropy_gate=(self.config.get('observation_gate_mode','legacy_entropy')
@@ -325,17 +412,22 @@ class DecisionOrchestrator:
         if (unknown>.45 or entropy_gate) and self._can_repeek(request):
             result=self._observe_action(request,track,
                 'high_unknown_mass' if unknown>.45 else 'diffuse_motion_hypotheses')
-            result['reasoning']=dict(raw_request=messages,raw_response=inferred,
-                hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION)
+            if inferred is not None:
+                result['reasoning']=dict(raw_request=messages,raw_response=inferred,
+                    hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION)
             return self._record(context,req_id,result)
         model_started=time.perf_counter()
-        trajectories=generate(self.map,parsed,track,request['time'],horizon,self.rules)
-        model_seconds=time.perf_counter()-model_started
+        trajectories=(precomputed if precomputed is not None else
+                      generate(self.map,parsed,track,request['time'],horizon,self.rules,
+                               mode=self.config.get('trajectory_mode','legacy')))
+        model_seconds=(time.perf_counter()-local_started if local_update else
+                       time.perf_counter()-model_started)
         prediction=dict(forecast_id=f'{episode_id}:{req_id}',
             track_id=track['id'],generated_at=request['time'],
             horizon=horizon,hypotheses=parsed['hypotheses'],
             trajectories=trajectories,
-            last_observed_xy=last['xy'])
+            last_observed_xy=last['xy'],
+            forecast_source='local_motion_envelope_v1' if local_update else 'llm_paths')
         context.predictions.append(prediction)
         track['hypothesis_history'].append(dict(time=request['time'],
                                                  hypotheses=parsed['hypotheses']))
@@ -345,7 +437,8 @@ class DecisionOrchestrator:
                 public['smoke_available'],unknown,horizon,self.map,
                 public['own_xy'],
                 maximum_particles=self.config.get('maximum_fast_particles',
-                    self.config.get('maximum_formal_particles',6)))
+                    self.config.get('maximum_formal_particles',6)),
+                own_state=public if stateful else None)
         elif mode=='formal':
             plan=optimize(trajectories,request['stage'],
                 public['smoke_available'],unknown,horizon,
@@ -377,17 +470,27 @@ class DecisionOrchestrator:
             result['optimizer']=plan
         else:
             result=dict(status='plan',plan=plan['selected'],gate=gate,
+                        boundary_recheck=self.config.get('boundary_recheck',False),
                         optimizer=plan,track_id=track['id'],
                         forecast_id=prediction['forecast_id'])
             context.plans.append(dict(time=request['time'],request_id=req_id,
                                       plan=plan['selected']))
-        result['reasoning']=dict(raw_request=messages,raw_response=inferred,
-            hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION,
-            prompt_digest=prompt_digest())
+        if inferred is not None:
+            result['reasoning']=dict(raw_request=messages,raw_response=inferred,
+                hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION,
+                prompt_digest=prompt_digest())
+        result['llm_called']=inferred is not None
         result['forecast']=prediction
         result['timing']=dict(api_seconds=llm_seconds,
+                              preparation_seconds=preparation_seconds,
                               trajectory_seconds=model_seconds,
                               optimizer_seconds=plan['score_seconds'])
+        if stateful:
+            result['time_alignment']=dict(clock='simulation_game_time',
+                request_game_time=request['time'],forecast_generated_at=request['time'],
+                latest_measurement_at=last['time'],
+                measurement_age_seconds=request['time']-last['time'],
+                execution_mode='simulation_paused_while_waiting_for_api')
         return self._record(context,req_id,result)
 
     def _record(self,context,request_id,result):
@@ -405,6 +508,7 @@ class DecisionOrchestrator:
         context.status='finished'
         return dict(episode_id=episode_id,summary=summary,
                     evaluation=context.evaluation(summary),
+                    forecast_comparisons=context.comparisons,
                     track_count=len(context.tracks),
                     request_count=len(context.requests),
                     plan_count=len(context.plans))

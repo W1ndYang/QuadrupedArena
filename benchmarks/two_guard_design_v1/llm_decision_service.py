@@ -12,12 +12,14 @@ from llm_decision_core import DecisionOrchestrator
 from llm_motion_client import APIReasoner, FixtureReasoner, adapter_sources
 from llm_map_review import check as check_map
 from llm_semantic import COMPACT_SCHEMA_VERSION
+from llm_robot_rollout import prewarm
 
 
 def code_version():
     root=Path(__file__).resolve().parent
     names=('llm_semantic.py','llm_map_review.py','llm_motion_client.py','llm_trajectory.py',
            'llm_formal_optimizer.py','llm_fast_optimizer.py',
+           'llm_robot_rollout.py',
            'llm_fast_templates.json','llm_decision_core.py',
            'llm_decision_service.py','llm_option_policy.py',
            'formal_central_screen.py','option_env.py','online_env.py',
@@ -89,6 +91,9 @@ class ServiceState:
         reasoner=(FixtureReasoner(lambda payload:fixture_response(payload,compact=True))
                   if fixture else APIReasoner(config))
         self.orchestrator=DecisionOrchestrator(reasoner,config)
+        prepared_at=time.perf_counter()
+        self.startup_precomputation=(dict(prewarm(),call_wall_seconds=time.perf_counter()-prepared_at)
+                                    if config.get('robot_rollout_mode')=='stateful_v2' else None)
         manifest=check_map()
         if manifest['map_id']!=self.orchestrator.map['map_id']:
             raise ValueError('Map ID differs from checked geometry')
@@ -183,6 +188,7 @@ def make_handler(state):
                                 rules_version=state.orchestrator.rules['version'],
                                 code_version=state.version,fixture_only=state.fixture,
                                 api_adapters=adapter_sources(),
+                                startup_precomputation=state.startup_precomputation,
                                 map_review_status=state.map_review_status))
 
         def do_POST(self):
@@ -217,6 +223,7 @@ def main():
                           map_id=state.orchestrator.map['map_id'],
                           fixture_only=args.fixture_for_tests,
                           api_adapters=adapter_sources(),
+                          startup_precomputation=state.startup_precomputation,
                           map_review_status=state.map_review_status)),flush=True)
     if state.map_review_status!='human_approved':
         print(json.dumps(dict(status='warning',

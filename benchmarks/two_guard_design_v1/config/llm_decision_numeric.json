@@ -1,0 +1,22 @@
+{
+  "provider": "deepseek",
+  "base_url": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "thinking": {"type": "disabled"},
+  "reasoning_effort": "none",
+  "max_tokens": 3072,
+  "timeout_seconds": 10,
+  "wall_timeout_seconds": 10,
+  "api_key_env": "DEEPSEEK_API_KEY",
+  "max_peeks_per_stage": 2,
+  "max_observation_seconds": 12.0,
+  "maximum_formal_particles": 4,
+  "optimizer_mode": "fast_proxy",
+  "maximum_fast_particles": 18,
+  "observation_gate_mode": "action_risk",
+  "trajectory_mode": "observed_anchor_v2",
+  "velocity_mode": "recent_acceleration_v2",
+  "robot_rollout_mode": "stateful_v2",
+  "boundary_recheck": true,
+  "max_llm_calls_per_stage": 0
+}

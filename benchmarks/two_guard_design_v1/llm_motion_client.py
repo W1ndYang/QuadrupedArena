@@ -26,7 +26,7 @@ def adapter_sources():
             for name,module in (('deepseek',deepseek_client),('qwen',qwen_client))}
 
 
-PROMPT_VERSION = 'guard-motion-reasoner-20261118-v6'
+PROMPT_VERSION = 'guard-motion-reasoner-20261118-v7'
 
 SYSTEM_PROMPT = """You infer a moving guard's possible future behavior from public observations.
 Return one JSON object only. You never choose the robot action and never output
@@ -40,6 +40,10 @@ JSON fields: schema='guard-motion-paths-v2', map_id, track_id,
 hypotheses=[{id,probability,state,edge_ids,dwell_node_ids,
 speed_range_mps,dwell_range_seconds,reason}].
 state is MOVE, TURN, DWELL, REVERSE or UNKNOWN.
+Time contract: paths, state and remaining dwell refer to latest_measurement_at,
+not to API return time. The runtime advances through measurement_age_seconds
+before using a prediction at game_time. Cover path_coverage_seconds from that
+measurement, including the blind interval and the requested future horizon.
 edge_ids form a connected directed path in the current guard region.
 An edge ID has the exact form start_node_id__end_node_id; copy it from
 map.edge_ids rather than constructing a new ID.

@@ -40,7 +40,10 @@ def _start_state(track, now, region):
     return xy, yaw, min(speed,1.5)
 
 
-def generate(semantic_map, response, track, now, horizon, rules):
+def generate(semantic_map, response, track, now, horizon, rules, mode='legacy'):
+    if mode=='observed_anchor_v2':
+        return generate_aligned(semantic_map,response,track,now,horizon,rules)
+    if mode!='legacy':raise ValueError(f'Unknown trajectory mode: {mode}')
     region = track['region']
     start, yaw, observed_speed = _start_state(track, now, region)
     dt = .1
@@ -112,3 +115,159 @@ def generate(semantic_map, response, track, now, horizon, rules):
     if not traces:
         raise ValueError('No concrete motion hypothesis to simulate')
     return traces
+
+
+def _remaining_path(semantic_map,hypothesis,position,velocity):
+    edges=[semantic_map['edges'][key] for key in hypothesis['edge_ids']]
+    speed=float(np.linalg.norm(velocity))
+    ranked=[]
+    for i,edge in enumerate(edges):
+        a=np.asarray(semantic_map['nodes'][edge['start']]['xy'],float)
+        b=np.asarray(semantic_map['nodes'][edge['end']]['xy'],float)
+        direction=b-a
+        fraction=float(np.clip((position-a)@direction/max(1e-9,direction@direction),0.,1.))
+        distance=float(np.linalg.norm(position-a-fraction*direction))
+        alignment=(1.-float(direction@velocity)/max(1e-9,float(np.linalg.norm(direction))*speed)
+                   if speed>.15 else 0.)
+        ranked.append((distance+.35*alignment+.015*i,i,distance))
+    _,index,distance=min(ranked)
+    if distance>2.25:
+        raise ValueError('LLM route does not connect to observed guard location')
+    chosen=edges[index:]
+    # Stay at the measured position: graph starts describe connectivity, not
+    # a mandatory visit before the prediction may begin.
+    return [edge['end'] for edge in chosen]
+
+
+def generate_aligned(semantic_map,response,track,now,horizon,rules):
+    latest=track['observations'][-1]
+    age=float(now-latest['time'])
+    if not -1e-5<=age<=4.:
+        raise ValueError('Latest guard sighting is too old or in the future')
+    position=np.asarray(latest['xy'],float)
+    velocity=np.asarray(track.get('estimated_velocity',[0.,0.]),float)
+    observed_speed=min(1.5,float(np.linalg.norm(velocity)))
+    dt=.02;age_ticks=round(age/dt);count=math.ceil(horizon/dt)
+    if abs(age-age_ticks*dt)>1e-5:
+        raise ValueError('Observation age must align with the simulation clock')
+    result=[]
+    for hypothesis in response['hypotheses']:
+        if hypothesis['state']=='UNKNOWN' or hypothesis['probability']==0.:continue
+        ids=_remaining_path(semantic_map,hypothesis,position,velocity)
+        points=[semantic_map['nodes'][node]['xy'] for node in ids]
+        heading=(math.atan2(velocity[1],velocity[0]) if observed_speed>.15 else
+                 math.atan2(points[0][1]-position[1],points[0][0]-position[0]))
+        dwell_nodes={event['at_id'] for event in hypothesis['events']
+                     if event['type']=='DWELL'}
+        lo,hi=hypothesis['speed_range_mps'];d0,d1=hypothesis['dwell_range_seconds']
+        variants=((lo,d0),((lo+hi)/2.,(d0+d1)/2.),(hi,d1))
+        for variant,(speed,dwell) in enumerate(variants):
+            mover=HumanoidMover(position,heading,float(speed),
+                rules['public_kinematics']['acceleration_mps2'],
+                rules['public_kinematics']['yaw_rate_radps'])
+            mover.v=min(observed_speed,speed)
+            index=0
+            # Initial dwell belongs to the currently observed endpoint, not
+            # to a graph point that must first be reached by walking backward.
+            initial_dwell=(hypothesis['state']=='DWELL' and observed_speed<.15)
+            dwell_left=dwell if initial_dwell else 0.
+            states=[];covered_until=horizon;request_index=0;request_dwell=0.
+            for tick in range(age_ticks+count+1):
+                relative=(tick-age_ticks)*dt
+                if tick==age_ticks:
+                    request_index=index;request_dwell=dwell_left
+                if tick>=age_ticks and ((tick-age_ticks)%5==0 or tick==age_ticks+count):
+                    states.append(dict(dt=round(relative,6),xy=mover.xy.tolist(),
+                                       yaw=float(mover.yaw),speed=float(mover.v)))
+                if dwell_left>1e-8:
+                    mover.navigate([]);dwell_left=max(0.,dwell_left-dt)
+                else:
+                    if index<len(points) and math.dist(mover.xy,points[index])<.15:
+                        arrived=ids[index];index+=1
+                        if arrived in dwell_nodes:dwell_left=dwell
+                    if index<len(points) and dwell_left<=1e-8:
+                        if not mover.route or math.dist(mover.route[-1],points[index])>1e-7:
+                            mover.navigate([points[index]])
+                    else:mover.navigate([])
+                if index>=len(points) and dwell_left<=1e-8:
+                    covered_until=min(covered_until,max(0.,relative))
+                mover.step(dt,mover.yaw+2.4*dt)
+            if not states:raise ValueError('Empty aligned forecast')
+            result.append(dict(hypothesis_id=hypothesis['id'],
+                probability=hypothesis['probability']/3.,variant=variant,
+                speed_mps=speed,dwell_seconds=dwell,
+                start_xy=states[0]['xy'],start_yaw=states[0]['yaw'],
+                initial_speed=states[0]['speed'],waypoint_ids=ids[request_index:],
+                waypoints=points[request_index:],initial_dwell_remaining=request_dwell,
+                dwell_node_ids=sorted(dwell_nodes),states=states,horizon=horizon,
+                generated_at=now,source_observed_at=latest['time'],
+                source_age_seconds=age,covered_until=covered_until,
+                trajectory_method='observed_anchor_v2'))
+    if not result:raise ValueError('No concrete motion hypothesis to simulate')
+    return result
+
+
+def local_motion_envelope(semantic_map,track,now,horizon,rules):
+    """Short-horizon update using new legal measurements, without another API.
+
+    Continue measured velocity with a small direction/speed envelope; reflect
+    at the public patrol bounds. This is a numerical fallback, not LLM output.
+    """
+    latest=track['observations'][-1]
+    velocity=np.asarray(track['estimated_velocity'],float)
+    speed=float(np.linalg.norm(velocity))
+    if speed>.15:
+        heading=math.atan2(velocity[1],velocity[0]);unknown=.2
+    else:
+        old=next((row for row in reversed(track['observations'][:-1])
+                  if math.dist(row['xy'],latest['xy'])>.1),None)
+        heading=(math.atan2(latest['xy'][1]-old['xy'][1],latest['xy'][0]-old['xy'][0])
+                 if old is not None else -math.pi/2 if latest['xy'][1]>0 else math.pi/2)
+        unknown=.6
+    local_map=dict(semantic_map,nodes=dict(semantic_map['nodes']),edges=dict(semantic_map['edges']))
+    xlo,xhi=(-3.9,-2.1) if track['region']=='first' else (7.1,8.9)
+    hypotheses=[]
+    for variant,offset in enumerate((-.25,0.,.25)):
+        point=np.asarray(latest['xy'],float).copy()
+        point[0]=np.clip(point[0],xlo+1e-5,xhi-1e-5)
+        point[1]=np.clip(point[1],-3.35+1e-5,3.35-1e-5)
+        direction=np.array([math.cos(heading+offset),math.sin(heading+offset)])
+        ids=[];edge_ids=[]
+        for step in range(13):
+            node=f'local_{variant}_{step}';ids.append(node)
+            local_map['nodes'][node]=dict(id=node,xy=point.tolist(),region=track['region'])
+            if step:
+                edge=f'{ids[-2]}__{node}';edge_ids.append(edge)
+                local_map['edges'][edge]=dict(id=edge,start=ids[-2],end=node,
+                                            traversable_by=['guard'])
+            hits=[]
+            for axis,(lo,hi) in enumerate(((xlo,xhi),(-3.35,3.35))):
+                if abs(direction[axis])>1e-9:
+                    distance=((hi if direction[axis]>0 else lo)-point[axis])/direction[axis]
+                    if distance>1e-7:hits.append((distance,axis))
+            distance,axis=min(hits)
+            point=point+distance*direction;direction[axis]*=-1.
+        hypotheses.append(dict(id=f'local-motion-{variant}',probability=(1.-unknown)/3.,
+            state='MOVE' if speed>.15 else 'DWELL',edge_ids=edge_ids,
+            events=[dict(type='MOVE',at_id=edge) for edge in edge_ids],
+            speed_range_mps=[max(.5,min(1.5,speed*.8)) if speed>.15 else .8,
+                             max(.8,min(1.5,speed*1.2)) if speed>.15 else 1.5],
+            dwell_range_seconds=[0.,0.] if speed>.15 else [0.,2.],
+            next_target_id=ids[1],reason='Updated measured motion envelope',
+            uncertainty='Unobserved future turns remain possible'))
+    response=dict(hypotheses=hypotheses)
+    traces=generate_aligned(local_map,response,track,now,horizon,rules)
+    earliest=latest['time']
+    if now-latest['time']<=.15:
+        for row in reversed(track['observations'][:-1]):
+            if earliest-row['time']>.151:break
+            earliest=row['time']
+        possible_reaction=min(rules['public_kinematics']['reaction_seconds'],now-earliest)
+    else:possible_reaction=0.
+    for trace in traces:
+        trace['trajectory_method']='local_motion_envelope_v1'
+        # Visual LOS is reciprocal, while guard facing is unobserved. Treat
+        # continuous recent samples as possible prior detection in the same
+        # conservative sensing envelope used by the risk model.
+        trace['possible_reaction_elapsed_seconds']=possible_reaction
+    return traces,unknown

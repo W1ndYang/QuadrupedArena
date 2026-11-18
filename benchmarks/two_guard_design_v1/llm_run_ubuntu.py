@@ -96,6 +96,9 @@ def run(args):
                     second_seed=args.second_seed, duration_seconds=args.duration,
                     provider=config.get('provider'), model=config.get('model'),
                     fixture_only=args.fixture_for_tests, git_head=_git_head(),
+                    decision_mode=('fixture_debug' if args.fixture_for_tests else
+                        'numeric_only' if config.get('max_llm_calls_per_stage')==0 else
+                        'llm_with_local_updates'),
                     source_sha256={name: hashlib.sha256((HERE / name).read_bytes()).hexdigest()
                                    for name in ('llm_run_ubuntu.py', 'llm_bundle.py',
                                                 'llm_run_episode.py', 'llm_replay.py')},
@@ -140,6 +143,21 @@ def run(args):
 
     if (run_dir / 'decision_events.jsonl').exists():
         try:
+            events=[json.loads(line) for line in
+                    (run_dir/'decision_events.jsonl').read_text().splitlines() if line.strip()]
+            decision_events=[row for row in events if row['kind']=='decision']
+            decisions=list({(row['request']['episode_id'],row['request']['request_id']):row
+                            for row in decision_events}.values())
+            manifest['decision_events']=len(decision_events)
+            manifest['unique_decision_requests']=len(decisions)
+            manifest['llm_inference_attempts']=sum(bool(row.get('llm_request')) for row in decisions)
+            raw=[row.get('llm_response') or row['response'].get('reasoning',{}).get('raw_response')
+                 for row in decisions]
+            manifest['llm_responses_received']=sum(row is not None for row in raw)
+            manifest['completed_model_wall_seconds']=sum(float(row.get('wall_seconds') or 0.)
+                                                         for row in raw if row is not None)
+            manifest['local_boundary_decisions']=sum(row['response']['status']=='boundary'
+                                                      for row in decisions)
             replay_command = [sys.executable, str(HERE / 'llm_replay.py'),
                               '--input-log', str(run_dir / 'decision_events.jsonl'),
                               '--output', str(run_dir / 'replay.json'),

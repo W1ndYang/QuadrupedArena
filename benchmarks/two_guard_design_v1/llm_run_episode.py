@@ -24,6 +24,7 @@ def run(first_seed,second_seed,service_url,output_dir,duration=48.,episode_id=No
             finished_utc=datetime.now(timezone.utc).isoformat(),
             episode_id=episode_id,first_seed=first_seed,second_seed=second_seed,
             summary=summary,service_evaluation=evaluation,
+            own_trajectory=policy.own_trajectory,
             decisions=policy.responses,
             options=[dict(stage=row['stage'],action=ACTION_NAMES[row['action']],
                           start=row['time'],end=row['end_time'],
@@ -34,7 +35,8 @@ def run(first_seed,second_seed,service_url,output_dir,duration=48.,episode_id=No
             finished_utc=datetime.now(timezone.utc).isoformat(),
             episode_id=episode_id,first_seed=first_seed,second_seed=second_seed,
             error_type=type(exc).__name__,error=str(exc),
-            traceback=traceback.format_exc(),decisions=policy.responses)
+            traceback=traceback.format_exc(),decisions=policy.responses,
+            own_trajectory=policy.own_trajectory)
     path=output_dir/f'{episode_id}.json'
     path.write_text(json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False)+'\n')
     print(json.dumps(dict(status=result['status'],episode_id=episode_id,
