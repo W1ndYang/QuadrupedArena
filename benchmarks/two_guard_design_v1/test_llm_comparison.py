@@ -56,6 +56,19 @@ class ComparisonTests(unittest.TestCase):
         result = summarize(rows, ['llm', 'numeric'], 6)
         self.assertEqual(result['paired_vs_llm']['numeric']['exact_two_sided_p'], .03125)
 
+    def test_explicit_abstention_is_a_loss_but_invalid_future_time_still_stops(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/'run_manifest.json').write_text(json.dumps(dict(episode_id='e',status='failed')))
+            for error_type, message, expected in (
+                    ('PolicyAbstention','Guard track expired after observation cap','policy_failure'),
+                    ('ValueError','Boundary guard sighting is in the future','failed')):
+                with self.subTest(error_type=error_type):
+                    (root/'decision_events.jsonl').write_text(json.dumps(dict(kind='decision',
+                        request=dict(time=8.),response=dict(status='error',
+                            error_type=error_type,error=message)))+'\n')
+                    self.assertEqual(read_result(root,'llm',0,1,2)['status'],expected)
+
     def test_one_archive_preserves_and_checks_individual_run_bundles(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

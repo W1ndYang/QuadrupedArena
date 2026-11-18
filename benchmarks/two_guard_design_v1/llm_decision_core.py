@@ -10,7 +10,7 @@ from llm_formal_optimizer import horizon_for, optimize
 from llm_fast_optimizer import optimize as fast_optimize
 from llm_motion_client import messages_for, prompt_digest, PROMPT_VERSION
 from llm_semantic import SCHEMA_VERSION, build_map, public_rules, validate_motion, normalize_motion
-from llm_trajectory import generate, interpolate, local_motion_envelope
+from llm_trajectory import generate, interpolate, local_motion_envelope, MAX_OBSERVATION_AGE_SECONDS
 from llm_robot_rollout import prediction_horizon,selected_prediction
 
 PUBLIC_FIELDS = {'own_xy','own_yaw','own_speed','smoke_available',
@@ -20,6 +20,10 @@ SAMPLE_FIELDS = {'time','xy','observer_xy','observer_yaw',
                  'uncertainty_m','stage','frame_valid'}
 PROHIBITED = {'private_patrol','guard_seed','first_seed','second_seed',
               'hidden_waypoints','future_trace','referee_memory','guard_id'}
+
+
+class PolicyAbstention(ValueError):
+    """The legal information/recovery budget cannot support another action."""
 
 
 def _check_public_request(request):
@@ -231,18 +235,23 @@ class EpisodeContext:
                                  if bucket else None),
                 empirical_accuracy=(sum(x['top_class_correct'] for x in bucket)/len(bucket)
                                     if bucket else None)))
-        action_scores=[]
+        action_scores=[];unscored=[]
         if summary is not None:
             for request in self.requests:
                 response=self.responses.get(request['request_id'],{})
                 if response.get('status') not in ('plan','boundary'):continue
+                if 'optimizer' not in response:
+                    unscored.append(dict(time=request['time'],stage=request['stage'],
+                        action=response.get('action'),
+                        information_state=response.get('information_state')))
+                    continue
                 risk=response['optimizer']['selected_risk']
                 failed=(summary['handoff_time'] is None if request['stage']==0
                         else summary['winner']!='attacker')
                 action_scores.append(dict(stage=request['stage'],
                     predicted_failure=risk,actual_failure=bool(failed),
                     brier=(risk-float(failed))**2))
-        return dict(samples=len(rows),
+        result=dict(samples=len(rows),
             mean_position_error_m=(sum(x['position_error_m'] for x in rows)/len(rows)
                                    if rows else None),
             coverage80=(sum(x['coverage80'] for x in rows)/len(rows) if rows else None),
@@ -258,6 +267,8 @@ class EpisodeContext:
             action_risk_scores=action_scores,
             mean_action_risk_brier=(sum(x['brier'] for x in action_scores)/len(action_scores)
                                     if action_scores else None))
+        if unscored:result['unscored_action_decisions']=unscored
+        return result
 
 
 class DecisionOrchestrator:
@@ -290,6 +301,25 @@ class DecisionOrchestrator:
     def _boundary_decision(self,request,context,track):
         started=time.perf_counter()
         public=dict(request['public'],retreat_allowed=request['skill_state'].get('retreats',0)<1)
+        if self.config.get('boundary_track_recovery',False):
+            missing=track is None or len(track['observations'])<2
+            age=(None if missing else request['time']-track['observations'][-1]['time'])
+            if age is not None and age < -1e-5:
+                raise ValueError('Boundary guard sighting is in the future')
+            if missing or age>MAX_OBSERVATION_AGE_SECONDS:
+                if public['retreat_allowed'] and public['action_mask'][1]:
+                    # The motion model has no usable current anchor. Do not
+                    # relabel the old sighting or invent a risk estimate.
+                    return self._record(context,request['request_id'],dict(
+                        status='boundary',action=1,llm_called=False,
+                        information_state='missing' if missing else 'expired',
+                        observation_age_seconds=age,
+                        gate=dict(sufficient=False,reasons=[
+                            'missing_boundary_track_retreat' if missing else
+                            'expired_boundary_track_retreat']),
+                        timing=dict(api_seconds=0.,optimizer_seconds=0.,
+                            local_boundary_seconds=time.perf_counter()-started)))
+                raise PolicyAbstention('Boundary guard track unavailable and recovery exhausted')
         if track is None or len(track['observations'])<2:
             raise ValueError('Boundary reassessment has no public guard track')
         horizon=prediction_horizon(public,request['stage'])
@@ -350,11 +380,15 @@ class DecisionOrchestrator:
             if self._can_repeek(request):
                 result=self._observe_action(request,track,'insufficient_legal_track')
                 return self._record(context,req_id,result)
-            raise ValueError('No associated two-sample guard track after observation cap')
+            error=(PolicyAbstention if self.config.get('boundary_track_recovery',False) else ValueError)
+            raise error('No associated two-sample guard track after observation cap')
         last=track['observations'][-1]
         if request['time']-last['time']>1.5 and self._can_repeek(request):
             result=self._observe_action(request,track,'stale_visual_track')
             return self._record(context,req_id,result)
+        if (self.config.get('boundary_track_recovery',False) and
+                request['time']-last['time']>MAX_OBSERVATION_AGE_SECONDS):
+            raise PolicyAbstention('Guard track expired after observation cap')
         budget=self.config.get('max_llm_calls_per_stage')
         used=sum(row['request_id'] in context.llm_messages and row['stage']==request['stage']
                  for row in context.requests)

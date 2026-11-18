@@ -13,12 +13,14 @@ import os
 from pathlib import Path
 import secrets
 import tarfile
+import tempfile
 import time
 import traceback
 from types import SimpleNamespace
 
 from llm_bundle import create_bundle, verify_bundle
 from llm_run_ubuntu import HERE, PROJECT, _git_head, _stamp, run as run_service
+from llm_response_cache import add_recorded_events
 
 
 METHODS = ('fixed_no_peek', 'fixed_two_peek', 'numeric', 'llm')
@@ -26,6 +28,7 @@ DESIGN_SEEDS = (810000, 820000)
 TRACK_ABSTENTIONS = {
     'No associated two-sample guard track after observation cap',
     'Boundary reassessment has no public guard track',
+    'Boundary guard track unavailable and recovery exhausted',
 }
 
 
@@ -107,13 +110,19 @@ def read_result(directory, method, index, first_seed, second_seed):
     decisions = [event for event in events if event['kind'] == 'decision']
     abstention = next((event for event in reversed(decisions)
                       if event['response'].get('status') == 'error' and
-                      event['response'].get('error') in TRACK_ABSTENTIONS), None)
-    api_seconds, local_seconds, model_seconds = [], [], []
+                      (event['response'].get('error_type')=='PolicyAbstention' or
+                       event['response'].get('error') in TRACK_ABSTENTIONS)), None)
+    api_seconds, local_seconds, model_seconds, reuse_seconds = [], [], [], []
     for event in decisions:
         response = event['response']
         if response.get('llm_called'):
-            api_seconds.append(event['service_wall_seconds'])
-            model_seconds.append(response.get('timing', {}).get('api_seconds', 0.))
+            raw = (event.get('llm_response') or
+                   response.get('reasoning', {}).get('raw_response') or {})
+            if raw.get('response_source') == 'recorded_exact_request':
+                reuse_seconds.append(event['service_wall_seconds'])
+            else:
+                api_seconds.append(event['service_wall_seconds'])
+                model_seconds.append(response.get('timing', {}).get('api_seconds', 0.))
         elif response['status'] in ('plan', 'boundary'):
             local_seconds.append(event['service_wall_seconds'])
     summary = episode.get('summary')
@@ -131,7 +140,11 @@ def read_result(directory, method, index, first_seed, second_seed):
                 error=manifest.get('error') or episode.get('error'),
                 llm_inference_attempts=manifest.get('llm_inference_attempts', 0),
                 llm_responses_received=manifest.get('llm_responses_received', 0),
+                recorded_responses_reused=manifest.get('recorded_responses_reused', 0),
+                fresh_model_responses_received=manifest.get('fresh_model_responses_received',
+                    manifest.get('llm_responses_received', 0)),
                 model_seconds=model_seconds, api_service_seconds=api_seconds,
+                recorded_reuse_service_seconds=reuse_seconds,
                 local_service_seconds=local_seconds,
                 evaluation=episode.get('service_evaluation', {}).get('evaluation'))
 
@@ -153,6 +166,8 @@ def summarize(rows, methods, count):
             mean_winning_game_seconds=(sum(row['summary']['seconds'] for row in wins)/len(wins)
                                        if wins else None),
             llm_inference_attempts=sum(row['llm_inference_attempts'] for row in attempted),
+            recorded_responses_reused=sum(row.get('recorded_responses_reused', 0) for row in attempted),
+            fresh_model_responses_received=sum(row.get('fresh_model_responses_received', 0) for row in attempted),
             model_seconds=[x for row in attempted for x in row['model_seconds']],
             api_service_seconds=[x for row in attempted for x in row['api_service_seconds']],
             local_service_seconds=[x for row in attempted for x in row['local_service_seconds']])
@@ -230,6 +245,30 @@ def verify_comparison(path):
     return manifest
 
 
+def recorded_cache_from_comparison(path):
+    """Validate both archive levels before importing public model exchanges."""
+    verify_comparison(path)
+    entries = {}
+    source_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    with tarfile.open(path, 'r:gz') as archive, tempfile.TemporaryDirectory() as directory:
+        for member in archive.getmembers():
+            if not member.name.endswith('.tar.gz'):
+                continue
+            data = archive.extractfile(member).read()
+            inner_path = Path(directory) / 'run.tar.gz'
+            inner_path.write_bytes(data)
+            verify_bundle(inner_path)
+            with tarfile.open(inner_path, 'r:gz') as inner:
+                if 'llm_run/decision_events.jsonl' not in inner.getnames():
+                    continue
+                events = [json.loads(line) for line in inner.extractfile(
+                    'llm_run/decision_events.jsonl').read().decode().splitlines()]
+                add_recorded_events(entries, events, dict(source_archive_sha256=source_sha,
+                    inner_bundle=member.name, inner_bundle_sha256=hashlib.sha256(data).hexdigest()))
+    return dict(schema='llm-exact-response-cache-v1', entries=entries,
+                source_archive_sha256=source_sha)
+
+
 def run(args):
     methods = args.methods
     config = json.loads(args.config.read_text())
@@ -255,10 +294,24 @@ def run(args):
             observation='0 or 2 peeks per stage; south then north',
             design_archive='ubuntu-20261118-073656-9a7a8d.tar.gz'),
         source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), rows=[], error=None)
+    report['boundary_track_recovery'] = config.get('boundary_track_recovery', False)
     numeric_path = root / '.numeric-runtime.json'
     numeric_path.write_text(json.dumps(dict(config, max_llm_calls_per_stage=0)))
+    llm_path = args.config
+    llm_runtime_path = root / '.llm-runtime.json'
+    cache_path = root / '.recorded-response-cache.json'
     secret_values = [os.environ.get(config.get('api_key_env', 'DEEPSEEK_API_KEY'))]
     try:
+        if args.reuse_responses_from:
+            cached = recorded_cache_from_comparison(args.reuse_responses_from)
+            cache_path.write_text(json.dumps(cached, ensure_ascii=False))
+            llm_runtime_path.write_text(json.dumps(dict(config,
+                recorded_response_cache_file=str(cache_path))))
+            llm_path = llm_runtime_path
+            report['recorded_response_reuse'] = dict(source=str(args.reuse_responses_from),
+                source_archive_sha256=cached['source_archive_sha256'], entries=len(cached['entries']),
+                contract='Exact API configuration and complete message equality; misses call live API. '
+                         'All episodes rerun under current policy; old outcomes are not pooled.')
         if config.get('api_key_file'):
             secret_values.append(Path(config['api_key_file']).expanduser().read_text().strip())
         for index, (first_seed, second_seed) in enumerate(pairs):
@@ -272,7 +325,7 @@ def run(args):
                     create_bundle(directory, archive, secret_values)
                 else:
                     run_service(SimpleNamespace(output_dir=directory, bundle_path=archive,
-                        config=numeric_path if method == 'numeric' else args.config,
+                        config=numeric_path if method == 'numeric' else llm_path,
                         episode_id=directory.name, first_seed=first_seed, second_seed=second_seed,
                         duration=args.duration, port=args.port,
                         fixture_for_tests=args.fixture_for_tests and method == 'llm'))
@@ -283,10 +336,12 @@ def run(args):
                 (root / 'comparison.json').write_text(json.dumps(report, indent=2)+'\n')
                 if row['status'] not in ('completed', 'policy_failure'):
                     raise RuntimeError(f'{directory.name} failed; stopped without retrying model calls')
-    except Exception as exc:
+    except (Exception, KeyboardInterrupt) as exc:
         report['error'] = f'{type(exc).__name__}: {exc}'
     finally:
         numeric_path.unlink(missing_ok=True)
+        llm_runtime_path.unlink(missing_ok=True)
+        cache_path.unlink(missing_ok=True)
         report.update(finished_utc=datetime.now(timezone.utc).isoformat(),
                       status='failed' if report['error'] else 'completed',
                       aggregate=summarize(report['rows'], methods, args.count))
@@ -309,6 +364,8 @@ def main():
     parser.add_argument('--methods', nargs='+', choices=METHODS, default=list(METHODS))
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--fixture-for-tests', action='store_true')
+    parser.add_argument('--reuse-responses-from', type=Path,
+                        help='Verified comparison archive; reuse only identical saved model requests')
     parser.add_argument('--output-dir', type=Path, default=PROJECT/
         f'.arena-workspace/experiments/llm-motion/comparison-{_stamp()}-{secrets.token_hex(3)}')
     parser.add_argument('--bundle-path', type=Path)

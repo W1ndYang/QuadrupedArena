@@ -197,6 +197,56 @@ class AlignmentTests(unittest.TestCase):
         self.assertEqual(response['forecast']['forecast_source'],'local_motion_envelope_v1')
         self.assertEqual(response['status'],'plan')
 
+    def test_expired_boundary_returns_to_cover_without_reanchoring_or_calling_api(self):
+        class ForbiddenReasoner:
+            def infer(self,messages):raise AssertionError('No model call for blind recovery')
+        config=dict(provider='deepseek',boundary_recheck=True,boundary_track_recovery=True)
+        with tempfile.TemporaryDirectory() as directory:
+            state=ServiceState(config,directory,fixture=True)
+            state.orchestrator.reasoner=ForbiddenReasoner()
+            request=public_request(time=11.2,peek=2,observations=[
+                sample(5.9,[-3.12,-2.5]),sample(6.,[-3.123,-2.474])])
+            request['decision_type']='gate_boundary'
+            request['public'].update(own_xy=[-5.3,-1.54],
+                action_mask=[False,True,False,False,True,False,False,True,False,False])
+            response=state.decide(request)
+            self.assertEqual((response['status'],response['action']),('boundary',1))
+            self.assertAlmostEqual(response['observation_age_seconds'],5.2)
+            self.assertFalse(response['gate']['sufficient'])
+            self.assertNotIn('optimizer',response)
+            self.assertNotIn('forecast',response)
+            track=state.orchestrator.episodes['test'].track_for(0)
+            self.assertEqual(track['observations'][-1]['time'],6.)
+            repeated=state.decide(request)
+            self.assertEqual(response,repeated)
+            report=replay(state.log_path,Path(directory)/'replay.json',config)
+            self.assertEqual(report['same_decisions'],2)
+            exhausted=copy.deepcopy(request)
+            exhausted['request_id']='test:2'
+            exhausted['skill_state']['retreats']=1
+            rejected=state.decide(exhausted)
+            self.assertEqual(rejected['error'],'Boundary guard track unavailable and recovery exhausted')
+            finished=state.finish(dict(episode_id='test',observations=[],summary=dict(
+                winner='defender',reason='tag',seconds=12.,handoff_time=None)))
+            self.assertEqual(finished['evaluation']['action_risk_scores'],[])
+            self.assertEqual(len(finished['evaluation']['unscored_action_decisions']),1)
+            report=replay(state.log_path,Path(directory)/'replay-finished.json',config)
+            self.assertEqual(report['same_decisions'],3)
+            self.assertTrue(report['finishes'][0]['same_evaluation'])
+
+    def test_expired_anchor_at_observation_cap_abstains_before_model_or_rollout(self):
+        class ForbiddenReasoner:
+            def infer(self,messages):raise AssertionError('Expired track must not call API')
+        config=dict(provider='deepseek',boundary_track_recovery=True,max_peeks_per_stage=2)
+        with tempfile.TemporaryDirectory() as directory:
+            state=ServiceState(config,directory,fixture=True)
+            state.orchestrator.reasoner=ForbiddenReasoner()
+            request=public_request(time=8.,peek=2,observations=[
+                sample(3.,[-3.,-1.]),sample(3.1,[-3.,-.9])])
+            result=state.decide(request)
+            self.assertEqual(result['error_type'],'PolicyAbstention')
+            self.assertEqual(result['error'],'Guard track expired after observation cap')
+
     def test_retreat_returns_to_cover_and_clears_gate_state(self):
         class Recovered(Exception):pass
         requests=[]

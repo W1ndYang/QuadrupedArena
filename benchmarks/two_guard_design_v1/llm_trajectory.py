@@ -5,6 +5,7 @@ import numpy as np
 
 from humanoid_motion import HumanoidMover
 
+MAX_OBSERVATION_AGE_SECONDS = 4.
 
 def interpolate(states, seconds):
     if seconds <= states[0]['dt']:
@@ -26,7 +27,7 @@ def _start_state(track, now, region):
         raise ValueError('No legal guard observation for trajectory generation')
     latest = observations[-1]
     age = now-latest['time']
-    if age < -1e-5 or age > 4.:
+    if age < -1e-5 or age > MAX_OBSERVATION_AGE_SECONDS:
         raise ValueError('Latest guard sighting is too old or in the future')
     xy = np.asarray(latest['xy'], float)
     velocity = np.asarray(track.get('estimated_velocity', [0., 0.]), float)
@@ -142,7 +143,7 @@ def _remaining_path(semantic_map,hypothesis,position,velocity):
 def generate_aligned(semantic_map,response,track,now,horizon,rules):
     latest=track['observations'][-1]
     age=float(now-latest['time'])
-    if not -1e-5<=age<=4.:
+    if not -1e-5<=age<=MAX_OBSERVATION_AGE_SECONDS:
         raise ValueError('Latest guard sighting is too old or in the future')
     position=np.asarray(latest['xy'],float)
     velocity=np.asarray(track.get('estimated_velocity',[0.,0.]),float)

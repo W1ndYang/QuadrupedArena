@@ -18,5 +18,6 @@
   "velocity_mode": "recent_acceleration_v2",
   "robot_rollout_mode": "stateful_v2",
   "boundary_recheck": true,
+  "boundary_track_recovery": true,
   "max_llm_calls_per_stage": 1
 }

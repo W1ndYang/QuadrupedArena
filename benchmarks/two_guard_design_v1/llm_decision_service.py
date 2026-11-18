@@ -18,6 +18,7 @@ from llm_robot_rollout import prewarm
 def code_version():
     root=Path(__file__).resolve().parent
     names=('llm_semantic.py','llm_map_review.py','llm_motion_client.py','llm_trajectory.py',
+           'llm_response_cache.py',
            'llm_formal_optimizer.py','llm_fast_optimizer.py',
            'llm_robot_rollout.py',
            'llm_fast_templates.json','llm_decision_core.py',

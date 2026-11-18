@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 import types
 
+from llm_response_cache import ExactResponseCache
+
 ROOT = Path(__file__).resolve().parents[2]
 # The frozen simulator imports modules with the same names into sys.modules.
 # A separate package binds this runtime to the current adapters and their
@@ -102,6 +104,7 @@ class APIReasoner:
     def __init__(self, config):
         self.config = dict(config)
         self.provider = config['provider']
+        self.recorded = ExactResponseCache(config.get('recorded_response_cache_file'))
         if self.provider not in ('deepseek', 'qwen'):
             raise ValueError('Unsupported provider')
         if self.provider=='deepseek':
@@ -110,6 +113,9 @@ class APIReasoner:
             qwen_client.endpoint(self.config)
 
     def infer(self, messages):
+        recorded = self.recorded.lookup(self.config, messages)
+        if recorded is not None:
+            return recorded
         key = _key(self.config)
         if self.provider == 'deepseek':
             result = deepseek_client.call_api(self.config, key, messages)
@@ -120,7 +126,7 @@ class APIReasoner:
         text = result.get('content', '')
         if not isinstance(text, str) or len(text) > 100_000:
             raise ValueError('Empty or oversized LLM response')
-        return dict(text=text, usage=result.get('usage'),
+        return dict(text=text, usage=result.get('usage'),response_source='live_api',
                     model=result.get('response_model'),
                     response_id=result.get('response_id'),
                     wall_seconds=result.get('api_wall_seconds'),

@@ -154,6 +154,13 @@ def run(args):
             raw=[row.get('llm_response') or row['response'].get('reasoning',{}).get('raw_response')
                  for row in decisions]
             manifest['llm_responses_received']=sum(row is not None for row in raw)
+            manifest['recorded_responses_reused']=sum(
+                row is not None and row.get('response_source')=='recorded_exact_request'
+                for row in raw)
+            manifest['fixture_responses_received']=(manifest['llm_responses_received']
+                                                    if args.fixture_for_tests else 0)
+            manifest['fresh_model_responses_received']=(manifest['llm_responses_received']-
+                manifest['recorded_responses_reused']-manifest['fixture_responses_received'])
             manifest['completed_model_wall_seconds']=sum(float(row.get('wall_seconds') or 0.)
                                                          for row in raw if row is not None)
             manifest['local_boundary_decisions']=sum(row['response']['status']=='boundary'
