@@ -15,7 +15,7 @@ from llm_fast_optimizer import _templates
 from llm_motion_client import messages_for, APIReasoner, deepseek_client, qwen_client
 from llm_map_visual import render as render_map_review
 from llm_replay import _effective_config, replay
-from llm_semantic import build_map, public_rules, validate_motion
+from llm_semantic import build_map, public_rules, validate_motion, normalize_motion, COMPACT_SCHEMA_VERSION
 from llm_trajectory import generate
 
 
@@ -55,8 +55,8 @@ class LLMDecisionTests(unittest.TestCase):
             recent_observations=track['observations'],
             estimated_guard_velocity=track['estimated_velocity'])
         payload=json.loads(messages_for(decision,semantic_map,public_rules())[-1]['content'])
-        self.assertEqual(payload['response_constraints']['allowed_next_target_ids'],
-                         semantic_map['regions']['first']['node_ids']+['first'])
+        self.assertEqual(payload['response_constraints']['allowed_dwell_node_ids'],
+                         semantic_map['regions']['first']['node_ids'])
         response=fixture_response(payload)
         validate_motion(response,semantic_map,track['id'],'first',8.)
         trajectories=generate(semantic_map,response,track,3.3,8.,public_rules())
@@ -208,10 +208,84 @@ class LLMDecisionTests(unittest.TestCase):
                 sample(3.1,[-3.,0.]),sample(3.2,[-3.,.1])])
             result=state.decide(request)
             self.assertEqual(result['status'],'plan')
+            self.assertEqual(json.loads(result['reasoning']['raw_response']['text'])
+                             ['schema'],COMPACT_SCHEMA_VERSION)
             self.assertEqual(result['optimizer']['scoring_method'],
                              'fast_los_proxy_v1')
             self.assertEqual(len(result['optimizer']['candidates']),6)
             self.assertLess(result['timing']['optimizer_seconds'],1.)
+
+    def test_compact_path_derives_moves_and_rejects_invalid_geometry(self):
+        semantic_map=build_map()
+        decision=dict(schema='guard-motion-hypotheses-v1',request_id='r',
+            map_id=semantic_map['map_id'],track_id='track-0001',region='first',
+            recent_observations=[sample(3.2,[-3.,.1])],
+            estimated_guard_velocity=[0.,1.])
+        payload=json.loads(messages_for(decision,semantic_map,public_rules())[-1]['content'])
+        original=fixture_response(payload)
+        original['hypotheses'][0]['state']='REVERSE'
+        original['hypotheses'][0]['events'][0]['type']='REVERSE'
+        with self.assertRaisesRegex(ValueError,'MOVE events must match'):
+            validate_motion(original,semantic_map,'track-0001','first',8.)
+        compact=copy.deepcopy(original)
+        compact['schema']=COMPACT_SCHEMA_VERSION
+        for hypothesis in compact['hypotheses']:
+            hypothesis.pop('events');hypothesis.pop('next_target_id')
+            hypothesis.pop('uncertainty');hypothesis['dwell_node_ids']=[]
+        first_edge=semantic_map['edges'][compact['hypotheses'][0]['edge_ids'][0]]
+        compact['hypotheses'][0]['dwell_node_ids']=[first_edge['end']]
+        normalized=normalize_motion(compact,semantic_map,'first')
+        validate_motion(normalized,semantic_map,'track-0001','first',8.)
+        hypothesis=normalized['hypotheses'][0]
+        self.assertEqual(hypothesis['next_target_id'],first_edge['end'])
+        self.assertEqual([e['at_id'] for e in hypothesis['events']
+                          if e['type']=='MOVE'],hypothesis['edge_ids'])
+        self.assertEqual(hypothesis['events'][1],
+                         dict(type='DWELL',at_id=first_edge['end']))
+        self.assertEqual(normalize_motion(original,semantic_map,'first'),original)
+        broken=copy.deepcopy(compact)
+        broken['hypotheses'][0]['edge_ids'][0]='invented_edge'
+        with self.assertRaisesRegex(ValueError,'Unknown or non-guard edge'):
+            normalize_motion(broken,semantic_map,'first')
+        broken=copy.deepcopy(compact)
+        broken['hypotheses'][0]['dwell_node_ids']=['second_x0_y0']
+        with self.assertRaisesRegex(ValueError,'Dwell node is not on'):
+            normalize_motion(broken,semantic_map,'first')
+        broken=copy.deepcopy(compact)
+        broken['hypotheses'][0]['edge_ids'][1]=broken['hypotheses'][0]['edge_ids'][0]
+        with self.assertRaisesRegex(ValueError,'Disconnected directed edge sequence'):
+            validate_motion(normalize_motion(broken,semantic_map,'first'),
+                            semantic_map,'track-0001','first',8.)
+
+    def test_diffuse_hypotheses_with_same_action_do_not_force_repeek(self):
+        class SplitHypothesisReasoner:
+            def infer(self,messages):
+                response=fixture_response(json.loads(messages[-1]['content']))
+                known,unknown=response['hypotheses']
+                unknown['probability']=.1
+                response['hypotheses']=[dict(copy.deepcopy(known),id=f'h{i}',
+                                             probability=.3) for i in range(3)]+[unknown]
+                response['schema']=COMPACT_SCHEMA_VERSION
+                for hypothesis in response['hypotheses']:
+                    hypothesis.pop('events');hypothesis.pop('next_target_id')
+                    hypothesis.pop('uncertainty');hypothesis['dwell_node_ids']=[]
+                return dict(text=json.dumps(response))
+
+        with tempfile.TemporaryDirectory() as directory:
+            state=ServiceState(dict(provider='deepseek',optimizer_mode='fast_proxy',
+                maximum_formal_particles=4,maximum_fast_particles=18,
+                observation_gate_mode='action_risk'),directory,fixture=True)
+            state.orchestrator.reasoner=SplitHypothesisReasoner()
+            request=public_request(time=3.3,peek=1,observations=[
+                sample(3.1,[-3.,0.]),sample(3.2,[-3.,.1])])
+            response=state.decide(request)
+            self.assertEqual(response['status'],'plan')
+            self.assertGreater(response['gate']['entropy'],.92)
+            self.assertFalse(response['gate']['hypothesis_action_disagreement'])
+            self.assertEqual(response['optimizer']['trajectories_used'],9)
+            self.assertAlmostEqual(response['optimizer']['represented_probability'],.9)
+            report=replay(state.log_path,Path(directory)/'replay.json',state.config)
+            self.assertEqual(report['same_decisions'],1)
 
     def test_map_review_renders_readable_artifacts_without_approval(self):
         semantic_map=build_map()

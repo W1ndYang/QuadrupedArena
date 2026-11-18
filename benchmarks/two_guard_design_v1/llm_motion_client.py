@@ -26,7 +26,7 @@ def adapter_sources():
             for name,module in (('deepseek',deepseek_client),('qwen',qwen_client))}
 
 
-PROMPT_VERSION = 'guard-motion-reasoner-20261117-v5'
+PROMPT_VERSION = 'guard-motion-reasoner-20261118-v6'
 
 SYSTEM_PROMPT = """You infer a moving guard's possible future behavior from public observations.
 Return one JSON object only. You never choose the robot action and never output
@@ -36,22 +36,23 @@ mutually exclusive, plausible routes through map geometry, not the true hidden
 route. Include an UNKNOWN hypothesis whenever your routes omit material
 possibilities. Probabilities are numerical predictions summing to 1.
 
-JSON fields: schema='guard-motion-hypotheses-v1', map_id, track_id,
-hypotheses=[{id,probability,state,next_target_id,edge_ids,events,
-speed_range_mps,dwell_range_seconds,reason,uncertainty}].
-state is MOVE, TURN, DWELL, REVERSE or UNKNOWN. Each event is
-{type: MOVE|TURN|DWELL|REVERSE, at_id: existing Node or Edge ID}.
+JSON fields: schema='guard-motion-paths-v2', map_id, track_id,
+hypotheses=[{id,probability,state,edge_ids,dwell_node_ids,
+speed_range_mps,dwell_range_seconds,reason}].
+state is MOVE, TURN, DWELL, REVERSE or UNKNOWN.
 edge_ids form a connected directed path in the current guard region.
 An edge ID has the exact form start_node_id__end_node_id; copy it from
 map.edge_ids rather than constructing a new ID.
-The edge sequence and explicit DWELL events must cover the supplied prediction
+The edge sequence and dwell at dwell_node_ids must cover the supplied prediction
 horizon. Do not end a path early and assume the guard stops. The first edge
 must start within 2.25 m of the latest guard sighting. Reverse travel uses
 the separately listed reverse directed edge ID.
-For UNKNOWN use edge_ids=[] and events=[]. Supply 1 to 6 hypotheses.
+Use dwell_node_ids only for nodes on that path. For UNKNOWN use edge_ids=[]
+and dwell_node_ids=[]. Prefer 2 or 3 substantive alternatives plus UNKNOWN;
+use at most 6 hypotheses if needed. Keep each reason to at most 12 words.
+The runtime derives MOVE events and next target from edge_ids; omit events,
+next_target_id and uncertainty. Avoid repeating the same path in prose.
 Do not invent map IDs or claim that a spatial edge is a known patrol route.
-Choose next_target_id from response_constraints.allowed_next_target_ids exactly;
-do not use coordinates, informal waypoint names, or edge IDs in that field.
 """
 
 
@@ -70,7 +71,8 @@ def messages_for(request, semantic_map, rules):
                       obstacles=semantic_map['obstacles'])
     payload = dict(map=public_map, rules=rules,
                    response_constraints=dict(
-                       allowed_next_target_ids=node_ids + [region],
+                       output_schema='guard-motion-paths-v2',
+                       allowed_dwell_node_ids=node_ids,
                        region_id_for_unknown=region),
                    decision=request)
     return [dict(role='system', content=SYSTEM_PROMPT),

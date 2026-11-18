@@ -11,6 +11,7 @@ import time
 from llm_decision_core import DecisionOrchestrator
 from llm_motion_client import APIReasoner, FixtureReasoner, adapter_sources
 from llm_map_review import check as check_map
+from llm_semantic import COMPACT_SCHEMA_VERSION
 
 
 def code_version():
@@ -34,7 +35,7 @@ def code_version():
     return digest.hexdigest()[:16]
 
 
-def fixture_response(payload):
+def fixture_response(payload, compact=False):
     """Local engineering smoke only: this is not an LLM research result."""
     request=payload['decision']; region=request['region']
     nodes=payload['map']['nodes']
@@ -60,7 +61,7 @@ def fixture_response(payload):
             -abs(nodes[e['end']][0]-nodes[start][0])))
         path.append(selected)
         current=selected['end']
-    return dict(schema=request['schema'],map_id=request['map_id'],
+    response=dict(schema=request['schema'],map_id=request['map_id'],
                 track_id=request['track_id'],hypotheses=[
                     dict(id='fixture_path',probability=.8,state='MOVE',
                          next_target_id=path[0]['end'],
@@ -73,11 +74,20 @@ def fixture_response(payload):
                          next_target_id=region,edge_ids=[],events=[],
                          speed_range_mps=[.8,1.5],dwell_range_seconds=[0.,4.],
                          reason='Unrepresented routes',uncertainty='Unbounded')])
+    if compact:
+        response['schema']=COMPACT_SCHEMA_VERSION
+        for hypothesis in response['hypotheses']:
+            events=hypothesis.pop('events')
+            hypothesis['dwell_node_ids']=[event['at_id'] for event in events
+                                          if event['type']=='DWELL']
+            hypothesis.pop('next_target_id');hypothesis.pop('uncertainty')
+    return response
 
 
 class ServiceState:
     def __init__(self,config,log_dir,fixture=False):
-        reasoner=(FixtureReasoner(fixture_response) if fixture else APIReasoner(config))
+        reasoner=(FixtureReasoner(lambda payload:fixture_response(payload,compact=True))
+                  if fixture else APIReasoner(config))
         self.orchestrator=DecisionOrchestrator(reasoner,config)
         manifest=check_map()
         if manifest['map_id']!=self.orchestrator.map['map_id']:

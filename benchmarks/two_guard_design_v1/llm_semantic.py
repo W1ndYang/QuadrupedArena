@@ -10,6 +10,7 @@ import math
 from two_node_geometry import add_two_node_geometry, make_config, Planner
 
 SCHEMA_VERSION = 'guard-motion-hypotheses-v1'
+COMPACT_SCHEMA_VERSION = 'guard-motion-paths-v2'
 RULES_VERSION = 'varied-guard-public-rules-v1'
 
 
@@ -127,6 +128,52 @@ def _finite_number(value, label):
     if type(value) not in (int, float) or not math.isfinite(value):
         raise ValueError(f'{label} must be a finite number')
     return float(value)
+
+
+def normalize_motion(raw, semantic_map, region):
+    """Expand the compact wire format without inventing paths or probabilities.
+
+    Old recorded responses keep their original validation behavior. New model
+    responses state a path once; MOVE events and next target are deterministic.
+    """
+    if not isinstance(raw,dict) or raw.get('schema')!=COMPACT_SCHEMA_VERSION:
+        return raw
+    hypotheses=raw.get('hypotheses')
+    if not isinstance(hypotheses,list) or not 1<=len(hypotheses)<=6:
+        raise ValueError('Expected 1..6 motion hypotheses')
+    result=dict(raw,schema=SCHEMA_VERSION,hypotheses=[])
+    for hypothesis in hypotheses:
+        if not isinstance(hypothesis,dict):
+            raise ValueError('Invalid compact hypothesis')
+        if any(key in hypothesis for key in ('events','next_target_id')):
+            raise ValueError('Compact hypothesis must state the path only once')
+        edges=hypothesis.get('edge_ids')
+        dwells=hypothesis.get('dwell_node_ids')
+        if (not isinstance(edges,list) or len(edges)>12 or
+                not isinstance(dwells,list) or len(dwells)>13 or
+                any(not isinstance(x,str) for x in edges+dwells)):
+            raise ValueError('Invalid compact path or dwell nodes')
+        path=[]
+        for edge_id in edges:
+            edge=semantic_map['edges'].get(edge_id)
+            if edge is None:
+                raise ValueError(f'Unknown or non-guard edge {edge_id}')
+            path.append(edge)
+        nodes=([path[0]['start']]+[e['end'] for e in path]) if path else []
+        if any(node not in nodes for node in dwells):
+            raise ValueError('Dwell node is not on the supplied path')
+        events=[]
+        if nodes and nodes[0] in dwells:
+            events.append(dict(type='DWELL',at_id=nodes[0]))
+        for edge in path:
+            events.append(dict(type='MOVE',at_id=edge['id']))
+            if edge['end'] in dwells:
+                events.append(dict(type='DWELL',at_id=edge['end']))
+        result['hypotheses'].append(dict(hypothesis,
+            next_target_id=path[0]['end'] if path else region,
+            events=events,
+            uncertainty=hypothesis.get('uncertainty','Uncalibrated route hypothesis')))
+    return result
 
 
 def validate_motion(raw, semantic_map, track_id, region, horizon):

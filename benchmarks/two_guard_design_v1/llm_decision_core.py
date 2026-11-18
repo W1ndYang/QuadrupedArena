@@ -9,7 +9,7 @@ import numpy as np
 from llm_formal_optimizer import horizon_for, optimize
 from llm_fast_optimizer import optimize as fast_optimize
 from llm_motion_client import messages_for, prompt_digest, PROMPT_VERSION
-from llm_semantic import SCHEMA_VERSION, build_map, public_rules, validate_motion
+from llm_semantic import SCHEMA_VERSION, build_map, public_rules, validate_motion, normalize_motion
 from llm_trajectory import generate, interpolate
 
 PUBLIC_FIELDS = {'own_xy','own_yaw','own_speed','smoke_available',
@@ -313,14 +313,16 @@ class DecisionOrchestrator:
         wall_start=time.perf_counter()
         inferred=self.reasoner.infer(messages)
         context.llm_attempts[req_id]=inferred
-        parsed=json.loads(inferred['text'])
+        parsed=normalize_motion(json.loads(inferred['text']),self.map,track['region'])
         validate_motion(parsed,self.map,track['id'],track['region'],horizon)
         llm_seconds=time.perf_counter()-wall_start
         unknown=sum(h['probability'] for h in parsed['hypotheses']
                     if h['state']=='UNKNOWN')
         probs=[h['probability'] for h in parsed['hypotheses'] if h['probability']>0]
         entropy=-sum(p*math.log(p) for p in probs)/max(1e-9,math.log(max(2,len(probs))))
-        if (unknown>.45 or entropy>.92) and self._can_repeek(request):
+        entropy_gate=(self.config.get('observation_gate_mode','legacy_entropy')
+                      =='legacy_entropy' and entropy>.92)
+        if (unknown>.45 or entropy_gate) and self._can_repeek(request):
             result=self._observe_action(request,track,
                 'high_unknown_mass' if unknown>.45 else 'diffuse_motion_hypotheses')
             result['reasoning']=dict(raw_request=messages,raw_response=inferred,
@@ -342,7 +344,8 @@ class DecisionOrchestrator:
             plan=fast_optimize(trajectories,request['stage'],
                 public['smoke_available'],unknown,horizon,self.map,
                 public['own_xy'],
-                maximum_particles=self.config.get('maximum_formal_particles',6))
+                maximum_particles=self.config.get('maximum_fast_particles',
+                    self.config.get('maximum_formal_particles',6)))
         elif mode=='formal':
             plan=optimize(trajectories,request['stage'],
                 public['smoke_available'],unknown,horizon,
