@@ -67,7 +67,8 @@ class ExactResponseCache:
         result = copy.deepcopy(entry['response'])
         result['response_source'] = 'recorded_exact_request'
         result['reused_from'] = dict(entry['provenance'], request_sha256=key)
-        result['original_model_wall_seconds'] = result.get('wall_seconds')
+        result['original_model_wall_seconds'] = result.get(
+            'original_model_wall_seconds', result.get('wall_seconds'))
         result['wall_seconds'] = 0.
         result['usage_is_reused'] = True
         return result

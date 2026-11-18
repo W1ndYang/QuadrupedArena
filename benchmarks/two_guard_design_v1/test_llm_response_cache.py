@@ -41,6 +41,14 @@ class ResponseCacheTests(unittest.TestCase):
             self.assertEqual(result['wall_seconds'], 0.)
             self.assertEqual(result['original_model_wall_seconds'], 3.)
             self.assertTrue(result['usage_is_reused'])
+            again={}
+            cached_event=event()
+            cached_event['response']['reasoning']['raw_response']=result
+            add_recorded_events(again,[cached_event],dict(source_archive_sha256='second'))
+            path.write_text(json.dumps(dict(schema='llm-exact-response-cache-v1',entries=again)))
+            chained=ExactResponseCache(path).lookup(CONFIG,MESSAGES)
+            self.assertEqual(chained['original_model_wall_seconds'],3.)
+            self.assertEqual(chained['wall_seconds'],0.)
             changed = copy.deepcopy(MESSAGES)
             changed[-1]['content'] += ' '
             with patch('llm_motion_client._key', side_effect=FileNotFoundError('Live key required')):

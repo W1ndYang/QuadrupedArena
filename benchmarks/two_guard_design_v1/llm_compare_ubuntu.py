@@ -110,19 +110,21 @@ def read_result(directory, method, index, first_seed, second_seed):
     decisions = [event for event in events if event['kind'] == 'decision']
     abstention = next((event for event in reversed(decisions)
                       if event['response'].get('status') == 'error' and
-                      (event['response'].get('error_type')=='PolicyAbstention' or
+                      (event['response'].get('error_type') in ('PolicyAbstention','ModelOutputError') or
                        event['response'].get('error') in TRACK_ABSTENTIONS)), None)
     api_seconds, local_seconds, model_seconds, reuse_seconds = [], [], [], []
     for event in decisions:
         response = event['response']
-        if response.get('llm_called'):
-            raw = (event.get('llm_response') or
-                   response.get('reasoning', {}).get('raw_response') or {})
+        raw = (event.get('llm_response') or
+               response.get('reasoning', {}).get('raw_response'))
+        # A received response still consumed model time if validation failed.
+        if raw is not None:
             if raw.get('response_source') == 'recorded_exact_request':
                 reuse_seconds.append(event['service_wall_seconds'])
             else:
                 api_seconds.append(event['service_wall_seconds'])
-                model_seconds.append(response.get('timing', {}).get('api_seconds', 0.))
+                model_seconds.append(raw.get('wall_seconds',
+                    response.get('timing', {}).get('api_seconds', 0.)))
         elif response['status'] in ('plan', 'boundary'):
             local_seconds.append(event['service_wall_seconds'])
     summary = episode.get('summary')
@@ -131,11 +133,15 @@ def read_result(directory, method, index, first_seed, second_seed):
         # It is the policy's inability to decide under its own observation cap,
         # not a machine failure or an ignorable missing trial. Count it as a loss.
         status = 'policy_failure'
-        summary = dict(winner='defender', reason='policy_abstention',
+        model_error=abstention['response'].get('error_type')=='ModelOutputError'
+        summary = dict(winner='defender', reason='model_output_invalid' if model_error else 'policy_abstention',
                        seconds=abstention['request']['time'],
                        synthetic_result=True, formal_terminal_reached=False)
     return dict(index=index, method=method, first_seed=first_seed, second_seed=second_seed,
                 status=status, summary=summary,
+                failure_category=('model_output' if abstention and
+                    abstention['response'].get('error_type')=='ModelOutputError' else
+                    'information_budget' if abstention else None),
                 replay_matches=manifest.get('replay_matches'),
                 error=manifest.get('error') or episode.get('error'),
                 llm_inference_attempts=manifest.get('llm_inference_attempts', 0),
@@ -145,6 +151,9 @@ def read_result(directory, method, index, first_seed, second_seed):
                     manifest.get('llm_responses_received', 0)),
                 model_seconds=model_seconds, api_service_seconds=api_seconds,
                 recorded_reuse_service_seconds=reuse_seconds,
+                model_validation_events=[dict(time=event['request']['time'],
+                    **event['response']['reasoning']['validation']) for event in decisions
+                    if event['response'].get('reasoning',{}).get('validation') is not None],
                 local_service_seconds=local_seconds,
                 evaluation=episode.get('service_evaluation', {}).get('evaluation'))
 
@@ -159,6 +168,9 @@ def summarize(rows, methods, count):
         result[method] = dict(planned=count, attempted=len(attempted),
             completed=len(completed), evaluated=len(evaluated),
             policy_failures=len(evaluated)-len(completed),
+            model_output_failures=sum(row.get('failure_category')=='model_output' for row in evaluated),
+            partially_rejected_model_responses=sum(bool(v['rejected_hypotheses']) for row in attempted
+                                                   for v in row.get('model_validation_events',[])),
             run_errors=len(attempted)-len(evaluated),
             unattempted=count-len(attempted), wins=len(wins),
             win_rate_on_evaluated=len(wins)/len(evaluated) if evaluated else None,
@@ -198,7 +210,7 @@ def summarize(rows, methods, count):
                 both_lost=both_lost, exact_two_sided_p=p)
     return dict(methods=result, paired_vs_llm=pairs,
                 note='Small screening experiment; no automatic feasibility verdict. '
-                     'Observation-budget abstentions count as policy losses; run errors and '
+                     'Observation-budget abstentions and unusable model outputs count as policy losses; run errors and '
                      'unattempted trials remain explicit. Success per attempted includes run errors.')
 
 

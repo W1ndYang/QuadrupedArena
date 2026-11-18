@@ -20,5 +20,6 @@
   "robot_rollout_mode": "stateful_v2",
   "boundary_recheck": true,
   "boundary_track_recovery": true,
+  "invalid_hypothesis_mode": "unknown_mass",
   "max_llm_calls_per_stage": 1
 }

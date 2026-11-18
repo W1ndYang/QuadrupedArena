@@ -10,6 +10,7 @@ from llm_formal_optimizer import horizon_for, optimize
 from llm_fast_optimizer import optimize as fast_optimize
 from llm_motion_client import messages_for, prompt_digest, PROMPT_VERSION
 from llm_semantic import SCHEMA_VERSION, build_map, public_rules, validate_motion, normalize_motion
+from llm_semantic import normalize_validated_motion,ModelOutputError
 from llm_trajectory import generate, interpolate, local_motion_envelope, MAX_OBSERVATION_AGE_SECONDS
 from llm_robot_rollout import prediction_horizon,selected_prediction
 
@@ -273,6 +274,8 @@ class EpisodeContext:
 
 class DecisionOrchestrator:
     def __init__(self, reasoner, config):
+        if config.get('invalid_hypothesis_mode','strict') not in ('strict','unknown_mass'):
+            raise ValueError('Unknown invalid_hypothesis_mode')
         self.map=build_map()
         self.rules=public_rules()
         self.reasoner=reasoner
@@ -422,7 +425,7 @@ class DecisionOrchestrator:
             observable_guard_facing=None,
             association_uncertainty=track['association_uncertainty'],
             previous_hypotheses=prior,prediction_comparisons=comparisons)
-        local_started=time.perf_counter();precomputed=None
+        local_started=time.perf_counter();precomputed=None;validation=None
         if local_update:
             precomputed,unknown=local_motion_envelope(
                 self.map,track,request['time'],horizon,self.rules)
@@ -434,8 +437,14 @@ class DecisionOrchestrator:
             wall_start=time.perf_counter()
             inferred=self.reasoner.infer(messages)
             context.llm_attempts[req_id]=inferred
-            parsed=normalize_motion(json.loads(inferred['text']),self.map,track['region'])
-            validate_motion(parsed,self.map,track['id'],track['region'],horizon)
+            try:
+                parsed,validation=normalize_validated_motion(json.loads(inferred['text']),
+                    self.map,track['id'],track['region'],horizon,
+                    mode=self.config.get('invalid_hypothesis_mode','strict'))
+            except ValueError as exc:
+                if self.config.get('invalid_hypothesis_mode')=='unknown_mass':
+                    raise ModelOutputError(str(exc)) from exc
+                raise
             llm_seconds=time.perf_counter()-wall_start
             unknown=sum(h['probability'] for h in parsed['hypotheses']
                         if h['state']=='UNKNOWN')
@@ -449,11 +458,19 @@ class DecisionOrchestrator:
             if inferred is not None:
                 result['reasoning']=dict(raw_request=messages,raw_response=inferred,
                     hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION)
+                if validation is not None:result['reasoning']['validation']=validation
             return self._record(context,req_id,result)
         model_started=time.perf_counter()
-        trajectories=(precomputed if precomputed is not None else
-                      generate(self.map,parsed,track,request['time'],horizon,self.rules,
-                               mode=self.config.get('trajectory_mode','legacy')))
+        try:
+            trajectories=(precomputed if precomputed is not None else
+                          generate(self.map,parsed,track,request['time'],horizon,self.rules,
+                                   mode=self.config.get('trajectory_mode','legacy')))
+        except ValueError as exc:
+            if (inferred is not None and self.config.get('invalid_hypothesis_mode')=='unknown_mass'
+                    and str(exc) in ('No concrete motion hypothesis to simulate',
+                                     'LLM route does not connect to observed guard location')):
+                raise ModelOutputError(str(exc)) from exc
+            raise
         model_seconds=(time.perf_counter()-local_started if local_update else
                        time.perf_counter()-model_started)
         prediction=dict(forecast_id=f'{episode_id}:{req_id}',
@@ -513,6 +530,7 @@ class DecisionOrchestrator:
             result['reasoning']=dict(raw_request=messages,raw_response=inferred,
                 hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION,
                 prompt_digest=prompt_digest())
+            if validation is not None:result['reasoning']['validation']=validation
         result['llm_called']=inferred is not None
         result['forecast']=prediction
         result['timing']=dict(api_seconds=llm_seconds,

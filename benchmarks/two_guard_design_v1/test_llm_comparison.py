@@ -5,9 +5,13 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from llm_bundle import create_bundle
 from llm_compare_ubuntu import comparison_bundle, read_result, summarize, verify_comparison
+from llm_compare_ubuntu import run as run_comparison
 
 
 def row(index, method, winner=None, status='completed'):
@@ -62,12 +66,55 @@ class ComparisonTests(unittest.TestCase):
             (root/'run_manifest.json').write_text(json.dumps(dict(episode_id='e',status='failed')))
             for error_type, message, expected in (
                     ('PolicyAbstention','Guard track expired after observation cap','policy_failure'),
+                    ('ModelOutputError','Disconnected directed edge sequence','policy_failure'),
                     ('ValueError','Boundary guard sighting is in the future','failed')):
                 with self.subTest(error_type=error_type):
                     (root/'decision_events.jsonl').write_text(json.dumps(dict(kind='decision',
                         request=dict(time=8.),response=dict(status='error',
                             error_type=error_type,error=message)))+'\n')
                     self.assertEqual(read_result(root,'llm',0,1,2)['status'],expected)
+
+    def test_failed_model_validation_still_counts_received_api_time(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/'run_manifest.json').write_text(json.dumps(dict(episode_id='e',status='failed',
+                llm_responses_received=1,fresh_model_responses_received=1)))
+            (root/'decision_events.jsonl').write_text(json.dumps(dict(kind='decision',
+                request=dict(time=3.3),service_wall_seconds=4.,
+                llm_response=dict(text='{}',wall_seconds=3.49),
+                response=dict(status='error',error_type='ModelOutputError',error='Invalid path')))+'\n')
+            value=read_result(root,'llm',0,1,2)
+            self.assertEqual(value['model_seconds'],[3.49])
+            self.assertEqual(value['api_service_seconds'],[4.])
+            report=summarize([value],['llm'],1)['methods']['llm']
+            self.assertEqual(report['model_output_failures'],1)
+            self.assertEqual(report['success_rate_per_attempted'],0.)
+
+    def test_unusable_model_output_counts_as_loss_and_batch_continues(self):
+        def failed_service(args):
+            args.output_dir.mkdir()
+            (args.output_dir/'run_manifest.json').write_text(json.dumps(dict(
+                episode_id=args.episode_id,status='failed',llm_responses_received=1)))
+            (args.output_dir/'decision_events.jsonl').write_text(json.dumps(dict(
+                kind='decision',request=dict(time=3.3),service_wall_seconds=2.1,
+                llm_response=dict(text='bad JSON',wall_seconds=2.),
+                response=dict(status='error',error_type='ModelOutputError',error='Invalid JSON')))+'\n')
+            create_bundle(args.output_dir,args.bundle_path)
+            return 1
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);config=root/'config.json'
+            config.write_text(json.dumps(dict(max_llm_calls_per_stage=1)))
+            args=SimpleNamespace(methods=['llm'],count=2,config=config,
+                first_seed=810100,second_seed=820100,first_stride=17,second_stride=19,
+                output_dir=root/'runs',bundle_path=None,duration=48.,fixture_for_tests=False,
+                port=8765,reuse_responses_from=None)
+            with patch('llm_compare_ubuntu.run_service',side_effect=failed_service),redirect_stdout(io.StringIO()):
+                self.assertEqual(run_comparison(args),0)
+            report=json.loads((args.output_dir/'comparison.json').read_text())
+            self.assertEqual(len(report['rows']),2)
+            self.assertEqual(report['aggregate']['methods']['llm']['model_output_failures'],2)
+            self.assertEqual(report['aggregate']['methods']['llm']['unattempted'],0)
+            verify_comparison(root/'runs.tar.gz')
 
     def test_one_archive_preserves_and_checks_individual_run_bundles(self):
         with tempfile.TemporaryDirectory() as directory:

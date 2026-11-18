@@ -257,3 +257,75 @@ def validate_motion(raw, semantic_map, track_id, region, horizon):
     if horizon <= 0.:
         raise ValueError('Invalid horizon')
     return raw
+
+
+class ModelOutputError(ValueError):
+    """A received model response cannot supply an admissible prediction."""
+
+
+def normalize_validated_motion(raw, semantic_map, track_id, region, horizon,
+                              mode='strict'):
+    """Keep invalid-hypothesis probability as unknown, never as extra confidence.
+
+    Global identity/probability errors reject the response. Independent route
+    errors do not invalidate other routes. No edges or connecting paths are
+    invented. The default preserves validation of previously recorded runs.
+    """
+    if mode == 'strict':
+        parsed = normalize_motion(raw, semantic_map, region)
+        return validate_motion(parsed, semantic_map, track_id, region, horizon), None
+    if mode != 'unknown_mass':
+        raise ValueError('Unknown invalid_hypothesis_mode')
+    if (not isinstance(raw, dict) or raw.get('schema') != COMPACT_SCHEMA_VERSION or
+            raw.get('map_id') != semantic_map['map_id'] or raw.get('track_id') != track_id):
+        raise ValueError('Motion response schema/map/track mismatch')
+    hypotheses = raw.get('hypotheses')
+    if not isinstance(hypotheses, list) or not 1 <= len(hypotheses) <= 6:
+        raise ValueError('Expected 1..6 motion hypotheses')
+    ids, probabilities = set(), []
+    for hypothesis in hypotheses:
+        if (not isinstance(hypothesis, dict) or not isinstance(hypothesis.get('id'), str)
+                or hypothesis['id'] in ids):
+            raise ValueError('Invalid or duplicate hypothesis ID')
+        ids.add(hypothesis['id'])
+        probability = _finite_number(hypothesis.get('probability'), 'probability')
+        if not 0. <= probability <= 1.:
+            raise ValueError('Probability outside [0,1]')
+        probabilities.append(probability)
+    total = sum(probabilities)
+    if abs(total-1.) > .025:
+        raise ValueError('Hypothesis probabilities must sum to 1')
+    scale = 1. if abs(total-1.) <= 1e-12 else 1./total
+    accepted, rejected = [], []
+    for hypothesis, probability in zip(hypotheses, probabilities):
+        # Test each route at unit mass so the existing validator can enforce
+        # all path, region, dwell, state and kinematic constraints independently.
+        one = dict(raw, hypotheses=[dict(hypothesis, probability=1.)])
+        try:
+            normalized = normalize_motion(one, semantic_map, region)
+            validate_motion(normalized, semantic_map, track_id, region, horizon)
+        except ValueError as exc:
+            rejected.append(dict(id=hypothesis['id'], probability=probability*scale,
+                                 error=str(exc)))
+        else:
+            accepted.append(dict(normalized['hypotheses'][0], probability=probability*scale))
+    rejected_mass = sum(row['probability'] for row in rejected)
+    if rejected:
+        unknown = next((h for h in accepted if h['state'] == 'UNKNOWN'), None)
+        if unknown is None:
+            name = '__rejected_motion__'
+            while name in ids:
+                name += '_'
+            unknown = dict(id=name, probability=0., state='UNKNOWN', edge_ids=[],
+                dwell_node_ids=[], events=[], next_target_id=region,
+                speed_range_mps=[.5,1.8], dwell_range_seconds=[0.,4.],
+                reason='Rejected hypotheses retain unknown probability mass',
+                uncertainty='No trusted route for this probability mass')
+            accepted.append(unknown)
+        unknown['probability'] += rejected_mass
+    parsed = dict(raw, schema=SCHEMA_VERSION, hypotheses=accepted)
+    validate_motion(parsed, semantic_map, track_id, region, horizon)
+    return parsed, dict(mode=mode, rejected_hypotheses=rejected,
+        rejected_probability_mass=rejected_mass, original_probability_sum=total,
+        probability_scale=scale,
+        note='All probability mass retained, including unknown; no route repair')
