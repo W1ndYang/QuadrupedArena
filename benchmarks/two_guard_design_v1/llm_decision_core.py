@@ -276,6 +276,11 @@ class DecisionOrchestrator:
     def __init__(self, reasoner, config):
         if config.get('invalid_hypothesis_mode','strict') not in ('strict','unknown_mass'):
             raise ValueError('Unknown invalid_hypothesis_mode')
+        minimum=config.get('minimum_peeks_by_stage')
+        if minimum is not None and (not isinstance(minimum,(list,tuple)) or len(minimum)!=2 or
+                any(type(n) is not int or not 1<=n<=config.get('max_peeks_per_stage',3)
+                    for n in minimum)):
+            raise ValueError('minimum_peeks_by_stage must contain two integer budgets within the peek cap')
         self.map=build_map()
         self.rules=public_rules()
         self.reasoner=reasoner
@@ -375,7 +380,10 @@ class DecisionOrchestrator:
         if public['peek_count']==0:
             result=self._observe_action(request,track,'initial_observation')
             return self._record(context,req_id,result)
-        if (public['peek_count']<self.config.get('minimum_peeks_per_stage',1)
+        minimum=(self.config['minimum_peeks_by_stage'][request['stage']]
+                 if self.config.get('minimum_peeks_by_stage') is not None else
+                 self.config.get('minimum_peeks_per_stage',1))
+        if (public['peek_count']<minimum
                 and self._can_repeek(request)):
             return self._record(context,req_id,
                 self._observe_action(request,track,'configured_observation_budget'))

@@ -23,6 +23,30 @@ class AlignmentTests(unittest.TestCase):
     def setUp(self):
         self.map=build_map();self.rules=public_rules()
 
+    def test_stage_specific_observation_control_precedes_prediction(self):
+        class ForbiddenReasoner:
+            def infer(self,messages):raise AssertionError('Observation control must not call API')
+        model=DecisionOrchestrator(ForbiddenReasoner(),dict(max_llm_calls_per_stage=0,
+            max_peeks_per_stage=2,minimum_peeks_by_stage=[1,2]))
+        second=public_request(time=15.6,stage=1,peek=1,observations=[
+            sample(15.3,[8.,-.5],1),sample(15.4,[8.,-.6],1)])
+        second['public']['stage_elapsed_seconds']=4.9
+        with patch('llm_decision_core.horizon_for',side_effect=AssertionError('Must observe first')):
+            result=model.decide(second)
+        self.assertEqual(result['status'],'observe')
+        self.assertEqual(result['gate']['reasons'],['configured_observation_budget'])
+        first=public_request(request='test:2',time=3.3,stage=0,peek=1,observations=[
+            sample(3.1,[-3.,-.5]),sample(3.2,[-3.,-.6])])
+        # With no forced first-stage second peek, the normal planning path is reached.
+        first['episode_id']='first'
+        with patch('llm_decision_core.horizon_for',side_effect=RuntimeError('Planning reached')):
+            with self.assertRaisesRegex(RuntimeError,'Planning reached'):model.decide(first)
+
+    def test_invalid_stage_observation_budgets_rejected(self):
+        for minimum in ([],[1],[1,3],[True,2],[1,'2']):
+            with self.subTest(minimum=minimum),self.assertRaises(ValueError):
+                DecisionOrchestrator(None,dict(max_peeks_per_stage=2,minimum_peeks_by_stage=minimum))
+
     def test_replay_tolerates_roundoff_but_keeps_counts_and_outcomes_exact(self):
         left=dict(samples=13,brier=.7733333333333328,failed=True)
         self.assertTrue(evaluation_matches(left,dict(left,brier=.7733333333333325)))
