@@ -2,7 +2,21 @@
 
 ## 当前批次
 
-通过 Git 同步本阶段提交，在 Ubuntu 仓库根目录、已经配置 `DEEPSEEK_API_KEY` 的终端运行。
+通过 Git 同步思考模式复验提交，在 Ubuntu 仓库根目录、已配置 `DEEPSEEK_API_KEY` 的终端运行。
+
+```bash
+python3 benchmarks/two_guard_design_v1/llm_study_online.py \
+  --phase thinking \
+  --output .arena-workspace/experiments/llm-study/ubuntu-thinking-v1
+```
+
+沿用初步批次的 16 组种子，D0 数值对照和三种 LLM 架构的思考、非思考配置共 112 局。程序记录思考 token、截断、空输出、接口异常及正式裁判终局。两种模式在同一架构内都使用 16,384 个输出 token、150 秒网络超时和 180 秒 API 墙钟上限。按之前的调用时长粗估约需 1–2 小时，取决于模型输出长度及每局调用次数。
+
+结束后回传最后一行 `upload_this` 指向的一个压缩包。
+
+## 历史非思考初步批次
+
+以下命令保留用于复现已完成的非思考批次。
 
 ```bash
 python3 benchmarks/two_guard_design_v1/llm_study_online.py \

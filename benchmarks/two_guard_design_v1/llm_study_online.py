@@ -26,6 +26,8 @@ METHODS = ('D0', 'D1', 'D1_matched', 'D2', 'D3')
 PILOT_PLAN = HERE/'config'/'llm_study_pilot_seeds.json'
 EVENT_PLAN = HERE/'config'/'llm_study_turn_collection.json'
 FIXTURE_SEEDS = [810000,820000]
+THINKING_POLICY_ARMS = ('D1_matched','D2','D3')
+THINKING_LIMITS = dict(max_tokens=16384,timeout_seconds=150,wall_timeout_seconds=180)
 
 
 def excluded_seed_streams(phase):
@@ -95,6 +97,23 @@ def config_matrix(direct_model):
     return configs
 
 
+def thinking_config_matrix():
+    reference = config_matrix('M1')
+    configs = {'D0':reference['D0']}
+    for method in THINKING_POLICY_ARMS:
+        common=dict(reference[method],**THINKING_LIMITS)
+        configs[f'{method}_M1']=common
+        configs[f'{method}_M2']=dict(common,thinking={'type':'enabled'},reasoning_effort='high')
+    return configs
+
+
+def maximum_calls(configs, pair_count):
+    return 2*pair_count*sum(
+        config['direct_call_cap_per_stage'] if config.get('study_architecture') in ('D2','D3')
+        else config['max_llm_calls_per_stage']
+        for config in configs.values())
+
+
 def enrich(row, directory):
     path = directory/'decision_events.jsonl'
     events = read_jsonl(path.read_text()) if path.exists() else []
@@ -123,6 +142,8 @@ def enrich(row, directory):
     responses = [e['response'].get('reasoning', {}).get('raw_response') or
                  e.get('llm_response') for e in exchanges]
     usages = [v.get('usage') or {} for v in responses if v]
+    reasoning_tokens = [(usage.get('completion_tokens_details') or {}).get('reasoning_tokens')
+                        for usage in usages]
     checks = [e['response'].get('reasoning', {}).get('safety_check') or
               (e.get('llm_response') or {}).get('safety_check') for e in decisions]
     row.update(formal_terminal=row['status'] == 'completed', official_reason=(
@@ -142,6 +163,12 @@ def enrich(row, directory):
                total_tokens_reported=sum(u['total_tokens'] for u in usages
                                          if type(u.get('total_tokens')) is int),
                calls_with_total_tokens=sum(type(u.get('total_tokens')) is int for u in usages),
+               reasoning_tokens_reported=sum(value for value in reasoning_tokens if type(value) is int),
+               calls_with_reasoning_tokens=sum(type(value) is int for value in reasoning_tokens),
+               api_finish_reasons=dict(Counter(v.get('raw_metadata',{}).get('finish_reason') or 'unknown'
+                                               for v in responses if v)),
+               empty_visible_model_responses=sum(not v.get('text','').strip()
+                                                 for v in responses if v),
                full_service_seconds=[e['service_wall_seconds'] for e in decisions],
                local_compute_seconds=[max(0., e['service_wall_seconds'] -
                      float((e['response'].get('reasoning', {}).get('raw_response') or
@@ -203,6 +230,8 @@ def paired(rows, methods, count, include_api_failures=True):
 
 
 def primary_comparisons(methods):
+    if 'D2_M2' in methods:
+        return ('D2_M2_vs_D2_M1','D1_matched_M2_vs_D1_matched_M1','D3_M2_vs_D3_M1')
     matched = 'D1_selected' if 'D1_selected' in methods else 'D1_matched'
     return ('D2_vs_D0','D3_vs_D2',f'D2_vs_{matched}')
 
@@ -226,6 +255,9 @@ def aggregate(rows, methods, count):
         n = len(group)
         outcome = Counter(r['official_reason'] or r['failure_category'] or 'run_error'
                           for r in group)
+        finish_reasons=Counter()
+        for row in group:
+            finish_reasons.update(row.get('api_finish_reasons',{}))
         result[method] = dict(wins=wins, attempted=n, planned=count,
             status=dict(Counter(r['status'] for r in group)), outcome=dict(outcome),
             success_rate=wins/n if n else None, wilson_95=wilson(wins,n),
@@ -237,6 +269,10 @@ def aggregate(rows, methods, count):
                                         if r['episode_wall_seconds'] is not None]),
             model_calls=sum(r['llm_inference_attempts'] for r in group),
             total_tokens_reported=sum(r['total_tokens_reported'] for r in group),
+            reasoning_tokens_reported=sum(r.get('reasoning_tokens_reported',0) for r in group),
+            calls_with_reasoning_tokens=sum(r.get('calls_with_reasoning_tokens',0) for r in group),
+            empty_visible_model_responses=sum(r.get('empty_visible_model_responses',0) for r in group),
+            api_finish_reasons=dict(finish_reasons),
             safety_rejections=sum(c['rejection'] is not None for r in group for c in r['safety_checks']),
             api_seconds=distributions([v for r in group for v in r['model_seconds'] if v is not None]),
             service_seconds=distributions([v for r in group for v in r['full_service_seconds']]),
@@ -251,14 +287,17 @@ def aggregate(rows, methods, count):
 
 
 def run(args):
-    plan = load_plan(args.plan, args.phase)
+    thinking_comparison=args.phase=='thinking'
+    plan = load_plan(args.plan, 'pilot' if thinking_comparison else args.phase)
+    if thinking_comparison and plan['seed_pairs']!=load_plan(PILOT_PLAN,'pilot')['seed_pairs']:
+        raise ValueError('Thinking comparison uses the 16 frozen pilot seed pairs')
     pairs = plan['seed_pairs']
     batch = getattr(args,'batch',None)
     if batch is not None and (args.phase!='holdout' or args.fixture_for_tests):
         raise ValueError('Seed batches are available for the live holdout only')
     indices = batch_indices(len(pairs),batch)
     pairs = [pairs[index] for index in indices]
-    configs = config_matrix(args.direct_model)
+    configs = thinking_config_matrix() if thinking_comparison else config_matrix(args.direct_model)
     methods = list(configs)
     config_hash = digest(configs)
     runtime_version = code_version()
@@ -289,7 +328,12 @@ def run(args):
                   seed_plan_sha256=digest(plan), seed_pairs=pairs, methods=methods,
                   seed_indices=indices,holdout_batch=list(batch) if batch else None,
                   direct_model=args.direct_model, historical_prediction_model='M1',
-                  matched_for_direct='D1_matched' if args.direct_model=='M1' else 'D1_selected',
+                  matched_for_direct=(None if thinking_comparison else
+                                      'D1_matched' if args.direct_model=='M1' else 'D1_selected'),
+                  thinking_comparison=(dict(primary='D2_M2_vs_D2_M1',
+                    secondary=['D1_matched_M2_vs_D1_matched_M1','D3_M2_vs_D3_M1'],
+                    baseline='D0',within_architecture_equal_limits=THINKING_LIMITS,
+                    same_pilot_seed_pairs=True) if thinking_comparison else None),
                   duration_seconds=48., fixture_only=args.fixture_for_tests,
                   decision_clock='paused_simulation', row_count_planned=len(pairs)*len(methods),
                   started_utc=datetime.now(timezone.utc).isoformat(), rows=[], error=None,
@@ -298,8 +342,7 @@ def run(args):
                   decision_config_sha256=config_hash,
                   decision_runtime_version=runtime_version,
                   runner_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-                  maximum_live_calls=0 if args.fixture_for_tests else len(pairs)*(
-                      2*(len(methods)-3)+48))
+                  maximum_live_calls=0 if args.fixture_for_tests else maximum_calls(configs,len(pairs)))
     emit(root/'comparison.json', report)
     try:
         for index, (first, second) in enumerate(pairs):
@@ -343,7 +386,7 @@ def run(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', type=Path, default=PILOT_PLAN)
-    parser.add_argument('--phase', choices=('pilot','holdout'), default='pilot')
+    parser.add_argument('--phase', choices=('pilot','holdout','thinking'), default='pilot')
     parser.add_argument('--batch',type=parse_batch,help='Optional live holdout batch, e.g. 1/6')
     parser.add_argument('--direct-model', choices=MODELS)
     parser.add_argument('--output', type=Path)
@@ -354,8 +397,12 @@ def main():
     if args.verify:
         print(json.dumps(verify_comparison(args.verify), indent=2))
         return 0
-    if not args.output or not args.direct_model:
-        parser.error('--output and --direct-model are required')
+    if not args.output:
+        parser.error('--output is required')
+    if args.phase=='thinking' and args.direct_model is not None:
+        parser.error('--phase thinking fixes both DeepSeek modes')
+    if args.phase!='thinking' and not args.direct_model:
+        parser.error('--direct-model is required for the pilot and holdout')
     return run(args)
 
 

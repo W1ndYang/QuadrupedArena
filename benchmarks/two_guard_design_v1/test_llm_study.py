@@ -7,7 +7,9 @@ from llm_decision_service import ServiceState
 from llm_option_policy import LLMOptionPolicy
 from llm_replay import replay
 from llm_study_architecture import screen
-from llm_study_online import METHODS, batch_indices, config_matrix, holm_primary, load_plan, paired
+from llm_study_online import (METHODS, THINKING_LIMITS, batch_indices, config_matrix,
+                              holm_primary, load_plan, maximum_calls, paired,
+                              primary_comparisons, thinking_config_matrix)
 from llm_bundle import create_bundle
 from llm_compare_ubuntu import comparison_bundle, verify_comparison
 from llm_study_data import emit
@@ -23,6 +25,19 @@ HERE = Path(__file__).resolve().parent
 
 
 class StudyTests(unittest.TestCase):
+    def test_thinking_arms_change_only_the_mode_within_each_architecture(self):
+        configs=thinking_config_matrix()
+        base=config_matrix('M1')
+        self.assertEqual(configs['D0'],base['D0'])
+        self.assertEqual(len(configs),7)
+        self.assertEqual(maximum_calls(base,16),832)
+        self.assertEqual(maximum_calls(configs,16),1600)
+        for method in ('D1_matched','D2','D3'):
+            m1,m2=(configs[f'{method}_{model}'] for model in ('M1','M2'))
+            self.assertEqual(m1,dict(base[method],**THINKING_LIMITS))
+            self.assertEqual(m2,dict(m1,thinking={'type':'enabled'},reasoning_effort='high'))
+        self.assertEqual(primary_comparisons(list(configs))[0],'D2_M2_vs_D2_M1')
+
     def test_holdout_batches_require_full_disjoint_seed_coverage(self):
         self.assertEqual([i for b in (1,2,3) for i in batch_indices(10,(b,3))],
                          list(range(10)))
