@@ -4,8 +4,8 @@ import json
 import math
 from pathlib import Path
 
-from llm_decision_core import DecisionOrchestrator
 from llm_motion_client import APIReasoner
+from llm_study_architecture import make_orchestrator
 
 
 def evaluation_matches(left,right):
@@ -57,7 +57,7 @@ def replay(input_log,output,config,live_model=False):
             if line.strip()]
     effective_config,config_source=_effective_config(events,config,live_model)
     reasoner=(APIReasoner(effective_config) if live_model else RecordedReasoner(events))
-    orchestrator=DecisionOrchestrator(reasoner,effective_config)
+    orchestrator=make_orchestrator(reasoner,effective_config)
     rows=[];finishes=[]
     for event in events:
         if event['kind']=='finish':

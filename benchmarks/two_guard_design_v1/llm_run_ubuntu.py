@@ -128,6 +128,8 @@ def run(args):
                                '--duration', str(args.duration),
                                '--episode-id', episode_id,
                                '--output-dir', str(run_dir)]
+            if getattr(args, 'study_telemetry', False):
+                episode_command.append('--study-telemetry')
             manifest['episode_exit_code'] = _run_logged(
                 episode_command, run_dir / 'episode_stdout.log')
     except Exception as exc:
@@ -173,6 +175,11 @@ def run(args):
                                                        run_dir / 'replay_stdout.log')
             if manifest['replay_exit_code'] == 0:
                 replay = json.loads((run_dir / 'replay.json').read_text())
+                terminal_response = decisions[-1]['response'] if decisions else {}
+                manifest['policy_failure_replay_matches'] = (
+                    terminal_response.get('error_type') in ('PolicyAbstention','ModelOutputError')
+                    and not replay['finishes'] and replay['count'] > 0
+                    and replay['count'] == replay['same_decisions'])
                 manifest['replay_matches'] = (
                     replay['count'] > 0 and
                     len(replay['finishes']) == 1 and

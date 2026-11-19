@@ -26,21 +26,22 @@ def _episode_json(path):
             value.get('status') in ('completed', 'failed'))
 
 
-def _included_files(run_dir):
+def _included_files(run_dir, additional_files=()):
     files = []
     for path in sorted(run_dir.iterdir()):
         if path.is_symlink():
             raise ValueError(f'Symlinks are not allowed in a run directory: {path.name}')
         if not path.is_file():
             continue
-        if path.name in KNOWN_FILES or (path.suffix == '.json' and _episode_json(path)):
+        if path.name in KNOWN_FILES or path.name in additional_files or (
+                path.suffix == '.json' and _episode_json(path)):
             files.append(path)
     if not files:
         raise ValueError('No recognized run files to package')
     return files
 
 
-def create_bundle(run_dir, archive_path, secret_values=()):
+def create_bundle(run_dir, archive_path, secret_values=(), *, additional_files=()):
     run_dir = Path(run_dir).resolve()
     archive_path = Path(archive_path).resolve()
     if not run_dir.is_dir():
@@ -49,7 +50,7 @@ def create_bundle(run_dir, archive_path, secret_values=()):
         raise ValueError('Archive must be outside the run directory')
     if archive_path.exists():
         raise FileExistsError(f'Archive already exists: {archive_path}')
-    files = _included_files(run_dir)
+    files = _included_files(run_dir, additional_files)
     secrets = [value.encode() for value in secret_values if isinstance(value, str) and value]
     rows = []
     contents = []

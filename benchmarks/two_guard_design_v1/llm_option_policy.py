@@ -56,6 +56,7 @@ class LLMOptionPolicy:
         self.last_time=-1.
         self.recovery=False
         self.boundary_recheck=False
+        self.direct_skill_mode=False
         self.boundary_waits=0
         self.retreats=0
 
@@ -155,6 +156,11 @@ class LLMOptionPolicy:
                 self.last_action=1
                 return 1,0.,0.
             raise RuntimeError('Skill failure with no legal safe-cover recovery')
+        if self.direct_skill_mode:
+            decision_type=('gate_boundary' if mask[7] else
+                           'execution_anomaly' if self.recovery else
+                           'observation_complete' if self.peek_count[self.stage] else 'initial')
+            return self._apply_direct_skill(self._request(observation,mask,decision_type),mask)
         if mask[7]:
             self.last_plan=None
             if self.boundary_recheck:
@@ -179,6 +185,9 @@ class LLMOptionPolicy:
                            else 'initial')
             response=self._request(observation,mask,decision_type)
             self.recovery=False
+            if response['status']=='skill':
+                self.direct_skill_mode=True
+                return self._apply_direct_skill(response,mask)
             if response['status']=='observe':
                 action=int(response['action'])
                 if action not in (2,3):raise ValueError('Invalid observe action')
@@ -205,6 +214,23 @@ class LLMOptionPolicy:
                     6 if plan['side']=='north' else 5)
         if not mask[action]:
             raise ValueError(f'Planned Option {ACTION_NAMES[action]} not legal')
+        self.last_action=action
+        return action,0.,0.
+
+    def _apply_direct_skill(self,response,mask):
+        action=response.get('action')
+        if (response['status']!='skill' or type(action) is not int or
+                not 0<action<len(mask) or not mask[action]):
+            raise ValueError('Invalid direct Skill response')
+        self.boundary_recheck=True
+        self.recovery=False
+        if action in (2,3):
+            self.peek_count[self.stage]+=1
+        elif mask[7] and action==4:
+            self.boundary_waits+=1
+        elif mask[7] and action==1:
+            self.recovery=True
+            self.retreats+=1
         self.last_action=action
         return action,0.,0.
 

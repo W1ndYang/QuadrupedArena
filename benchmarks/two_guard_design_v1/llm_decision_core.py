@@ -355,7 +355,7 @@ class DecisionOrchestrator:
                         local_boundary_seconds=time.perf_counter()-started),
             llm_called=False))
 
-    def decide(self, request):
+    def _begin_decision(self, request):
         _check_public_request(request)
         episode_id=request['episode_id']
         context=self.episodes.setdefault(episode_id,EpisodeContext(
@@ -367,12 +367,20 @@ class DecisionOrchestrator:
                           if row['request_id']==req_id)
             if original!=request:
                 raise ValueError('Duplicate Request ID has different public payload')
-            return context.responses[req_id]
+            return context, context.responses[req_id]
         if context.status!='active' or request['time']+1e-7<context.last_time:
             raise ValueError('Episode closed or game time moved backward')
         context.last_time=request['time'];context.stage=request['stage']
         context.add_samples(request['observations'])
         context.requests.append(request)
+        return context, None
+
+    def decide(self, request):
+        context, cached = self._begin_decision(request)
+        if cached is not None:
+            return cached
+        episode_id = request['episode_id']
+        req_id = request['request_id']
         track=context.track_for(request['stage'])
         public=request['public']
         if public['action_mask'][7] and self.config.get('boundary_recheck',False):
@@ -440,7 +448,8 @@ class DecisionOrchestrator:
             parsed=dict(schema=SCHEMA_VERSION,hypotheses=[])
             inferred=None;messages=None;llm_seconds=0.
         else:
-            messages=messages_for(reasoning_request,self.map,self.rules)
+            messages, version, version_digest = self._motion_messages(
+                reasoning_request, request, context, track)
             context.llm_messages[req_id]=messages
             wall_start=time.perf_counter()
             inferred=self.reasoner.infer(messages)
@@ -465,7 +474,7 @@ class DecisionOrchestrator:
                 'high_unknown_mass' if unknown>.45 else 'diffuse_motion_hypotheses')
             if inferred is not None:
                 result['reasoning']=dict(raw_request=messages,raw_response=inferred,
-                    hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION)
+                    hypotheses=parsed,api_seconds=llm_seconds,prompt_version=version)
                 if validation is not None:result['reasoning']['validation']=validation
             return self._record(context,req_id,result)
         model_started=time.perf_counter()
@@ -536,8 +545,8 @@ class DecisionOrchestrator:
                                       plan=plan['selected']))
         if inferred is not None:
             result['reasoning']=dict(raw_request=messages,raw_response=inferred,
-                hypotheses=parsed,api_seconds=llm_seconds,prompt_version=PROMPT_VERSION,
-                prompt_digest=prompt_digest())
+                hypotheses=parsed,api_seconds=llm_seconds,prompt_version=version,
+                prompt_digest=version_digest)
             if validation is not None:result['reasoning']['validation']=validation
         result['llm_called']=inferred is not None
         result['forecast']=prediction
@@ -552,6 +561,9 @@ class DecisionOrchestrator:
                 measurement_age_seconds=request['time']-last['time'],
                 execution_mode='simulation_paused_while_waiting_for_api')
         return self._record(context,req_id,result)
+
+    def _motion_messages(self, reasoning_request, request, context, track):
+        return messages_for(reasoning_request,self.map,self.rules), PROMPT_VERSION, prompt_digest()
 
     def _record(self,context,request_id,result):
         response=dict(episode_id=context.episode_id,request_id=request_id,

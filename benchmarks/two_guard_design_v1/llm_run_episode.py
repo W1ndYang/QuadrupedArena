@@ -11,11 +11,20 @@ from option_env import run_episode
 from online_env import ACTION_NAMES
 
 
-def run(first_seed,second_seed,service_url,output_dir,duration=48.,episode_id=None):
+def option_log(records):
+    return [dict(stage=row['stage'],action=ACTION_NAMES[row['action']],
+                 start=row['time'],end=row['end_time'],
+                 duration_seconds=row['elapsed_seconds'],
+                 termination=row['termination_reason']) for row in records]
+
+
+def run(first_seed,second_seed,service_url,output_dir,duration=48.,episode_id=None,
+        study_telemetry=False):
     output_dir=Path(output_dir);output_dir.mkdir(parents=True,exist_ok=True)
     episode_id=episode_id or 'ep-'+secrets.token_hex(8)
     client=DecisionServiceClient(service_url)
     policy=LLMOptionPolicy(episode_id,client,duration)
+    policy.record_referee_telemetry=study_telemetry
     started=datetime.now(timezone.utc).isoformat()
     try:
         summary,records=run_episode(first_seed,second_seed,policy,duration)
@@ -26,16 +35,15 @@ def run(first_seed,second_seed,service_url,output_dir,duration=48.,episode_id=No
             summary=summary,service_evaluation=evaluation,
             own_trajectory=policy.own_trajectory,
             decisions=policy.responses,
-            options=[dict(stage=row['stage'],action=ACTION_NAMES[row['action']],
-                          start=row['time'],end=row['end_time'],
-                          duration_seconds=row['elapsed_seconds'],
-                          termination=row['termination_reason']) for row in records])
+            options=option_log(records))
     except Exception as exc:
         result=dict(status='failed',started_utc=started,
             finished_utc=datetime.now(timezone.utc).isoformat(),
             episode_id=episode_id,first_seed=first_seed,second_seed=second_seed,
             error_type=type(exc).__name__,error=str(exc),
             traceback=traceback.format_exc(),decisions=policy.responses,
+            options_before_failure=option_log(getattr(exc,'closed_options',[])),
+            referee_telemetry=getattr(exc,'referee_telemetry',None),
             own_trajectory=policy.own_trajectory)
     path=output_dir/f'{episode_id}.json'
     path.write_text(json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False)+'\n')
@@ -52,10 +60,11 @@ def main():
     parser.add_argument('--second-seed',type=int,default=820000)
     parser.add_argument('--duration',type=float,default=48.)
     parser.add_argument('--episode-id')
+    parser.add_argument('--study-telemetry',action='store_true')
     parser.add_argument('--output-dir',type=Path,required=True)
     args=parser.parse_args()
     result=run(args.first_seed,args.second_seed,args.service_url,
-               args.output_dir,args.duration,args.episode_id)
+               args.output_dir,args.duration,args.episode_id,args.study_telemetry)
     if result['status']!='completed':raise SystemExit(1)
 
 

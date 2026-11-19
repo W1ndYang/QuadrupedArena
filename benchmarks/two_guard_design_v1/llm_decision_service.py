@@ -8,11 +8,12 @@ from pathlib import Path
 import threading
 import time
 
-from llm_decision_core import DecisionOrchestrator
-from llm_motion_client import APIReasoner, FixtureReasoner, adapter_sources
+from llm_motion_client import APIReasoner, FixtureReasoner, adapter_sources, messages_for
 from llm_map_review import check as check_map
-from llm_semantic import COMPACT_SCHEMA_VERSION
+from llm_semantic import COMPACT_SCHEMA_VERSION, SCHEMA_VERSION
 from llm_robot_rollout import prewarm
+from llm_study_architecture import make_orchestrator
+from llm_study_protocol import DIRECT_VERSION
 
 
 def code_version():
@@ -23,6 +24,7 @@ def code_version():
            'llm_robot_rollout.py',
            'llm_fast_templates.json','llm_decision_core.py',
            'llm_decision_service.py','llm_option_policy.py',
+           'llm_study_architecture.py','llm_study_protocol.py',
            'formal_central_screen.py','option_env.py','online_env.py',
            'ppo_observation.py','varied_patrol.py','two_node_geometry.py')
     digest=hashlib.sha256()
@@ -87,11 +89,33 @@ def fixture_response(payload, compact=False):
     return response
 
 
+def study_fixture(payload):
+    decision = payload['decision']
+    if 'allowed_skills' not in decision:
+        return fixture_response(payload, compact=True)
+    if payload.get('fixture_motion'):
+        track = decision['current_track']
+        region = track['region']
+        samples = [row for row in decision['observations'] if row['stage'] == decision['stage']]
+        reasoning = dict(schema=SCHEMA_VERSION, map_id=payload['map']['map_id'],
+                         track_id=track['id'], region=region, recent_observations=samples,
+                         estimated_guard_velocity=track['estimated_velocity'])
+        compact = json.loads(messages_for(reasoning, payload['map'], payload['rules'])[-1]['content'])
+        return fixture_response(compact, compact=True)
+    candidates = ('NEXT_COVER_OR_GOAL', 'NORTH_GATE', 'WAIT')
+    skill = next((name for name in candidates if name in decision['allowed_skills']), 'UNKNOWN')
+    return dict(schema=DIRECT_VERSION, skill=skill, reason='Test fixture',
+                uncertainty='Test fixture')
+
+
 class ServiceState:
     def __init__(self,config,log_dir,fixture=False):
-        reasoner=(FixtureReasoner(lambda payload:fixture_response(payload,compact=True))
-                  if fixture else APIReasoner(config))
-        self.orchestrator=DecisionOrchestrator(reasoner,config)
+        def fixture_call(payload):
+            return study_fixture(dict(payload, fixture_motion=(
+                config.get('study_architecture') == 'D1_matched')))
+
+        reasoner=FixtureReasoner(fixture_call) if fixture else APIReasoner(config)
+        self.orchestrator=make_orchestrator(reasoner,config)
         prepared_at=time.perf_counter()
         self.startup_precomputation=(dict(prewarm(),call_wall_seconds=time.perf_counter()-prepared_at)
                                     if config.get('robot_rollout_mode')=='stateful_v2' else None)

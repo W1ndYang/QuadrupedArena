@@ -140,6 +140,35 @@ class OnlineProbe(HandoffProbe):
         return action in (2,3)
 
 
+def referee_telemetry(states, handoff_time, dt):
+    """Evaluation-only exposure intervals with no positions or guard commands."""
+    rows = []
+    for stage in (0,1):
+        trace = [row for row in states
+                 if int(handoff_time is not None and row['t'] >= handoff_time) == stage]
+        if not trace:
+            continue
+        masks = {
+            'guard_visibility': lambda row: row['visible'][1],
+            'valid_guard_lock': lambda row: row['lock_valid'][1],
+        }
+        report = dict(stage=stage)
+        for name, valid in masks.items():
+            intervals = []
+            for row in trace:
+                if not valid(row):
+                    continue
+                t = row['t']
+                if intervals and t-intervals[-1][1] <= dt+1e-7:
+                    intervals[-1][1] = t
+                else:
+                    intervals.append([t,t])
+            report[name+'_intervals'] = intervals
+            report[name+'_sampled_seconds'] = sum(max(0., b-a) for a,b in intervals)
+        rows.append(report)
+    return rows
+
+
 def run_episode(first_seed,second_seed,policy,duration=48.,
                 sensor=None,controller_class=OnlineController):
     encoder=VisualHistoryEncoder(duration,len(ACTION_NAMES),
@@ -176,7 +205,15 @@ def run_episode(first_seed,second_seed,policy,duration=48.,
     probe.patrol_style='varied'
     probe.early_second_sightings=[]
     probe.shadow_guard=ShadowGuard(probe,second_seed,'varied')
-    result=probe.run(f'online_{first_seed}_{second_seed}')
+    try:
+        result=probe.run(f'online_{first_seed}_{second_seed}')
+    except Exception as error:
+        error.closed_options = [row for row in probe.controllers[0].records
+                                if 'end_time' in row]
+        if getattr(policy,'record_referee_telemetry',False):
+            error.referee_telemetry = referee_telemetry(
+                probe.trace, getattr(probe,'handoff_time',None), probe.rules['dt'])
+        raise
     controller=probe.controllers[0]
     if hasattr(controller,'finalize_options'):
         controller.finalize_options(float(result['summary']['seconds']))
@@ -198,4 +235,7 @@ def run_episode(first_seed,second_seed,policy,duration=48.,
                  smoke_used=result['summary']['smoke_used'])
     if hasattr(controller,'visual_sample_counts'):
         summary['visual_sample_counts']=controller.visual_sample_counts.copy()
+    if getattr(policy,'record_referee_telemetry',False):
+        summary['referee_telemetry'] = referee_telemetry(
+            result['states'], summary['handoff_time'], probe.rules['dt'])
     return summary,records
