@@ -61,6 +61,23 @@ def load_plan(path, phase):
     return plan
 
 
+def batch_indices(size, batch):
+    if batch is None:
+        return list(range(size))
+    number, total = batch
+    if not 1<=number<=total<=size:
+        raise ValueError('Batch must satisfy 1 <= number <= total <= available seed count')
+    return list(range(size*(number-1)//total,size*number//total))
+
+
+def parse_batch(value):
+    try:
+        number,total=map(int,value.split('/'))
+    except ValueError as error:
+        raise argparse.ArgumentTypeError('Expected batch as NUMBER/TOTAL') from error
+    return number,total
+
+
 def config_matrix(direct_model):
     def from_file(name):
         return json.loads((HERE/'config'/f'llm_decision_{name}.json').read_text())
@@ -236,6 +253,11 @@ def aggregate(rows, methods, count):
 def run(args):
     plan = load_plan(args.plan, args.phase)
     pairs = plan['seed_pairs']
+    batch = getattr(args,'batch',None)
+    if batch is not None and (args.phase!='holdout' or args.fixture_for_tests):
+        raise ValueError('Seed batches are available for the live holdout only')
+    indices = batch_indices(len(pairs),batch)
+    pairs = [pairs[index] for index in indices]
     configs = config_matrix(args.direct_model)
     methods = list(configs)
     config_hash = digest(configs)
@@ -253,6 +275,7 @@ def run(args):
             raise ValueError('The live model and methods must match the frozen holdout plan')
     if args.fixture_for_tests:
         pairs = [FIXTURE_SEEDS]
+        indices = [0]
     else:
         for config in configs.values():
             if config.get('max_llm_calls_per_stage') != 0:
@@ -264,6 +287,7 @@ def run(args):
         raise FileExistsError(bundle)
     report = dict(schema='llm-study-paired-v1', phase=args.phase, seed_plan=plan,
                   seed_plan_sha256=digest(plan), seed_pairs=pairs, methods=methods,
+                  seed_indices=indices,holdout_batch=list(batch) if batch else None,
                   direct_model=args.direct_model, historical_prediction_model='M1',
                   matched_for_direct='D1_matched' if args.direct_model=='M1' else 'D1_selected',
                   duration_seconds=48., fixture_only=args.fixture_for_tests,
@@ -279,21 +303,24 @@ def run(args):
     emit(root/'comparison.json', report)
     try:
         for index, (first, second) in enumerate(pairs):
-            order = methods[index % len(methods):] + methods[:index % len(methods)]
+            seed_index=indices[index]
+            rotation=seed_index % len(methods)
+            order = methods[rotation:] + methods[:rotation]
             for method in order:
                 dir_ = root/f'{index:03d}-{method}'
                 config_path = root/f'.{method}.json'
                 emit(config_path, configs[method])
                 run_episode_bundle(SimpleNamespace(
                     output_dir=dir_, bundle_path=root/(dir_.name+'.tar.gz'),
-                    config=config_path, episode_id=f'pair-{index+1:03d}', first_seed=first,
+                    config=config_path, episode_id=f'pair-{seed_index+1:03d}', first_seed=first,
                     second_seed=second, duration=48., port=args.port,
                     study_telemetry=True,
                     fixture_for_tests=args.fixture_for_tests and method != 'D0'))
                 row = enrich(read_result(dir_, method, index, first, second), dir_)
+                row['seed_index']=seed_index
                 report['rows'].append(row)
                 emit(root/'comparison.json', report)
-                print(json.dumps(dict(index=index, method=method, status=row['status'],
+                print(json.dumps(dict(index=seed_index, method=method, status=row['status'],
                                       summary=row['summary'])), flush=True)
                 if row['status'] not in ('completed','policy_failure','api_failure'):
                     raise RuntimeError(f'{dir_.name} had an infrastructure error')
@@ -303,7 +330,8 @@ def run(args):
         for method in methods:
             (root/f'.{method}.json').unlink(missing_ok=True)
         report.update(finished_utc=datetime.now(timezone.utc).isoformat(),
-                      aggregate=aggregate(report['rows'], methods, len(pairs)),
+                      aggregate=(aggregate(report['rows'], methods, len(pairs))
+                                 if batch is None else None),
                       status='failed' if report['error'] else 'completed')
         emit(root/'comparison.json', report)
         comparison_bundle(root, bundle)
@@ -316,6 +344,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', type=Path, default=PILOT_PLAN)
     parser.add_argument('--phase', choices=('pilot','holdout'), default='pilot')
+    parser.add_argument('--batch',type=parse_batch,help='Optional live holdout batch, e.g. 1/6')
     parser.add_argument('--direct-model', choices=MODELS)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--port', type=int, default=8765)

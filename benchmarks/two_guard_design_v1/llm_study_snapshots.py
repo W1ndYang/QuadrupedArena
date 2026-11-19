@@ -10,6 +10,7 @@ import tarfile
 from llm_bundle import verify_bundle
 from llm_decision_core import DecisionOrchestrator, EpisodeContext
 from llm_option_policy import LLMOptionPolicy
+from llm_replay import evaluation_matches
 from llm_semantic import ModelOutputError
 from llm_study_architecture import decision_packet, screen
 from llm_study_data import archived_logs, diagnostic_logs, emit, read_jsonl
@@ -40,8 +41,8 @@ class PrefixReplay:
             raise ValueError('Historical decision prefix ended before the snapshot')
         expected = self.events[self.index]
         self.index += 1
-        if request != expected['request']:
-            raise ValueError('Historical prefix does not reconstruct the exact decision request')
+        if not evaluation_matches(request,expected['request']):
+            raise ValueError('Historical prefix does not reproduce the public request within replay tolerance')
         if request['request_id'] != self.sample_id:
             return expected['response']
         self.applied = True

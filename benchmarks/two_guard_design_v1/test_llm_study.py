@@ -7,9 +7,13 @@ from llm_decision_service import ServiceState
 from llm_option_policy import LLMOptionPolicy
 from llm_replay import replay
 from llm_study_architecture import screen
-from llm_study_online import METHODS, config_matrix, holm_primary, load_plan, paired
+from llm_study_online import METHODS, batch_indices, config_matrix, holm_primary, load_plan, paired
+from llm_bundle import create_bundle
+from llm_compare_ubuntu import comparison_bundle, verify_comparison
+from llm_study_data import emit
+from llm_study_holdout import join
 from llm_study_power import exact_power, freeze_holdout
-from llm_study_protocol import parse_direct, strict_json
+from llm_study_protocol import digest, parse_direct, strict_json
 from llm_study_turns import audit_case
 from llm_semantic import ModelOutputError
 from option_env import run_episode
@@ -19,6 +23,54 @@ HERE = Path(__file__).resolve().parent
 
 
 class StudyTests(unittest.TestCase):
+    def test_holdout_batches_require_full_disjoint_seed_coverage(self):
+        self.assertEqual([i for b in (1,2,3) for i in batch_indices(10,(b,3))],
+                         list(range(10)))
+        plan=dict(seed_pairs=[[800010,801010],[800020,801020]])
+        methods=['D0','D2']
+        reference=dict(phase='holdout',fixture_only=False,status='completed',
+                       seed_plan=plan,seed_plan_sha256=digest(plan),methods=methods,
+                       direct_model='M1',decision_runtime_version='fixture',
+                       decision_config_sha256='fixture',git_head='fixture',
+                       runner_sha256='fixture',duration_seconds=48.,
+                       decision_clock='paused_simulation',
+                       maximum_live_calls=0,started_utc='start',finished_utc='end')
+        with TemporaryDirectory() as directory:
+            root=Path(directory)
+            paths=[]
+            for index,(first,second) in enumerate(plan['seed_pairs']):
+                batch=root/f'batch-{index}'
+                batch.mkdir()
+                rows=[]
+                for method in methods:
+                    row=dict(index=0,seed_index=index,method=method,
+                             first_seed=first,second_seed=second,status='completed',
+                             summary=dict(winner='attacker' if method=='D0' else 'defender',
+                                          seconds=1.),
+                             official_reason='goal' if method=='D0' else 'tag',
+                             failure_category=None,formal_terminal=True,episode_wall_seconds=1.,
+                             llm_inference_attempts=0,total_tokens_reported=0,safety_checks=[],
+                             model_seconds=[],full_service_seconds=[],local_compute_seconds=[])
+                    rows.append(row)
+                    sub=batch/method
+                    sub.mkdir()
+                    emit(sub/'run_manifest.json',dict(fixture=True))
+                    create_bundle(sub,batch/f'000-{method}.tar.gz')
+                emit(batch/'comparison.json',dict(reference,holdout_batch=[index+1,2],
+                    seed_indices=[index],seed_pairs=[[first,second]],row_count_planned=len(rows),
+                    rows=rows))
+                archive=root/f'batch-{index}.tar.gz'
+                comparison_bundle(batch,archive)
+                paths.append(archive)
+            with self.assertRaises(ValueError):
+                join(paths[:1],root/'incomplete')
+            with self.assertRaises(ValueError):
+                join(paths[:1]*2,root/'overlap')
+            combined=join(paths[::-1],root/'combined')
+            self.assertEqual(len(verify_comparison(combined)['files']),5)
+            result=json.loads((root/'combined'/'comparison.json').read_text())
+            self.assertEqual(result['aggregate']['paired']['D2_vs_D0']['reference_only'],2)
+
     def test_pairing_checks_and_api_sensitivity(self):
         rows = []
         for index, (a,b) in enumerate((('attacker','defender'),('defender','attacker'),

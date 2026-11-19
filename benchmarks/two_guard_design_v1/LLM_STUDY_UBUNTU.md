@@ -29,3 +29,18 @@ python3 benchmarks/two_guard_design_v1/llm_study_offline.py --verify <历史离�
 ```
 
 完整回合入口接受 `--fixture-for-tests`，可使用预设响应做零 API 的工程检查。历史离线分析继续读取原来冻结的 `observations.json` 和 `evaluation.json`。Ubuntu 当前配对批次可直接使用 Git 中的配置启动。
+
+### 已冻结的独立留出方案
+
+初步批次已回传并完成分析。Git 中的 `config/llm_study_holdout_seeds.json` 固定了 360 组新种子、DeepSeek 配置和决策版本。按初步批次估计，六批全部运行约需 11.7 小时。可通过 Git 同步后，在同一个干净工作树上按顺序运行六个批次。每批 60 组，批次输出目录各自独立。
+
+```bash
+python3 benchmarks/two_guard_design_v1/llm_study_online.py \
+  --phase holdout \
+  --plan benchmarks/two_guard_design_v1/config/llm_study_holdout_seeds.json \
+  --direct-model M1 \
+  --batch 1/6 \
+  --output .arena-workspace/experiments/llm-study/ubuntu-holdout-v1-batch-01
+```
+
+随后使用 `--batch 2/6` 至 `--batch 6/6`，输出目录分别以 `batch-02` 至 `batch-06` 结尾。回传各批最后一行 `upload_this` 指向的归档。本地用 `llm_study_holdout.py` 校验并合并，只有所有冻结种子齐全且互不重叠时才生成配对统计。
